@@ -1,0 +1,9 @@
+demo/node_modules/
+demo/dist/
+output/qa/edge-*/
+output/qa/comparison.html
+output/qa/demo-mobile.png
+output/qa/ref-*.png
+*.log
+.DS_Store
+Thumbs.db
