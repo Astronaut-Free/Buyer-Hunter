@@ -9,6 +9,7 @@ function normalizeCompany(company = {}) {
   const productEvidence = productMatched && providerId ? [`trademo:company:${providerId}:product-match`] : [];
   const tradeEvidence = Number(company.numberOfShipments || 0) > 0 && providerId ? [`trademo:company:${providerId}:trade`] : [];
   const website = company.website || company.websiteUrl || company.companyWebsite || company.domain || '';
+  const matchedLabel = [...matchedProductKeywords, ...matchedHsCodes].filter(Boolean).join(', ');
   return {
     buyer_company_id: providerId,
     legal_or_display_name: company.companyName || company.name || '',
@@ -24,6 +25,8 @@ function normalizeCompany(company = {}) {
     matched_hs_codes: matchedHsCodes,
     trading_partner_count: company.tradingPartnerCount ?? null,
     sells_or_uses_product: productMatched ? true : undefined,
+    buyer_type: 'buyer',
+    why_fit: productMatched ? `trade activity matching ${matchedLabel}` : '',
     evidence_refs: companyEvidence,
     product_evidence: productEvidence,
     trade_evidence: tradeEvidence,

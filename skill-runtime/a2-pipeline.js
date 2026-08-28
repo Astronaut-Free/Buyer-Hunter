@@ -1,4 +1,5 @@
 import { runA2Skill, evaluateBuyerFit } from './a2.js';
+import { generateA2OutreachDraft } from './a2-outreach.js';
 
 function rank(fit = {}) {
   return fit.confidence === 'high' ? 3 : fit.confidence === 'medium' ? 2 : 1;
@@ -9,7 +10,7 @@ function domainOf(company = {}) {
   return String(raw).replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
 }
 
-export function createA2ProviderPipeline({ runA2 = runA2Skill, evaluateFit = evaluateBuyerFit } = {}) {
+export function createA2ProviderPipeline({ runA2 = runA2Skill, evaluateFit = evaluateBuyerFit, generateOutreach = generateA2OutreachDraft } = {}) {
   return async function runA2ProviderPipeline({ input, providers } = {}) {
     if (!input) throw new Error('A2 input required');
     const initial = runA2(input);
@@ -50,6 +51,23 @@ export function createA2ProviderPipeline({ runA2 = runA2Skill, evaluateFit = eva
       selected_company_id: selected.company.buyer_company_id || selected.company.id || null,
       contact_candidates: contacts?.length || 0
     };
+    if (result.domain_result.outreach_readiness?.status === 'READY') {
+      const outreach = generateOutreach({
+        seller: input.seller || {},
+        target,
+        buyerCompany: selected.company,
+        buyerFit: selected.fit,
+        contact: contact || {},
+        language: input.constraints?.language || 'en'
+      });
+      if (outreach.status === 'READY') {
+        result.domain_result.outreach = outreach.draft;
+      } else {
+        result.run_status = 'MORE_EVIDENCE';
+        result.missing_evidence = [...new Set([...(result.missing_evidence || []), ...(outreach.missing_evidence || [])])];
+        result.domain_result.outreach = null;
+      }
+    }
     return result;
   };
 }
