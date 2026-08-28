@@ -1,4 +1,4 @@
-import { A2_CAPABILITY_ID, A6_CAPABILITY_ID, runA2Skill, runA6Skill } from './skill-runtime/index.js';
+import { A2_CAPABILITY_ID, A6_CAPABILITY_ID, runA2Skill, runA6Skill, applyA6DependencyGate } from './skill-runtime/index.js';
 
 export async function withRetry(operation, { retries = 2, onRetry = () => {} } = {}) {
   let lastError;
@@ -25,7 +25,12 @@ export function createCapabilityAdapter({
   return async function invoke(capabilityId, context = {}) {
     return withRetry(async () => {
       if (capabilityId === A2_CAPABILITY_ID) return runA2(context);
-      if (capabilityId === A6_CAPABILITY_ID) return runA6(context);
+      if (capabilityId === A6_CAPABILITY_ID) {
+        const envelope = await runA6(context);
+        return applyA6DependencyGate(envelope, {
+          refreshedCapabilities: context.refreshed_capabilities || context.refreshedCapabilities || []
+        });
+      }
 
       if (capabilityId === 'supply.match') {
         const matches = typeof calculateMatch === 'function'

@@ -3,41 +3,42 @@
 ## 已完成
 
 ```text
-A2 SKILL spec                   DONE
-A2 references                   DONE
-A2 JSON / capability contracts  DONE
-A2 deterministic runtime        DONE
-A2 pre-reply follow-up guard    DONE
-A2 adapter dispatch             DONE
-A2 provider pipeline            DONE
+A2 SKILL spec                    DONE
+A2 references                    DONE
+A2 JSON / capability contracts   DONE
+A2 deterministic runtime         DONE
+A2 pre-reply follow-up guard     DONE
+A2 adapter dispatch              DONE
+A2 provider pipeline             DONE
 
-A6 SKILL spec                   DONE
-A6 references                   DONE
-A6 JSON / capability contracts  DONE
-A6 deterministic runtime        DONE
-A6 intent taxonomy runtime      DONE
-A6 changed-field routing        DONE
-A6 Human Gate runtime           DONE
-A6 adapter dispatch             DONE
+A6 SKILL spec                    DONE
+A6 references                    DONE
+A6 JSON / capability contracts   DONE
+A6 deterministic runtime         DONE
+A6 intent taxonomy runtime       DONE
+A6 changed-field routing         DONE
+A6 dependency refresh gate       DONE
+A6 Human Gate runtime            DONE
+A6 adapter dispatch              DONE
 
-Capability Result Envelope      DONE
-Skill Registry metadata         DONE
-Event routing metadata          DONE
-Deterministic validators        DONE
-Mock providers                  DONE
-Golden-path tests               DONE
-Node test suite                 DONE
-GitHub Actions workflow         DONE
+Capability Result Envelope       DONE
+Skill Registry metadata          DONE
+Event routing metadata           DONE
+Deterministic validators         DONE
+Mock providers                   DONE
+Golden-path tests                DONE
+Node test suite                  DONE
+GitHub Actions workflow          DONE
 
-Apollo provider adapter         DONE
-Trademo provider adapter        DONE
-Smartlead provider adapter      DONE
-Provider HTTP guard             DONE
-Agent-Skill bridge              DONE
-Smartlead webhook verification  DONE
-Webhook idempotency key         DONE
-Approved reply executor         DONE
-Provider integration docs       DONE
+Apollo provider adapter          DONE
+Trademo provider adapter         DONE
+Smartlead provider adapter       DONE
+Provider HTTP guard              DONE
+Agent-Skill bridge               DONE
+Smartlead webhook verification   DONE
+Webhook idempotency key          DONE
+Approved reply executor          DONE
+Provider integration docs        DONE
 ```
 
 ## 测试记录
@@ -50,12 +51,13 @@ Provider integration docs       DONE
 0 failed
 ```
 
-本轮新增隔离验证：
+后续新增隔离验证：
 
 ```text
-Provider + Bridge  11 / 11 passed
-A2 pipeline         2 / 2 passed
-Webhook / Executor  4 / 4 passed
+Provider + Bridge     11 / 11 passed
+A2 pipeline            2 / 2 passed
+Webhook / Executor     4 / 4 passed
+A6 Dependency Gate     3 / 3 passed
 ```
 
 GitHub Actions 工作流已经提交；截至最近一次远端检查尚未产生 workflow run，因此暂不把本地结果写成 CI 通过。

@@ -33,7 +33,7 @@ export async function invokeSkillThroughAdapter({ invoke, capabilityId, context 
   return result;
 }
 
-export function buildA6ContextFromAgent({ opportunity, event, conversationContext = {}, sellerContext = {}, dependencyResults = {} } = {}) {
+export function buildA6ContextFromAgent({ opportunity, event, conversationContext = {}, sellerContext = {}, dependencyResults = {}, refreshedCapabilities = [] } = {}) {
   if (!opportunity?.id) throw new Error('opportunity.id required');
   if (!event?.event_id) throw new Error('event.event_id required');
   return {
@@ -51,6 +51,7 @@ export function buildA6ContextFromAgent({ opportunity, event, conversationContex
       fields: opportunity.fields || {}
     },
     seller_context: sellerContext,
+    refreshed_capabilities: refreshedCapabilities,
     a3_result: dependencyResults.a3 || null,
     a4_result: dependencyResults.a4 || null,
     a5_result: dependencyResults.a5 || null
