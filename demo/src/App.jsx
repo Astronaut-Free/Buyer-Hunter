@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CheckCircle,
@@ -10,6 +10,7 @@ import {
   GlobeHemisphereWest,
   IdentificationCard,
   Key,
+  Lightning,
   LockKey,
   MagnifyingGlass,
   MapPin,
@@ -21,12 +22,14 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { countrySignals, opportunities } from "./data.js";
+import { loadOpportunityDetail, loadTodayOpportunities } from "./api.js";
+import "./decision.css";
 
 const navItems = [
-  ["opportunities", "今日机会", Crosshair],
-  ["radar", "需求雷达", GlobeHemisphereWest],
-  ["profile", "我的匹配条件", SlidersHorizontal],
-  ["unlocked", "已解锁买家", Key],
+  ["opportunities", "今日决策", Crosshair],
+  ["radar", "机会监控", GlobeHemisphereWest],
+  ["profile", "卖方能力", SlidersHorizontal],
+  ["unlocked", "触达资源", Key],
   ["membership", "会员中心", Crown],
 ];
 
@@ -43,12 +46,12 @@ function AppHeader({ isMember, quota, onMembership }) {
       </div>
       <div className="header-search">
         <MagnifyingGlass size={17} />
-        <span>搜索海外买家需求、产品或国家</span>
+        <span>搜索采购机会、产品或国家</span>
         <kbd>⌘ K</kbd>
       </div>
       <button className={`member-status ${isMember ? "active" : ""}`} onClick={onMembership}>
         {isMember ? <Crown size={17} weight="fill" /> : <LockKey size={17} />}
-        <span>{isMember ? `专业会员 · 剩余 ${quota}` : "免费预览"}</span>
+        <span>{isMember ? `决策会员 · 触达额度 ${quota}` : "查看决策会员"}</span>
       </button>
       <button className="icon-button" aria-label="账户"><UserCircle size={23} /></button>
     </header>
@@ -58,7 +61,7 @@ function AppHeader({ isMember, quota, onMembership }) {
 function Sidebar({ page, setPage }) {
   return (
     <aside className="sidebar">
-      <div className="nav-label">工作台</div>
+      <div className="nav-label">销售决策台</div>
       <nav>
         {navItems.map(([id, label, Icon]) => (
           <button key={id} className={page === id ? "active" : ""} onClick={() => setPage(id)}>
@@ -70,7 +73,7 @@ function Sidebar({ page, setPage }) {
       </nav>
       <div className="sidebar-foot">
         <div className="coverage-icon"><Database size={19} /></div>
-        <div><strong>数据覆盖 86%</strong><span>最后更新 2 小时前</span></div>
+        <div><strong>机会规则 v1.0</strong><span>证据更新 2 小时前</span></div>
       </div>
     </aside>
   );
@@ -81,42 +84,47 @@ function MobileNav({ page, setPage }) {
     <nav className="mobile-nav">
       {navItems.slice(0, 4).map(([id, label, Icon]) => (
         <button key={id} className={page === id ? "active" : ""} onClick={() => setPage(id)}>
-          <Icon size={20} weight={page === id ? "fill" : "regular"} /><span>{label.replace("我的匹配条件", "匹配")}</span>
+          <Icon size={20} weight={page === id ? "fill" : "regular"} /><span>{label}</span>
         </button>
       ))}
     </nav>
   );
 }
 
-function OpportunityCard({ item, isMember, unlocked, onOpen }) {
-  const name = unlocked ? item.buyerName : item.maskedName;
+function OpportunityCard({ item, isMember, onOpen }) {
   return (
     <button className="opportunity-card" onClick={() => onOpen(item)}>
-      <div className="opp-score"><strong>{item.score}</strong><span>机会分</span></div>
+      <div className="opp-score"><small>#{item.rank}</small><strong>{item.score}</strong><span>机会分</span></div>
       <div className="opp-main">
         <div className="opp-meta">
+          <Pill tone={item.decisionTone}>{item.decisionLabel}</Pill>
           <Pill>{item.window}</Pill>
-          <Pill tone={item.accessTone}>{item.access}</Pill>
-          {!unlocked && <Pill tone="neutral"><LockKey size={11} /> 身份受限</Pill>}
+          <Pill tone={isMember ? "success" : "neutral"}>{isMember ? "完整判断" : "决策摘要"}</Pill>
         </div>
-        <h3>{name}</h3>
+        <h3>{item.buyerName}</h3>
         <p>{item.demand} · {item.quantity}</p>
         <div className="why-line"><Sparkle size={15} weight="fill" /><span>{item.whyNow}</span></div>
+        <div className="action-line"><Lightning size={14} weight="fill" /><span>下一步：{item.action}</span></div>
       </div>
       <div className="opp-side">
         <span><MapPin size={15} />{item.country}</span>
         <span><ClockCounterClockwise size={15} />{item.published}</span>
         <div className="fit-meter"><i style={{ width: `${item.fit}%` }} /></div>
-        <small>匹配度 {item.fit}%</small>
+        <small>匹配 {item.fit}% · {item.risk}</small>
         <ArrowRight size={18} />
       </div>
     </button>
   );
 }
 
-function OpportunitiesPage({ isMember, unlockedIds, onOpen, onScan }) {
-  const [product, setProduct] = useState("贵州抹茶");
+function OpportunitiesPage({ isMember, items, dataMode, onOpen, onScan }) {
+  const [product, setProduct] = useState("贵州抹茶 / 蓝莓 / 刺梨 / 辣椒 / 茶");
   const [scanning, setScanning] = useState(false);
+  const counts = {
+    pursue: items.filter((item) => item.decision === "PURSUE_NOW").length,
+    verify: items.filter((item) => item.decision === "VERIFY_FIRST").length,
+    watch: items.filter((item) => item.decision === "WATCH").length,
+  };
   const runScan = () => {
     setScanning(true);
     onScan?.();
@@ -125,61 +133,86 @@ function OpportunitiesPage({ isMember, unlockedIds, onOpen, onScan }) {
   return (
     <div className="page-content">
       <section className="page-title-row">
-        <div><span className="eyebrow">TODAY'S BUYING MOMENTS</span><h1>今日最值得追的买家</h1><p>先看真实需求，再决定把销售时间投给谁。</p></div>
-        <div className="data-mode"><span className="status-dot" /> CACHED · 2 小时前更新</div>
+        <div><span className="eyebrow">TODAY'S OPPORTUNITY DECISIONS</span><h1>今天销售先追谁</h1><p>系统已从公开信号中筛出 5 个值得分配销售时间的采购机会。</p></div>
+        <div className="data-mode"><span className="status-dot" /> {dataMode === "LIVE_PIPELINE" ? "LIVE PIPELINE · 今日快照" : "FALLBACK · 演示样例"}</div>
       </section>
       <section className="query-bar">
         <div className="query-input"><MagnifyingGlass size={19} /><input value={product} onChange={(e) => setProduct(e.target.value)} aria-label="目标产品" /></div>
         <select aria-label="目标市场"><option>全球市场</option><option>美国</option><option>欧盟</option><option>日本</option></select>
-        <button className="primary" onClick={runScan} disabled={scanning}>{scanning ? "正在扫描 2 个来源…" : "扫描新需求"}</button>
+        <button className="primary" onClick={runScan} disabled={scanning}>{scanning ? "正在重算证据与匹配…" : "刷新机会判断"}</button>
       </section>
       <section className="kpi-grid">
-        <div className="kpi"><span>候选采购信号</span><strong>36</strong><small>2 个公开源</small></div>
-        <div className="kpi"><span>标准买家主体</span><strong>12</strong><small>已完成去重</small></div>
-        <div className="kpi featured"><span>高优机会</span><strong>5</strong><small>Truth ≥ 60</small></div>
-        <div className="kpi"><span>待补证据</span><strong>2</strong><small>未进入 Top 5</small></div>
+        <div className="kpi featured"><span>立即追</span><strong>{counts.pursue}</strong><small>无硬阻断</small></div>
+        <div className="kpi"><span>补证后追</span><strong>{counts.verify}</strong><small>先消除关键 Gap</small></div>
+        <div className="kpi"><span>继续观察</span><strong>{counts.watch}</strong><small>采购量尚未形成</small></div>
+        <div className="kpi"><span>今日行动</span><strong>0/{items.length}</strong><small>等待销售确认</small></div>
       </section>
       <section className="list-section">
-        <div className="section-heading"><div><h2>Top 5 机会</h2><p>按采购意图、供需匹配、时点和可触达性排序</p></div><button className="filter-button"><Funnel size={16} />筛选</button></div>
+        <div className="section-heading"><div><h2>今日 Top 5 决策</h2><p>按采购窗口、卖方匹配、市场准入、风险和可执行性排序</p></div><button className="filter-button"><Funnel size={16} />筛选</button></div>
         <div className="opportunity-list">
-          {opportunities.map((item) => <OpportunityCard key={item.id} item={item} isMember={isMember} unlocked={unlockedIds.has(item.id)} onOpen={onOpen} />)}
+          {items.map((item) => <OpportunityCard key={item.id} item={item} isMember={isMember} onOpen={onOpen} />)}
         </div>
       </section>
     </div>
   );
 }
 
-function DetailPanel({ item, isMember, unlocked, onClose, onUnlock, onMembership, onSetStage, stage }) {
+function DecisionDetails({ item }) {
+  return (
+    <>
+      <section className="detail-section"><div className="detail-title"><h3>供需匹配</h3><Pill tone="success">{item.fit}% 匹配</Pill></div><div className="match-table">{item.matches.map(([f, b, s, state]) => <div key={f}><span>{f}</span><span>{b}</span><span>{s}</span><Pill tone={state === "PASS" ? "success" : "warning"}>{state}</Pill></div>)}</div></section>
+      <section className="detail-section"><h3>证据时间线</h3><div className="timeline">{item.evidence.map(([d, src, text, level]) => <div key={d + src}><time>{d}</time><i /><div><strong>{src}<Pill tone={level === "FACT" ? "success" : level === "DERIVED" ? "blue" : "warning"}>{level}</Pill></strong><p>{text}</p></div></div>)}</div></section>
+      <section className="detail-section gap-section"><WarningCircle size={19} /><div><h3>当前缺口 / 风险</h3><p>{item.gap}</p></div></section>
+      <section className="detail-section action-section"><Lightning size={19} weight="fill" /><div><h3>今天怎么做</h3><p>{item.action}</p></div></section>
+    </>
+  );
+}
+
+function DetailPanel({ item, isMember, accessUnlocked, onClose, onUnlockAccess, onMembership, onSetStage, stage }) {
   if (!item) return null;
   return (
     <div className="drawer-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <aside className="detail-drawer" role="dialog" aria-modal="true" aria-label="买家机会详情">
+      <aside className="detail-drawer" role="dialog" aria-modal="true" aria-label="采购机会决策详情">
         <div className="drawer-head">
-          <div><span className="eyebrow">OPPORTUNITY · {item.score}</span><h2>{unlocked ? item.buyerName : item.maskedName}</h2><p>{item.country} · {item.industry} · {item.demand}</p></div>
+          <div><span className="eyebrow">#{item.rank} · {item.decisionLabel} · OPPORTUNITY {item.score}</span><h2>{item.buyerName}</h2><p>{item.country} · {item.industry} · {item.demand}</p></div>
           <button className="icon-button" onClick={onClose} aria-label="关闭"><X size={20} /></button>
         </div>
         <div className="drawer-scroll">
+          <section className={`decision-banner decision-${item.decision.toLowerCase()}`}>
+            <div><Pill tone={item.decisionTone}>{item.decisionLabel}</Pill><h3>{item.decision === "PURSUE_NOW" ? "今天值得投入销售时间" : item.decision === "VERIFY_FIRST" ? "先补关键证据，再投入销售时间" : "保留监控，暂不主动投入"}</h3><p>{item.action}</p></div>
+          </section>
           <div className="truth-strip">
-            <div><strong>{item.truth}</strong><span>需求真实性</span></div>
-            <div><strong>{item.fit}%</strong><span>供需匹配</span></div>
-            <div><strong>3</strong><span>有效证据</span></div>
+            <div><strong>{item.score}</strong><span>机会优先级</span></div>
+            <div><strong>{item.truth}</strong><span>真实性门槛</span></div>
+            <div><strong>{item.fit}%</strong><span>卖方匹配</span></div>
             <div><strong className={`tone-${item.accessTone}`}>{item.access}</strong><span>市场准入</span></div>
           </div>
-          <section className="detail-section accent-section"><span className="section-icon"><Sparkle size={17} weight="fill" /></span><div><h3>为什么是现在</h3><p>{item.whyNow}</p></div></section>
+          <section className="detail-section accent-section"><span className="section-icon"><Sparkle size={17} weight="fill" /></span><div><h3>为什么是现在</h3><ul className="reason-list">{item.whyNowReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div></section>
           <section className="detail-section"><h3>采购需求</h3><div className="tag-row">{item.tags.map((t) => <span key={t}>{t}</span>)}</div></section>
-          <section className="detail-section"><div className="detail-title"><h3>供需匹配</h3><Pill tone="success">{item.fit}% 匹配</Pill></div><div className="match-table">{item.matches.map(([f, b, s, state]) => <div key={f}><span>{f}</span><span>{b}</span><span>{s}</span><Pill tone={state === "PASS" ? "success" : "warning"}>{state}</Pill></div>)}</div></section>
-          <section className="detail-section"><h3>证据时间线</h3><div className="timeline">{item.evidence.map(([d, src, text, level]) => <div key={d + src}><time>{d}</time><i /><div><strong>{src}<Pill tone={level === "FACT" ? "success" : level === "DERIVED" ? "blue" : "warning"}>{level}</Pill></strong><p>{text}</p></div></div>)}</div></section>
-          <section className="detail-section gap-section"><WarningCircle size={19} /><div><h3>当前缺口</h3><p>{item.gap}</p></div></section>
-          <section className="detail-section"><h3>建议下一步</h3><p>{item.action}</p></section>
-          {!unlocked ? (
-            <section className="unlock-card">
+          {isMember ? <DecisionDetails item={item} /> : (
+            <section className="decision-gate">
               <div className="lock-orb"><LockKey size={24} /></div>
-              <div><span className="eyebrow">MEMBER ACCESS</span><h3>解锁完整买家身份与采购入口</h3><p>包含公司名称、官方采购页、公开商务联系方式和来源证明。</p></div>
-              <button className="primary" onClick={isMember ? onUnlock : onMembership}>{isMember ? "使用 1 次额度解锁" : "查看会员权益"}</button>
+              <div><span className="eyebrow">DECISION MEMBERSHIP</span><h3>解锁完整机会判断</h3><p>查看供需匹配矩阵、证据链、准入风险、关键 Gap 和今天的行动方案。</p></div>
+              <button className="primary" onClick={onMembership}>查看决策会员</button>
             </section>
-          ) : (
+          )}
+          {isMember && !accessUnlocked && item.leadAccessStatus === "UNAVAILABLE" && (
+            <section className="unlock-card execution-card">
+              <div className="lock-orb"><IdentificationCard size={24} /></div>
+              <div><span className="eyebrow">LEAD ACCESS · 执行层</span><h3>暂无可验证的站外触达资源</h3><p>系统不会伪造邮箱或电话；当前先通过原始需求页面询盘，并继续补全公司主体。</p></div>
+              <a className="primary access-link" href={item.procurementUrl} target="_blank" rel="noreferrer">查看原始需求</a>
+            </section>
+          )}
+          {isMember && !accessUnlocked && item.leadAccessStatus !== "UNAVAILABLE" && (
+            <section className="unlock-card execution-card">
+              <div className="lock-orb"><IdentificationCard size={24} /></div>
+              <div><span className="eyebrow">LEAD ACCESS · 执行层</span><h3>需要触达时，再解锁公开商务渠道</h3><p>1 次额度仅用于采购入口与已经验证的公开商务邮箱。</p></div>
+              <button className="primary" onClick={onUnlockAccess}>使用 1 次触达额度</button>
+            </section>
+          )}
+          {isMember && accessUnlocked && (
             <section className="access-card">
-              <div className="access-title"><CheckCircle size={22} weight="fill" /><div><span>已解锁买家入口</span><small>联系方式来自公开企业渠道</small></div></div>
+              <div className="access-title"><CheckCircle size={22} weight="fill" /><div><span>已解锁触达资源</span><small>联系方式来自公开企业渠道</small></div></div>
               <div className="access-row"><span>采购入口</span><a href={item.procurementUrl} target="_blank" rel="noreferrer">{item.procurementUrl}</a></div>
               <div className="access-row"><span>商务邮箱</span><strong>{item.contact}</strong></div>
               <button className="primary wide" onClick={() => onSetStage("FOLLOW_UP")}>{stage ? `当前状态：${stage === "FOLLOW_UP" ? "已跟进" : stage === "NEGOTIATING" ? "洽谈中" : stage === "WON" ? "已成交" : "未成交"}` : "记录为已开始跟进"}</button>
@@ -195,40 +228,41 @@ function DetailPanel({ item, isMember, unlocked, onClose, onUnlock, onMembership
 function MembershipModal({ onClose, onActivate }) {
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="member-modal" role="dialog" aria-modal="true" aria-label="会员权益">
+      <div className="member-modal" role="dialog" aria-modal="true" aria-label="决策会员权益">
         <button className="icon-button modal-close" onClick={onClose} aria-label="关闭"><X size={20} /></button>
         <div className="crown-orb"><Crown size={30} weight="fill" /></div>
-        <span className="eyebrow">PROFESSIONAL MEMBERSHIP</span>
-        <h2>不是更多名单，是更少的无效联系</h2>
-        <p>专业会员按月获得经过验真和智能匹配的海外买家需求入口。</p>
+        <span className="eyebrow">OPPORTUNITY DECISION MEMBERSHIP</span>
+        <h2>买的不是名单，是每天少做错误判断</h2>
+        <p>系统每天告诉销售最值得追的 5 个采购机会，以及为什么、能不能做和今天怎么做。</p>
         <div className="benefits">
-          <div><ShieldCheck size={19} /><span>完整买家身份与证据链</span></div>
-          <div><IdentificationCard size={19} /><span>采购入口与公开 B2B 联系方式</span></div>
-          <div><Crosshair size={19} /><span>每月 20 次机会解锁</span></div>
+          <div><Crosshair size={19} /><span>每日 Top 5 采购机会决策</span></div>
+          <div><ShieldCheck size={19} /><span>完整匹配、准入、风险与证据链</span></div>
+          <div><Lightning size={19} /><span>关键 Gap 与下一步行动方案</span></div>
         </div>
+        <div className="quota-note">另含每月 20 次 Lead Access 触达资源额度</div>
         <div className="price"><strong>¥599</strong><span>/ 月 · Demo 套餐</span></div>
         <button className="primary wide" onClick={onActivate}>切换至演示会员</button>
-        <small>本 Demo 不接真实支付，只模拟会员权限。</small>
+        <small>本 Demo 不接真实支付，只模拟决策权限与触达额度。</small>
       </div>
     </div>
   );
 }
 
 function RadarPage() {
-  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">GLOBAL DEMAND RADAR</span><h1>海外需求雷达</h1><p>过去 30 天已验证需求的国家分布。</p></div></section><div className="radar-layout"><section className="radar-panel"><div className="radar-heading"><GlobeHemisphereWest size={24} /><div><strong>36 条采购信号</strong><span>覆盖 8 个国家与地区</span></div></div><div className="country-bars">{countrySignals.map(([name, value, width]) => <div key={name}><span>{name}</span><div><i style={{ width: `${width}%` }} /></div><strong>{value}</strong></div>)}</div></section><section className="radar-side"><h3>本周变化</h3><div><Pill tone="success">+18%</Pill><p>美国饮品类抹茶需求</p></div><div><Pill tone="blue">3 条</Pill><p>日本第二供应源信号</p></div><div><Pill tone="warning">2 条</Pill><p>欧盟准入待核验</p></div></section></div></div>;
+  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">OPPORTUNITY MONITOR</span><h1>采购机会监控</h1><p>持续观察海外需求变化，并判断哪些变化值得进入销售队列。</p></div></section><div className="radar-layout"><section className="radar-panel"><div className="radar-heading"><GlobeHemisphereWest size={24} /><div><strong>36 条候选信号</strong><span>加工为 5 条今日机会</span></div></div><div className="country-bars">{countrySignals.map(([name, value, width]) => <div key={name}><span>{name}</span><div><i style={{ width: `${width}%` }} /></div><strong>{value}</strong></div>)}</div></section><section className="radar-side"><h3>本周判断变化</h3><div><Pill tone="success">+18%</Pill><p>美国饮品类抹茶采购窗口</p></div><div><Pill tone="blue">3 条</Pill><p>日本第二供应源机会</p></div><div><Pill tone="warning">2 条</Pill><p>欧盟准入待补证</p></div></section></div></div>;
 }
 
 function ProfilePage() {
-  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">PRIVATE MATCHING PROFILE</span><h1>我的匹配条件</h1><p>这些资料只用于计算 Fit，不会生成商品页或向买家公开。</p></div><Pill tone="success">资料完整度 86%</Pill></section><div className="profile-grid"><section className="form-card"><h3>目标产品</h3><label>产品关键词<input defaultValue="贵州抹茶粉" /></label><div className="form-row"><label>目标市场<select defaultValue="global"><option value="global">全球</option><option>美国</option><option>欧盟</option></select></label><label>产品形态<select><option>饮料级抹茶粉</option><option>烘焙级抹茶粉</option></select></label></div><h3>供货条件</h3><div className="form-row"><label>最低起订量<input defaultValue="100 kg" /></label><label>月产能<input defaultValue="8,000 kg" /></label></div><label>认证与能力<input defaultValue="HACCP / ISO 22000 / OEM" /></label><button className="primary">保存私有匹配条件</button></section><aside className="privacy-note"><ShieldCheck size={25} /><h3>不会成为商品展示</h3><p>只有当前账号的匹配引擎可以读取这些字段。其他卖家和海外买家均不可见。</p></aside></div></div>;
+  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">PRIVATE SELLER CAPABILITY</span><h1>卖方能力档案</h1><p>这是个性化判断“能不能做”的依据，不会生成商品页或向买家公开。</p></div><Pill tone="success">资料完整度 86%</Pill></section><div className="profile-grid"><section className="form-card"><h3>目标产品</h3><label>产品关键词<input defaultValue="贵州抹茶 / 蓝莓 / 刺梨 / 辣椒 / 茶" /></label><div className="form-row"><label>目标市场<select defaultValue="global"><option value="global">全球</option><option>美国</option><option>欧盟</option><option>日本</option></select></label><label>产品形态<select><option>饮料级抹茶粉</option><option>烘焙级抹茶粉</option></select></label></div><h3>供货与准入能力</h3><div className="form-row"><label>最低起订量<input defaultValue="100 kg" /></label><label>月产能<input defaultValue="8,000 kg" /></label></div><label>认证与能力<input defaultValue="HACCP / ISO 22000 / OEM / COA" /></label><button className="primary">保存卖方能力档案</button></section><aside className="privacy-note"><ShieldCheck size={25} /><h3>卖方能力决定机会排序</h3><p>同一条采购需求，对不同卖方会得到不同的匹配、准入、风险和行动建议。</p></aside></div></div>;
 }
 
-function UnlockedPage({ unlockedIds, onOpen }) {
-  const items = opportunities.filter((o) => unlockedIds.has(o.id));
-  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">BUYER ACCESS</span><h1>已解锁买家</h1><p>集中管理已获得访问授权的买家需求。</p></div></section>{items.length ? <div className="unlocked-grid">{items.map((item) => <button key={item.id} onClick={() => onOpen(item)}><div className="buyer-avatar">{item.buyerName.slice(0, 1)}</div><div><strong>{item.buyerName}</strong><span>{item.country} · {item.demand}</span><small>{item.contact}</small></div><ArrowRight size={18} /></button>)}</div> : <div className="empty-state"><LockKey size={32} /><h3>还没有解锁买家</h3><p>从今日机会中解锁采购入口后，会集中显示在这里。</p></div>}</div>;
+function AccessPage({ accessIds, opportunities: liveItems, onOpen }) {
+  const items = liveItems.filter((o) => accessIds.has(o.id));
+  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">LEAD ACCESS · EXECUTION LAYER</span><h1>触达资源</h1><p>只在决定执行机会后，管理已解锁的采购入口和公开商务渠道。</p></div></section>{items.length ? <div className="unlocked-grid">{items.map((item) => <button key={item.id} onClick={() => onOpen(item)}><div className="buyer-avatar">{item.buyerName.slice(0, 1)}</div><div><strong>{item.buyerName}</strong><span>{item.country} · {item.demand}</span><small>{item.contact}</small></div><ArrowRight size={18} /></button>)}</div> : <div className="empty-state"><IdentificationCard size={32} /><h3>尚未解锁触达资源</h3><p>先完成机会判断，决定执行后再消耗额度获取采购入口。</p></div>}</div>;
 }
 
 function MembershipPage({ isMember, quota, onActivate }) {
-  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">MEMBERSHIP</span><h1>会员中心</h1><p>按月获取经过验真、匹配和更新的海外买家需求。</p></div></section><div className={`membership-card ${isMember ? "active" : ""}`}><div><Crown size={28} weight="fill" /><span>{isMember ? "专业会员" : "免费预览"}</span><h2>{isMember ? "会员有效至 2026/09/28" : "升级后解锁买家入口"}</h2><p>{isMember ? `本周期剩余 ${quota} / 20 次解锁额度` : "免费态仅展示受限需求摘要。"}</p></div><button className="primary" onClick={onActivate}>{isMember ? "当前套餐" : "切换至演示会员"}</button></div></div>;
+  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">DECISION MEMBERSHIP</span><h1>会员中心</h1><p>会员核心权益是每日机会判断；联系方式属于执行资源。</p></div></section><div className={`membership-card ${isMember ? "active" : ""}`}><div><Crown size={28} weight="fill" /><span>{isMember ? "决策会员" : "免费决策摘要"}</span><h2>{isMember ? "完整机会判断已启用" : "升级后获得完整判断与行动方案"}</h2><p>{isMember ? `本周期另有 ${quota} / 20 次触达资源额度` : "免费态可看买家与判断摘要，完整决策需会员。"}</p></div><button className="primary" onClick={onActivate}>{isMember ? "当前套餐" : "切换至演示会员"}</button></div></div>;
 }
 
 export function App() {
@@ -236,23 +270,40 @@ export function App() {
   const [selected, setSelected] = useState(null);
   const [isMember, setIsMember] = useState(false);
   const [showMembership, setShowMembership] = useState(false);
-  const [unlockedIds, setUnlockedIds] = useState(new Set());
+  const [accessIds, setAccessIds] = useState(new Set());
   const [followStages, setFollowStages] = useState({});
-  const quota = 20 - unlockedIds.size;
+  const [liveItems, setLiveItems] = useState(opportunities);
+  const [dataMode, setDataMode] = useState("FALLBACK");
+  const quota = 20 - accessIds.size;
+
+  const refreshFeed = () => loadTodayOpportunities(isMember)
+    .then(({ items, dataMode: mode }) => { setLiveItems(items); setDataMode(mode); })
+    .catch(() => { setLiveItems(opportunities); setDataMode("FALLBACK"); });
+
+  useEffect(() => { refreshFeed(); }, [isMember]);
+
+  const openOpportunity = (item) => {
+    setSelected(item);
+    loadOpportunityDetail(item.id, isMember).then(setSelected).catch(() => null);
+  };
 
   const currentPage = useMemo(() => {
     if (page === "radar") return <RadarPage />;
     if (page === "profile") return <ProfilePage />;
-    if (page === "unlocked") return <UnlockedPage unlockedIds={unlockedIds} onOpen={setSelected} />;
+    if (page === "unlocked") return <AccessPage accessIds={accessIds} opportunities={liveItems} onOpen={openOpportunity} />;
     if (page === "membership") return <MembershipPage isMember={isMember} quota={quota} onActivate={() => isMember ? null : setShowMembership(true)} />;
-    return <OpportunitiesPage isMember={isMember} unlockedIds={unlockedIds} onOpen={setSelected} />;
-  }, [page, isMember, quota, unlockedIds]);
+    return <OpportunitiesPage isMember={isMember} items={liveItems} dataMode={dataMode} onOpen={openOpportunity} onScan={refreshFeed} />;
+  }, [page, isMember, quota, accessIds, liveItems, dataMode]);
 
-  const unlock = () => {
+  const unlockAccess = () => {
     if (!selected || !isMember) return;
-    setUnlockedIds((prev) => new Set(prev).add(selected.id));
+    setAccessIds((prev) => new Set(prev).add(selected.id));
   };
-  const activate = () => { setIsMember(true); setShowMembership(false); };
+  const activate = () => {
+    setIsMember(true);
+    setShowMembership(false);
+    if (selected) loadOpportunityDetail(selected.id, true).then(setSelected).catch(() => null);
+  };
   const setStage = (stage) => selected && setFollowStages((prev) => ({ ...prev, [selected.id]: stage }));
 
   return (
@@ -261,7 +312,7 @@ export function App() {
       <Sidebar page={page} setPage={setPage} />
       <main className="main-stage">{currentPage}</main>
       <MobileNav page={page} setPage={setPage} />
-      <DetailPanel item={selected} isMember={isMember} unlocked={selected ? unlockedIds.has(selected.id) : false} onClose={() => setSelected(null)} onUnlock={unlock} onMembership={() => setShowMembership(true)} onSetStage={setStage} stage={selected ? followStages[selected.id] : null} />
+      <DetailPanel item={selected} isMember={isMember} accessUnlocked={selected ? accessIds.has(selected.id) : false} onClose={() => setSelected(null)} onUnlockAccess={unlockAccess} onMembership={() => setShowMembership(true)} onSetStage={setStage} stage={selected ? followStages[selected.id] : null} />
       {showMembership && <MembershipModal onClose={() => setShowMembership(false)} onActivate={activate} />}
     </div>
   );

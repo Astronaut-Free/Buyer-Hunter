@@ -1,0 +1,10 @@
+{
+  "run": "E:\\贵客松-买家猎手\\pipeline\\data_ec21_regions\\20260827T211143Z",
+  "raw": 62,
+  "qualified": 1,
+  "qualified_by_region": {
+    "US": 0,
+    "JAPAN": 0,
+    "EUROPE": 1
+  }
+}

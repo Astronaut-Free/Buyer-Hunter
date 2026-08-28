@@ -1,0 +1,35 @@
+{
+  "requested_countries": [
+    "US",
+    "JP",
+    "DE",
+    "NL",
+    "FR",
+    "IT",
+    "ES",
+    "PL",
+    "BE",
+    "FI",
+    "HU",
+    "GB"
+  ],
+  "stopped_early": false,
+  "probe_count": 72,
+  "raw_record_count": 62,
+  "qualified_signal_count": 0,
+  "identified_buyer_count": 4,
+  "counts_by_region": {
+    "US": {
+      "raw": 34,
+      "qualified": 0
+    },
+    "JAPAN": {
+      "raw": 4,
+      "qualified": 0
+    },
+    "EUROPE": {
+      "raw": 24,
+      "qualified": 0
+    }
+  }
+}

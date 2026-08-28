@@ -1,0 +1,163 @@
+openapi: 3.1.0
+info:
+  title: Buyer Hunter Opportunity Decision API
+  version: 1.0.0
+  description: >-
+    Seller-specific daily purchase opportunity decisions. Truth score gates
+    evidence credibility; opportunity score ranks commercial pursuit. Lead
+    access is a separate execution resource and never changes either score.
+servers:
+  - url: http://localhost:8000/api/v1
+security:
+  - bearerAuth: []
+paths:
+  /opportunities/today:
+    get:
+      operationId: getTodayOpportunities
+      summary: Return today's ranked seller-specific opportunities
+      parameters:
+        - name: seller_profile_id
+          in: query
+          required: true
+          schema: {type: string}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 20, default: 5}
+      responses:
+        '200':
+          description: Stable ranking by score, latest evidence, then id
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [decision_date, seller_profile_id, items]
+                properties:
+                  decision_date: {type: string, format: date}
+                  seller_profile_id: {type: string}
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/OpportunityDecisionSummary'}
+  /opportunities/{opportunity_id}/decision:
+    get:
+      operationId: getOpportunityDecision
+      parameters:
+        - {$ref: '#/components/parameters/OpportunityId'}
+      responses:
+        '200':
+          description: Full decision when entitled; free response may contain a summary only
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OpportunityDecisionDetail'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /opportunities/{opportunity_id}/actions:
+    post:
+      operationId: acceptOpportunityAction
+      parameters:
+        - {$ref: '#/components/parameters/OpportunityId'}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action_type]
+              properties:
+                action_type: {type: string}
+                note: {type: [string, 'null'], maxLength: 2000}
+      responses:
+        '201': {description: Action accepted for seller follow-up}
+  /opportunities/{opportunity_id}/access-channels:
+    get:
+      operationId: getLeadAccessChannels
+      description: >-
+        Separate execution-layer entitlement. Requires active membership and
+        one lead-access credit; never changes decision or truth scores.
+      parameters:
+        - {$ref: '#/components/parameters/OpportunityId'}
+      responses:
+        '200':
+          description: Public business procurement/contact channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/AccessChannel'}
+        '403': {description: Membership or lead-access credit required}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
+  parameters:
+    OpportunityId:
+      name: opportunity_id
+      in: path
+      required: true
+      schema: {type: string}
+  responses:
+    NotFound: {description: Opportunity not found}
+  schemas:
+    DecisionStatus:
+      type: string
+      enum: [PURSUE_NOW, VERIFY_FIRST, WATCH, PASS]
+    OpportunityDecisionSummary:
+      type: object
+      required: [id, rank, buyer_display_name, country_code, demand_title, decision_status, opportunity_score, truth_score, why_now, next_action_summary]
+      properties:
+        id: {type: string}
+        rank: {type: integer, minimum: 1}
+        buyer_display_name: {type: string, description: Buyer identity is not the core paywall}
+        country_code: {type: string, pattern: '^[A-Z]{2}$'}
+        demand_title: {type: string}
+        decision_status: {$ref: '#/components/schemas/DecisionStatus'}
+        opportunity_score: {type: number, minimum: 0, maximum: 100}
+        truth_score: {type: number, minimum: 0, maximum: 100, description: Evidence gate only}
+        why_now: {type: array, items: {type: string}}
+        next_action_summary: {type: string}
+        decision_access: {type: string, enum: [SUMMARY, FULL]}
+        lead_access_status: {type: string, enum: [LOCKED, GRANTED, UNAVAILABLE]}
+    OpportunityDecisionDetail:
+      allOf:
+        - {$ref: '#/components/schemas/OpportunityDecisionSummary'}
+        - type: object
+          required: [hard_gate_passed, component_scores, gaps, blockers, risks, evidence, next_action, ruleset_version]
+          properties:
+            hard_gate_passed: {type: boolean}
+            component_scores:
+              type: object
+              required: [timing, seller_fit, buyer_strength, commercial_value, market_readiness, actionability, risk_penalty]
+              properties:
+                timing: {type: number, minimum: 0, maximum: 100}
+                seller_fit: {type: number, minimum: 0, maximum: 100}
+                buyer_strength: {type: number, minimum: 0, maximum: 100}
+                commercial_value: {type: number, minimum: 0, maximum: 100}
+                market_readiness: {type: number, minimum: 0, maximum: 100}
+                actionability: {type: number, minimum: 0, maximum: 100}
+                risk_penalty: {type: number, minimum: 0, maximum: 30}
+            gaps: {type: array, items: {type: string}}
+            blockers: {type: array, items: {type: string}}
+            risks: {type: array, items: {type: string}}
+            evidence:
+              type: array
+              items:
+                type: object
+                required: [source_url, claim, observed_at]
+                properties:
+                  source_url: {type: string, format: uri}
+                  claim: {type: string}
+                  observed_at: {type: string, format: date-time}
+            next_action:
+              type: object
+              required: [action_type, summary, checklist]
+              properties:
+                action_type: {type: string}
+                summary: {type: string}
+                checklist: {type: array, items: {type: string}}
+                due_at: {type: [string, 'null'], format: date-time}
+            ruleset_version: {type: string}
+    AccessChannel:
+      type: object
+      required: [type, value, source_url, verified_at]
+      properties:
+        type: {type: string, enum: [PROCUREMENT_PAGE, BUSINESS_CONTACT_PAGE, PUBLIC_BUSINESS_EMAIL, COMPANY_LINKEDIN]}
+        value: {type: string}
+        source_url: {type: string, format: uri}
+        verified_at: {type: string, format: date-time}

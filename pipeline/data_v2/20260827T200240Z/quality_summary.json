@@ -1,0 +1,18 @@
+{
+  "run": "20260827T200240Z",
+  "accepted_count": 56,
+  "counts_by_kind": {
+    "BUYER_DIRECTORY_ENTRY": 38,
+    "HISTORICAL_PURCHASE": 10,
+    "BUYER_PROCUREMENT_CHANNEL": 1,
+    "DIRECT_BUY_REQUIREMENT": 7
+  },
+  "direct_requirement_count": 7,
+  "field_count": 24,
+  "quality_rules": [
+    "public boundary pages are excluded from records",
+    "blueberry non-food homonyms are excluded",
+    "marketplace posts remain unverified until corroborated",
+    "buyer directories and historical purchases are background evidence, not direct demand"
+  ]
+}

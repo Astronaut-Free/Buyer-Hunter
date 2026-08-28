@@ -1,0 +1,13 @@
+{
+  "run": "20260827T200240Z",
+  "final_count": 55,
+  "direct_requirement_count": 6,
+  "deduplicated_count": 1,
+  "field_count": 40,
+  "counts_by_kind": {
+    "BUYER_DIRECTORY_ENTRY": 38,
+    "HISTORICAL_PURCHASE": 10,
+    "BUYER_PROCUREMENT_CHANNEL": 1,
+    "DIRECT_BUY_REQUIREMENT": 6
+  }
+}

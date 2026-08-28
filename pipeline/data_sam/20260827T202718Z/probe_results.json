@@ -1,0 +1,46 @@
+[
+  {
+    "source_code": "sam_gov",
+    "public_request": "https://api.sam.gov/opportunities/v2/search?title=matcha&postedFrom=<date>&postedTo=<date>&ptype=o,k",
+    "query_term": "matcha",
+    "status": "FETCHED",
+    "http_status": 200,
+    "observed_at": "2026-08-27T20:27:18+00:00",
+    "snapshot_sha256": "b178758a0edba567aabd2f96c52231696393de91aa58531a877d6ab4e85552a6",
+    "record_count": 0,
+    "error_body": null
+  },
+  {
+    "source_code": "sam_gov",
+    "public_request": "https://api.sam.gov/opportunities/v2/search?title=blueberry&postedFrom=<date>&postedTo=<date>&ptype=o,k",
+    "query_term": "blueberry",
+    "status": "FETCHED",
+    "http_status": 200,
+    "observed_at": "2026-08-27T20:27:21+00:00",
+    "snapshot_sha256": "eb96205630a315c38f2e5be8634722360719dbbdcf8a0427730f632a23b9f3c8",
+    "record_count": 0,
+    "error_body": null
+  },
+  {
+    "source_code": "sam_gov",
+    "public_request": "https://api.sam.gov/opportunities/v2/search?title=tea&postedFrom=<date>&postedTo=<date>&ptype=o,k",
+    "query_term": "tea",
+    "status": "FETCHED",
+    "http_status": 200,
+    "observed_at": "2026-08-27T20:27:24+00:00",
+    "snapshot_sha256": "5eaa9a278039d12f90d71441086e59036d09beb509b9a20627d0e749b7cd2ccf",
+    "record_count": 20,
+    "error_body": null
+  },
+  {
+    "source_code": "sam_gov",
+    "public_request": "https://api.sam.gov/opportunities/v2/search?title=food&postedFrom=<date>&postedTo=<date>&ptype=o,k",
+    "query_term": "food",
+    "status": "FETCHED",
+    "http_status": 200,
+    "observed_at": "2026-08-27T20:27:26+00:00",
+    "snapshot_sha256": "36cbf2fc269a63880a1d9d5e45c41e49c4636b334d8d4ce137f12916fc9236d7",
+    "record_count": 20,
+    "error_body": null
+  }
+]

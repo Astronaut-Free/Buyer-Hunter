@@ -7,3 +7,6 @@ output/qa/ref-*.png
 *.log
 .DS_Store
 Thumbs.db
+.playwright-cli/
+__pycache__/
+*.pyc
