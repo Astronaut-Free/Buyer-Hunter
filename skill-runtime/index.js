@@ -2,6 +2,7 @@ export * from './guards.js';
 export * from './a2.js';
 export * from './a2-outreach.js';
 export * from './a2-pipeline.js';
+export * from './a2-batch.js';
 export * from './a6.js';
 export * from './a6-enrichment.js';
 export * from './a6-dependency-gate.js';

@@ -10,6 +10,8 @@ A2 deterministic runtime         DONE
 A2 pre-reply follow-up guard     DONE
 A2 adapter dispatch              DONE
 A2 provider pipeline             DONE
+A2 batch prospecting             DONE
+A2 Opportunity seeder            DONE
 A2 evidence-grounded outreach    DONE
 
 A6 SKILL spec                    DONE
@@ -46,33 +48,27 @@ Provider integration docs        DONE
 
 ## 测试记录
 
-前一轮 A2/A6 Runtime 基线：
+已完成分层隔离验证：
 
 ```text
-17 tests
-17 passed
-0 failed
+Runtime baseline          17 / 17 passed
+Provider + Bridge         11 / 11 passed
+A2 pipeline                2 / 2 passed
+Webhook / Executor         4 / 4 passed
+A6 Dependency Gate         3 / 3 passed
+A2/A6 Draft Enrichment     5 / 5 passed
+A2 Batch                   2 / 2 passed
 ```
 
-后续新增隔离验证：
-
-```text
-Provider + Bridge       11 / 11 passed
-A2 pipeline              2 / 2 passed
-Webhook / Executor       4 / 4 passed
-A6 Dependency Gate       3 / 3 passed
-A2/A6 Draft Enrichment   5 / 5 passed
-```
-
-GitHub Actions 工作流已经提交；截至最近一次远端检查尚未产生 workflow run，因此暂不把本地结果写成 CI 通过。
+GitHub Actions 工作流已经提交；远端 workflow 尚需实际运行结果确认。
 
 ## 下一工程层
 
 ```text
 P0-1 接入现有 Agent CAPABILITIES Registry
-P0-2 BUYER_MESSAGE 正式切换到 A6 capability
-P0-3 SELLER_PROACTIVE_DEVELOPMENT / SYSTEM_NEW_PROSPECT_SIGNAL 接入 A2
-P0-4 新增 Smartlead Webhook HTTP endpoint
+P0-2 A2 Batch endpoint → Opportunity Store
+P0-3 BUYER_MESSAGE 正式切换到 A6 capability
+P0-4 Smartlead Webhook HTTP endpoint
 P0-5 真实 Smartlead sample payload → ConversationEvent mapping
 P0-6 Approval endpoint 接 external executor
 P0-7 provider production credentials / sandbox smoke test
