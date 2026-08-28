@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-08-28",
+  "providers": [
+    {
+      "code": "trademo",
+      "role": "trade_activity_and_buyer_discovery",
+      "capabilities": ["buyer_supplier_list", "company_profile", "shipments", "company_match"],
+      "auth": "vendor_contract",
+      "required_env": ["TRADEMO_API_KEY", "TRADEMO_API_BASE_URL", "TRADEMO_HEALTH_PATH"],
+      "status_without_credentials": "WAITING_COMMERCIAL_API_CONTRACT",
+      "official_docs": "https://trademo.com/apis",
+      "scraping": "disabled"
+    },
+    {
+      "code": "volza",
+      "role": "trade_activity_buyer_profile_and_contacts",
+      "capabilities": ["company_search", "buyer_insights", "shipments", "decision_maker_contacts"],
+      "auth": "bearer_token",
+      "required_env": ["VOLZA_API_TOKEN"],
+      "optional_contract_paths": ["VOLZA_COMPANY_SEARCH_PATH", "VOLZA_BUYER_INSIGHTS_PATH", "VOLZA_TRADE_SHIPMENTS_PATH", "VOLZA_COMPANY_CONTACT_PATH"],
+      "health_endpoint": "GET https://backend.volza.com/api/v1/countries/list",
+      "status_without_credentials": "WAITING_CREDENTIALS",
+      "official_docs": "https://docs.volza.com/docs/api/getting-started",
+      "scraping": "prohibited; official API only"
+    },
+    {
+      "code": "apollo",
+      "role": "company_and_decision_maker_enrichment",
+      "capabilities": ["company_search", "organization_enrichment", "people_enrichment"],
+      "auth": "x-api-key",
+      "required_env": ["APOLLO_API_KEY"],
+      "health_endpoint": "GET https://api.apollo.io/api/v1/auth/health",
+      "status_without_credentials": "WAITING_CREDENTIALS",
+      "official_docs": "https://docs.apollo.io/reference/apollo-api",
+      "buying_intent_api": "not exposed by the public OpenAPI as of 2026-08-28"
+    },
+    {
+      "code": "clay",
+      "role": "signal_to_score_to_action_orchestration",
+      "capabilities": ["receive_standardized_opportunity", "downstream_enrichment", "workflow_action"],
+      "auth": "webhook_url_with_optional_header_token",
+      "required_env": ["CLAY_WEBHOOK_URL"],
+      "optional_env": ["CLAY_WEBHOOK_TOKEN", "CLAY_AUTH_HEADER", "CLAY_AUTH_PREFIX"],
+      "status_without_credentials": "WAITING_WEBHOOK",
+      "official_docs": "https://university.clay.com/docs/webhook-integration-guide",
+      "write_policy": "dry-run unless --send-clay-test is explicitly supplied"
+    }
+  ]
+}
