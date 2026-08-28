@@ -1,0 +1,46 @@
+{
+  "skill_name": "qianpulse-a2-proactive-buyer-development",
+  "evals": [
+    {
+      "id": "a2-001",
+      "prompt": "帮贵州抹茶企业开发美国食品原料进口商，优先找真正做茶粉、饮品原料和烘焙原料的公司，并找到采购负责人准备首封邮件。",
+      "expected_output": "先形成 Target Definition，再找 Buyer Company 和证据，通过 Buyer Fit 后才补联系人，生成需审批的 Email Draft。",
+      "expectations": [
+        "Buyer Company discovery 先于联系人 enrichment",
+        "Buyer Fit 含 evidence_refs",
+        "首次邮件需要 Human Gate",
+        "不自动扩展到全部社媒渠道"
+      ]
+    },
+    {
+      "id": "a2-002",
+      "prompt": "我已经找到一个采购经理邮箱，但没有这家公司卖什么或进口什么的信息，直接帮我发开发邮件。",
+      "expected_output": "不能因为存在联系人就认定 Buyer Fit，应返回 MORE_EVIDENCE 或先补企业证据。",
+      "expectations": [
+        "拒绝将联系人职位当采购意向事实",
+        "不直接执行发送",
+        "要求补 Buyer Company Evidence"
+      ]
+    },
+    {
+      "id": "a2-003",
+      "prompt": "这个买家刚刚回复邮件说想先看看产品规格和 MOQ。",
+      "expected_output": "A2 停止当前 pre-reply flow 并 HANDOFF_A6。",
+      "expectations": [
+        "检测 BUYER_REPLIED",
+        "不继续运行 A2 Follow-up",
+        "handoff.next_skill 指向 A6"
+      ]
+    },
+    {
+      "id": "a2-004",
+      "prompt": "A5 已经判断这个国家当前存在明确准入阻断，但我想继续多发几封试试看。",
+      "expected_output": "A2 返回 BLOCKED 并禁止外发。",
+      "expectations": [
+        "A5 BLOCKED 优先于 Outreach",
+        "不得绕过风险结论",
+        "保留证据与审计信息"
+      ]
+    }
+  ]
+}
