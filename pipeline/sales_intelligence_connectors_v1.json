@@ -3,16 +3,6 @@
   "updated_at": "2026-08-28",
   "providers": [
     {
-      "code": "alibaba_rfq",
-      "role": "authorized_direct_rfq",
-      "capabilities": ["rfq_search", "rfq_detail"],
-      "auth": "top_hmac_with_seller_session",
-      "required_env": ["ALIBABA_ICBU_APP_KEY", "ALIBABA_ICBU_APP_SECRET", "ALIBABA_ICBU_SESSION_KEY"],
-      "status_without_credentials": "WAITING_CREDENTIALS",
-      "official_docs": "https://developer.alibaba.com/docs/api.htm?apiId=32084",
-      "scraping": "disabled; authorized seller API only"
-    },
-    {
       "code": "trademo",
       "role": "trade_activity_and_buyer_discovery",
       "capabilities": ["buyer_supplier_list", "company_profile", "shipments", "company_match"],

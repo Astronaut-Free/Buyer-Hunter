@@ -16,8 +16,6 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from parser_quality_v1_1 import product_matches, repair_cleaning_input, validate_quantity
-
 
 BUY_ACTION = re.compile(r"\b(?:buy|buying|buyer|wanted|need|require|requires|seeking|source|sourcing|rfq|quotation|order|import)\b", re.I)
 SPEC = re.compile(r"\b(?:grade|origin|harvest|moisture|organic|certificate|certification|brix|iqf|pesticide|residue|pack(?:age|ing)?|shelf\s*life|hs\s*code|specification|specs?|mesh|purity)\b", re.I)
@@ -36,12 +34,6 @@ COUNTRY_TO_CODE = {
     "poland": "PL", "belgium": "BE", "finland": "FI", "hungary": "HU",
     "pakistan": "PK", "india": "IN", "united arab emirates": "AE", "uae": "AE",
     "canada": "CA", "australia": "AU", "vietnam": "VN", "viet nam": "VN",
-    "hong kong": "HK", "turkey": "TR", "türkiye": "TR", "philippines": "PH",
-    "singapore": "SG", "kuwait": "KW", "lebanon": "LB", "malaysia": "MY",
-    "saudi arabia": "SA", "latvia": "LV", "new zealand": "NZ", "peru": "PE",
-    "qatar": "QA", "thailand": "TH", "greece": "GR", "ukraine": "UA", "oman": "OM",
-    "uganda": "UG", "sri lanka": "LK", "benin": "BJ", "kenya": "KE",
-    "afghanistan": "AF", "russia": "RU", "russian federation": "RU", "indonesia": "ID",
 }
 
 
@@ -99,7 +91,7 @@ def load_rows(path: Path) -> list[dict]:
 
 def find_latest_input() -> Path:
     root = Path(__file__).with_name("data_b2b_public_v3")
-    candidates = sorted(root.glob("*/B2B閸忣剙绱戝〒鐘讳壕_閸忋劑鍣?csv"), reverse=True)
+    candidates = sorted(root.glob("*/B2B公开渠道_全量.csv"), reverse=True)
     if not candidates:
         raise SystemExit("No v3 collection found. Run collect_b2b_public_v3.py first.")
     return candidates[0]
@@ -110,7 +102,6 @@ def boolish(value: str | None) -> bool:
 
 
 def clean_row(row: dict, observed_default: date) -> dict:
-    row = repair_cleaning_input(row)
     title = norm(row.get("title")) or ""
     description = norm(row.get("description_raw")) or ""
     combined = f"{title} {description}"
@@ -123,10 +114,9 @@ def clean_row(row: dict, observed_default: date) -> dict:
     country_raw = norm(row.get("buyer_country_raw"))
     country_code = COUNTRY_TO_CODE.get((country_raw or "").casefold())
     buyer_name = norm(row.get("buyer_name_raw"))
-    contact_person = norm(row.get("contact_person_raw"))
-    # Legacy rows stored a Go4WorldBusiness contact in buyer_name_raw.
-    if not contact_person and row.get("source_code") == "go4worldbusiness" and buyer_name and not COMPANY_MARKERS.search(buyer_name):
-        contact_person = buyer_name
+    # go4WorldBusiness often exposes a contact person's name, not a legal entity.
+    contact_person = buyer_name if row.get("source_code") == "go4worldbusiness" and buyer_name and not COMPANY_MARKERS.search(buyer_name) else None
+    if contact_person:
         buyer_name = None
     domain_match = DOMAIN.search(combined)
     domain = domain_match.group(1).casefold() if domain_match else None
@@ -135,13 +125,10 @@ def clean_row(row: dict, observed_default: date) -> dict:
     emails = sorted(set(EMAIL.findall(combined)))
     phones = sorted(set(norm(v) for v in PHONE.findall(combined) if norm(v)))
 
-    product_clear = product_matches(row.get("category_code", ""), title, description)
+    product_clear = boolish(row.get("exact_product_match"))
     action_clear = bool(BUY_ACTION.search(combined)) and row.get("record_kind") == "DIRECT_BUY_REQUIREMENT"
     spec_clear = bool(SPEC.search(combined))
-    detected_quantity = QUANTITY.search(combined)
-    quantity_candidate = norm(row.get("quantity_raw")) or (norm(detected_quantity.group(0)) if detected_quantity else None)
-    quantity_value, quantity_status, field_warnings = validate_quantity(quantity_candidate)
-    quantity_clear = quantity_status == "VALID"
+    quantity_clear = bool(norm(row.get("quantity_raw")) or QUANTITY.search(combined))
     destination_clear = bool(DESTINATION.search(combined))
     d1 = 10 * product_clear + 10 * action_clear + 5 * spec_clear + 5 * quantity_clear + 5 * destination_clear
 
@@ -161,14 +148,10 @@ def clean_row(row: dict, observed_default: date) -> dict:
         decision = "REJECT_MISSING_EVIDENCE"
     elif not product_clear or not action_clear:
         decision = "REJECT_NOT_DIRECT_REQUIREMENT"
-    elif quantity_status == "CONFLICT":
-        decision = "NEEDS_VERIFICATION"
     elif recency == 0:
         decision = "BACKGROUND_OR_STALE"
-    elif level in {"A", "B"} and company_clear:
-        decision = "QUALIFIED"
     elif level in {"A", "B"}:
-        decision = "NEEDS_VERIFICATION"
+        decision = "QUALIFIED"
     elif level == "C":
         decision = "NEEDS_VERIFICATION"
     else:
@@ -188,25 +171,17 @@ def clean_row(row: dict, observed_default: date) -> dict:
         "title": title,
         "description_raw": description,
         "specs_present": spec_clear,
-        "quantity_raw": quantity_value,
-        "quantity_status": quantity_status,
-        "quantity_source_span": norm(row.get("quantity_span")),
-        "field_warnings": "|".join(field_warnings) or None,
+        "quantity_raw": norm(row.get("quantity_raw")),
         "destination_present": destination_clear,
         "buyer_name_raw": buyer_name,
-        "buyer_name_source_span": norm(row.get("buyer_name_span")),
         "contact_person_raw": contact_person,
-        "entity_resolution_status": "RESOLVED" if company_clear else "PERSON_ONLY" if contact_person else "UNRESOLVED",
-        "contact_person_source_span": norm(row.get("contact_person_span")),
         "buyer_country_raw": country_raw,
-        "buyer_country_source_span": norm(row.get("buyer_country_span")),
         "buyer_country_code": country_code,
         "buyer_domain": domain,
         "registration_id": registration_id,
         "public_business_emails": "|".join(emails) or None,
         "public_business_phones": "|".join(phones) or None,
         "published_at": published_at,
-        "published_at_source_span": norm(row.get("published_at_span")),
         "observed_at": observed_at,
         "age_days": age_days,
         "time_precision": "DATE" if published_at else "UNKNOWN",
@@ -226,7 +201,7 @@ def clean_row(row: dict, observed_default: date) -> dict:
         "hard_gate_pass": hard_gate,
         "qualification_status": decision,
         "dedupe_fingerprint": fingerprint,
-        "ruleset_version": "truth-v1.1.0",
+        "ruleset_version": "truth-v1.0.0",
     }
 
 
@@ -271,7 +246,7 @@ def main() -> int:
     qualified = [r for r in deduped if r["qualification_status"] == "QUALIFIED"]
     write_csv(out_dir / "buyer_signals_qualified.csv", qualified, columns)
 
-    required = ["evidence_url", "observed_at", "evidence_excerpt", "category_code", "published_at", "buyer_country_code", "buyer_name_raw", "contact_person_raw"]
+    required = ["evidence_url", "observed_at", "evidence_excerpt", "category_code", "published_at", "buyer_country_code", "buyer_name_raw"]
     null_rates = {
         field: round(sum(not r.get(field) for r in deduped) / len(deduped), 4) if deduped else None
         for field in required
@@ -283,8 +258,6 @@ def main() -> int:
         "deduplicated_count": len(deduped),
         "duplicate_rows_removed": duplicate_rows,
         "qualified_count": len(qualified),
-        "demand_quality_pass_count": sum(r["truth_level"] in {"A", "B"} for r in deduped),
-        "entity_resolved_count": sum(r.get("entity_resolution_status") == "RESOLVED" for r in deduped),
         "levels": dict(Counter(r["truth_level"] for r in deduped)),
         "statuses": dict(Counter(r["qualification_status"] for r in deduped)),
         "sources": dict(Counter(r["source_code"] for r in deduped)),
@@ -292,9 +265,7 @@ def main() -> int:
         "required_field_null_rates": null_rates,
         "hard_gate_failure_count": sum(not r["hard_gate_pass"] for r in deduped),
         "future_date_count": sum((r["age_days"] is not None and r["age_days"] < 0) for r in deduped),
-        "invalid_quantity_count": sum(r.get("quantity_status") == "CONFLICT" for r in deduped),
-        "buyer_identity_coverage_rate": round(sum(bool(r.get("buyer_name_raw") or r.get("contact_person_raw")) for r in deduped) / len(deduped), 4) if deduped else None,
-        "ruleset_version": "truth-v1.1.0",
+        "ruleset_version": "truth-v1.0.0",
     }
     (out_dir / "data_quality_report.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False), flush=True)

@@ -39,24 +39,6 @@ class OpportunityApiTests(unittest.TestCase):
         self.assertEqual([item["rank"] for item in body["items"]], [1, 2, 3, 4, 5])
         self.assertEqual(body["data_mode"], "LIVE_PIPELINE")
 
-    def test_category_filter_recalculates_rank(self) -> None:
-        response = self.client.get(
-            "/api/v1/opportunities/today",
-            params={"seller_profile_id": "seller-guizhou-specialty-demo", "category_code": "MATCHA"},
-        )
-        self.assertEqual(response.status_code, 200)
-        items = response.json()["items"]
-        self.assertEqual(len(items), 2)
-        self.assertTrue(all(item["category_code"] == "MATCHA" for item in items))
-        self.assertEqual([item["rank"] for item in items], [1, 2])
-
-    def test_category_and_market_filter_can_return_empty(self) -> None:
-        response = self.client.get(
-            "/api/v1/opportunities/today",
-            params={"seller_profile_id": "seller-guizhou-specialty-demo", "category_code": "ROSA_ROXBURGHII", "market_code": "US"},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["items"], [])
     def test_free_detail_is_summary_only(self) -> None:
         item = self.client.get("/api/v1/opportunities/today", params={"seller_profile_id": "seller-guizhou-specialty-demo"}).json()["items"][0]
         response = self.client.get(f"/api/v1/opportunities/{item['id']}/decision")
@@ -79,3 +61,5 @@ class OpportunityApiTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+

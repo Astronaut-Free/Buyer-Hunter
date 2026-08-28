@@ -10,5 +10,3 @@ Thumbs.db
 .playwright-cli/
 __pycache__/
 *.pyc
-pipeline/data_*/**/raw/
-output/playwright/

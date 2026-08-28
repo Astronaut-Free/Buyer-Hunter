@@ -1,251 +1,75 @@
-# Buyer Hunter 数据库与机会决策 API v1.0
+# Buyer Signal Database API v1.0 正式接口说明
 
-更新时间：2026-08-28
+本文件是 API v1.0 的简明正式说明；机器契约以 `contracts/buyer-signal-api-v1.yaml` 为准。OpenAPI 版本 `3.1.0`，接口版本 `1.0.0`，已完成 YAML 解析和 27 个内部 `$ref` 解析校验。
 
-接口版本：`1.0.0`
+## 基础约定
 
-运行实现：`api/app.py`
+- Base URL：`http://localhost:8000/api/v1`
+- 鉴权：除 `/health` 外使用 Bearer JWT。
+- 分页：`cursor + limit`，最大 100。
+- 排序：`truth_score DESC, published_at DESC, id ASC`。
+- 时间：ISO 8601；国家：ISO 3166-1 alpha-2；未知值返回 `null`。
+- `truth_score` 是需求证据可信度，不是成交概率。
+- 会员只控制买方主体与公开业务渠道解锁，不得改变真实性评分。
 
-数据库模式：`db/schema.sql`、`db/migrations/002_opportunity_decision.sql`
+## 接口清单
 
-## 1. 本版本的准确边界
-
-本项目存在两个数据层，调用方不得把两者的数量混为一谈。
-
-| 层级 | 当前状态 | 本次真实结果 | 对外用途 |
-|---|---|---:|---|
-| 全平台采集与清洗产物 | 已实现 | 原始结构化记录 323 条；去重清洗后 184 条；当前有效机会 30 条；佐证记录 24 条 | 数据审计、质量复核、后续入库 |
-| SQLite 机会决策库 | 已实现 | 默认输入快照 21 条；生成 21 条机会决策和 Top 5 | 当前 React Demo 与 FastAPI |
-| 全平台 30 条自动写入 SQLite | 尚未自动衔接 | 0 条自动迁移 | 下一版本的数据适配任务 |
-
-因此：`pipeline/data_full_collection/20260828T083242Z/useful_current_opportunities.csv` 中的 30 条是本次全平台有效机会；当前 `/api/v1/opportunities/*` 返回的是 SQLite 默认输入快照生成的决策，不能宣称已经自动返回这 30 条。
-
-## 2. 数据产物
-
-全平台聚合运行：`20260828T083242Z`。
-
-| 文件 | 记录数 | 定义 |
-|---|---:|---|
-| `all_platform_records_cleaned.csv` | 184 | 标准化、严格品类匹配、去重后的全部记录 |
-| `useful_current_opportunities.csv` | 30 | 当前、直接采购需求或仍开放的官方采购机会 |
-| `formally_qualified_opportunities.csv` | 0 | 当前有效需求且法定/官方买方主体已经解析 |
-| `supporting_evidence.csv` | 24 | 历史采购、买家背景或已结束的官方采购证据，不作为当前需求 |
-| `platform_summary.csv` | 按平台汇总 | 原始量、清洗量、有效量、正式合格量和佐证量 |
-| `full_collection_quality_report.json` | 1 | 运行 ID、输入批次、质量口径和总量统计 |
-
-当前 30 条有效机会按品类分布：`TEA=17`、`MATCHA=6`、`CHILI=4`、`BLUEBERRY=3`、`ROSA_ROXBURGHII=0`。
-
-### 2.1 全平台标准记录字段
-
-| 字段 | 类型 | 说明 |
+| 方法 | 路径 | 主表/对象 |
 |---|---|---|
-| `record_id` | string | 来源内稳定记录标识；去重不能只依赖 URL |
-| `source_code` | string | 来源平台代码 |
-| `source_role` | enum | `DIRECT_RFQ`、`OFFICIAL_PROCUREMENT`、`HISTORICAL_PURCHASE`、`BUYER_BACKGROUND` |
-| `category_code` | enum | `MATCHA`、`BLUEBERRY`、`ROSA_ROXBURGHII`、`CHILI`、`TEA` |
-| `title` | string | 原始标题 |
-| `description_raw` | string/null | 可追溯原始需求文本 |
-| `buyer_name_raw` | string/null | 只有证据明确指向法定/采购主体时才填写 |
-| `contact_person_raw` | string/null | 联系人，不得当作公司名称 |
-| `buyer_country_code` | string/null | ISO 3166-1 alpha-2 |
-| `buyer_country_raw` | string/null | 来源原始国家文本 |
-| `quantity_raw` | string/null | 来源披露的原始数量，不猜测单位或数值 |
-| `published_at` | date/null | ISO 8601 日期 |
-| `deadline_at` | date/null | 官方采购截止日期；未知保持 `null` |
-| `source_url` | uri | 可人工复核的原始证据链接 |
-| `observed_at` | datetime | 系统采集时间 |
-| `verification_status` | string | 来源和核验状态，不等同于成交概率 |
-| `product_match` | boolean | 是否严格命中五类产品，排除口味、器具等噪声 |
-| `timely` | boolean | 是否仍处于当前采购窗口 |
-| `entity_resolved` | boolean | 是否已解析法定/官方买方主体 |
-| `quality_status` | string | 当前有效、待核验、佐证、过期或拒绝原因 |
-| `quality_reason` | string | 质量状态的可解释原因 |
-| `truth_score` | integer/null | 四维需求证据可信度，不是成交概率 |
-| `truth_level` | enum/null | `A`、`B`、`C`、`D` |
+| GET | `/health` | 运行状态 |
+| GET | `/sources` | `source` |
+| POST | `/crawl-runs` | `crawl_run`, `crawl_item` |
+| GET | `/crawl-runs/{run_id}` | `crawl_run`, `crawl_item` |
+| GET | `/buyer-signals` | `signal`, `buyer`, `evidence` |
+| GET | `/buyer-signals/{signal_id}` | `signal`, `signal_evidence`, `field_observation`, `requirement` |
+| GET | `/buyers/{buyer_id}` | `buyer`, `buyer_alias`, `buyer_relation` |
+| GET | `/buyer-signals/{signal_id}/access-channels` | `buyer_access_channel`, `buyer_access_grant` |
+| GET | `/data-quality/runs/{run_id}` | 清洗运行质量报告 |
 
-## 3. SQLite 核心对象
+## 实际运行样例
 
-```text
-source -> evidence -> signal -> requirement
-                         |
-                         v
-buyer -> opportunity -> opportunity_decision -> match_result
-  |
-  v
-buyer_access_channel
-```
-
-| 对象 | 作用 |
-|---|---|
-| `source` | 数据源和采集约束 |
-| `evidence` | URL、标题、原文片段、观察时间及快照哈希 |
-| `buyer` | 标准买方实体；联系人与公司主体分离 |
-| `signal` | 标准采购信号及真实性分数 |
-| `requirement` | 产品、市场、认证等原子需求 |
-| `opportunity` | 面向某卖方能力档案生成的机会 |
-| `opportunity_decision` | Why Now、Fit、风险、优先级和下一步动作 |
-| `match_result` | 买方原子需求与卖方能力逐项比较 |
-| `buyer_access_channel` | 有证据的公开商务/采购渠道；单独做 Lead Access 门禁 |
-
-未知值必须保存为 `NULL`，不得把联系人提升为法定买家公司，不得用平台“Verified”替代企业真实性验证。
-
-## 4. 实际可调用接口
-
-Base URL：`http://127.0.0.1:8000`。FastAPI 自动文档位于 `/docs`，机器可读契约位于 `/openapi.json`。下表只列 `api/app.py` 已实现接口。
-
-| 方法 | 路径 | 权限 | 作用 |
-|---|---|---|---|
-| GET | `/health` | 无 | 数据库健康、决策数量、最近决策日期 |
-| GET | `/api/v1/opportunities/today` | 摘要公开；Demo 会员头返回完整访问标记 | 按卖方档案、品类和市场返回排序机会 |
-| GET | `/api/v1/opportunities/{opportunity_id}/decision` | 摘要公开；会员返回完整判断 | Why Now、评分组件、Gap、风险、证据、匹配和动作 |
-| GET | `/api/v1/opportunities/{opportunity_id}/access-channels` | Lead Access | 返回数据库中已有证据的公开采购/商务渠道 |
-
-`contracts/buyer-signal-api-v1.yaml` 描述的是后续数据库管理 API 契约，不代表其中的 `/sources`、`/crawl-runs`、`/buyer-signals`、`/buyers` 和 `/data-quality` 已在当前 FastAPI 中实现。
-
-### 4.1 健康检查
-
-```http
-GET /health
-```
+以下值直接来自 `20260827T212941Z/cleaned_v1/buyer_signals_qualified.csv`，不是手工编造：
 
 ```json
 {
-  "status": "ok",
-  "decision_count": 21,
-  "latest_decision_date": "2026-08-28"
-}
-```
-
-数据库文件不存在时返回 `503`：
-
-```json
-{
-  "detail": "Decision store is missing; run pipeline/build_opportunity_store_v1.py"
-}
-```
-
-### 4.2 今日机会列表
-
-```http
-GET /api/v1/opportunities/today?seller_profile_id=seller-guizhou-specialty-demo&category_code=MATCHA&market_code=US&limit=5
-X-Demo-Member: true
-```
-
-查询参数：
-
-| 参数 | 必填 | 规则 |
-|---|---|---|
-| `seller_profile_id` | 是 | 当前 Demo 使用 `seller-guizhou-specialty-demo` |
-| `limit` | 否 | `1..20`，默认 5 |
-| `category_code` | 否 | 五品类枚举 |
-| `market_code` | 否 | `US`、`JP`、`GB`、`AU`、`EU`；`EU` 映射到数据库内欧盟国家代码集合 |
-
-响应结构：
-
-```json
-{
-  "decision_date": "2026-08-28",
-  "seller_profile_id": "seller-guizhou-specialty-demo",
+  "id": "0363e837fc9a023423f8ffab32d08891",
+  "source_code": "go4worldbusiness",
   "category_code": "MATCHA",
-  "market_code": "US",
-  "data_mode": "LIVE_PIPELINE",
-  "items": [
-    {
-      "id": "opp-...",
-      "rank": 1,
-      "buyer_display_name": "...",
-      "country_code": "US",
-      "demand_title": "...",
-      "category_code": "MATCHA",
-      "quantity_raw": "未披露",
-      "published_at": "2026-08-27",
-      "decision_status": "CONDITIONAL",
-      "opportunity_score": 72.5,
-      "truth_score": 69.0,
-      "why_now": ["..."],
-      "next_action_summary": "...",
-      "decision_access": "FULL",
-      "lead_access_status": "UNAVAILABLE",
-      "seller_fit_score": 80.0,
-      "data_mode": "LIVE"
-    }
-  ]
+  "title": "Wanted : Tea Like Sencha And Matcha Tea",
+  "buyer_display_name": null,
+  "buyer_country_code": "JP",
+  "quantity_raw": "1 - 5 Kilograms",
+  "published_at": "2026-08-04",
+  "truth_dimensions": {
+    "demand_explicitness": 35,
+    "entity_authenticity": 5,
+    "recency": 18,
+    "corroboration": 4
+  },
+  "truth_score": 62,
+  "truth_level": "B",
+  "hard_gate_pass": true,
+  "qualification_status": "QUALIFIED",
+  "missing_fields": [
+    "buyer_company",
+    "buyer_domain",
+    "independent_corroboration"
+  ],
+  "access_status": "PREVIEW",
+  "ruleset_version": "truth-v1.0.0"
 }
 ```
 
-筛选后没有符合项时返回 `200` 和空 `items`；卖方档案没有任何决策时返回 `404`。
+原始证据：`https://www.go4worldbusiness.com/buylead/view/1314744/wanted-:-tea-like-sencha-and-matcha-tea.html`。
 
-### 4.3 机会决策详情
-
-```http
-GET /api/v1/opportunities/{opportunity_id}/decision
-X-Demo-Member: true
-```
-
-不带 `X-Demo-Member: true` 时只返回列表摘要字段，`decision_access=SUMMARY`。会员响应额外包含：
-
-- `hard_gate_passed`
-- `component_scores`：timing、seller_fit、buyer_strength、commercial_value、market_readiness、actionability、risk_penalty
-- `gaps`、`blockers`、`risks`
-- `evidence[]`：source_url、claim、observed_at
-- `match_results[]`：field_code、buyer_value、seller_value、status、hard、reason
-- `next_action`
-- `ruleset_version`
-
-机会不存在时返回 `404`。
-
-### 4.4 公开采购/商务渠道
-
-```http
-GET /api/v1/opportunities/{opportunity_id}/access-channels
-X-Lead-Access: granted
-```
-
-未提供有效 Demo 访问头时返回 `403`。成功响应只返回数据库中已保存且带证据的公开渠道：
+## 错误结构
 
 ```json
-[
-  {
-    "type": "PROCUREMENT_URL",
-    "value": "https://example.com/procurement",
-    "source_url": "https://example.com/evidence",
-    "verified_at": "2026-08-28T08:00:00+00:00"
-  }
-]
+{
+  "code": "SIGNAL_NOT_FOUND",
+  "message": "Buyer signal was not found.",
+  "request_id": "req_01"
+}
 ```
 
-没有公开渠道时返回空数组，不编造邮箱或手机号。正式环境必须把两个 Demo Header 替换为 Bearer Token、会员状态与额度校验。
-
-## 5. 错误与状态码
-
-当前 FastAPI 使用标准结构：
-
-```json
-{"detail": "Opportunity not found"}
-```
-
-| 状态码 | 场景 |
-|---:|---|
-| 200 | 成功或筛选结果为空 |
-| 403 | 未获得 Lead Access |
-| 404 | 卖方档案无决策或机会不存在 |
-| 422 | 参数缺失、枚举错误或超出范围 |
-| 503 | SQLite 决策库不存在 |
-
-## 6. 构建、启动与验证
-
-```powershell
-python pipeline\build_opportunity_store_v1.py
-python -m uvicorn api.app:app --host 127.0.0.1 --port 8000
-python -m unittest api.test_app pipeline.test_opportunity_decision_engine_v1 pipeline.test_pipeline_stability_v1 pipeline.test_sales_intelligence_connectors_v1 pipeline.test_parser_quality_v1_1 pipeline.test_full_collection_aggregation_v1 -v
-```
-
-验收要求：
-
-1. `PRAGMA integrity_check` 返回 `ok`；
-2. `/health` 的 `decision_count` 与构建输入一致；
-3. 列表按 `opportunity_score DESC, opportunity_id` 排序，筛选后重新编号；
-4. 非会员详情不返回完整决策字段；
-5. 未授权访问渠道必须返回 `403`；
-6. 每条事实有 `source_url`，缺失字段保持 `null`；
-7. 全平台 30 条接入 SQLite 前，必须增加字段适配与回归测试，不得静默填造真实性维度。
+常用状态码：`200` 成功，`202` 采集已受理，`400` 参数错误，`401` 未登录，`403` 无会员/授权，`404` 资源不存在，`409` 重复运行冲突，`429` 限流，`500` 服务错误。

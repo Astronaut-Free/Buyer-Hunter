@@ -11,7 +11,7 @@ const decisionMeta = {
 const countryNames = {
   US: "美国", JP: "日本", GB: "英国", AU: "澳大利亚", DE: "德国", NL: "荷兰",
   FR: "法国", IT: "意大利", ES: "西班牙", PL: "波兰", BE: "比利时", FI: "芬兰",
-  HU: "匈牙利", OM: "阿曼", AE: "阿联酋", TH: "泰国", CA: "加拿大", IN: "印度", ZZ: "待核验",
+  HU: "匈牙利", AE: "阿联酋", TH: "泰国", CA: "加拿大", IN: "印度", ZZ: "待核验",
 };
 
 function daysSince(dateText) {
@@ -67,14 +67,13 @@ async function request(path, isMember = false) {
   return response.json();
 }
 
-export async function loadTodayOpportunities(isMember = false, filters = {}) {
-  const params = new URLSearchParams({ seller_profile_id: SELLER_PROFILE_ID, limit: "5" });
-  if (filters.categoryCode && filters.categoryCode !== "ALL") params.set("category_code", filters.categoryCode);
-  if (filters.marketCode && filters.marketCode !== "ALL") params.set("market_code", filters.marketCode);
-  const payload = await request(`/opportunities/today?${params.toString()}`, isMember);
+export async function loadTodayOpportunities(isMember = false) {
+  const payload = await request(`/opportunities/today?seller_profile_id=${SELLER_PROFILE_ID}&limit=5`, isMember);
   return { items: payload.items.map(mapOpportunity), dataMode: payload.data_mode || "LIVE_PIPELINE", decisionDate: payload.decision_date };
 }
 
 export async function loadOpportunityDetail(id, isMember = false) {
   return mapOpportunity(await request(`/opportunities/${encodeURIComponent(id)}/decision`, isMember));
 }
+
+

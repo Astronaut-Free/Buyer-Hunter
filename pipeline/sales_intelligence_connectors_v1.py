@@ -8,13 +8,11 @@ credentials or an undocumented commercial endpoint as a successful connection.
 from __future__ import annotations
 
 import argparse
-import hashlib
-import hmac
 import json
 import os
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urljoin
 
@@ -53,12 +51,11 @@ class JsonHttpClient:
 
     def request(self, method: str, url: str, *, headers: dict[str, str] | None = None,
                 params: dict[str, Any] | None = None, payload: dict[str, Any] | None = None,
-                form: dict[str, Any] | None = None,
                 timeout: tuple[int, int] = (7, 30)) -> tuple[int, Any]:
         response: requests.Response | None = None
         for attempt in range(self.retries + 1):
             response = self.session.request(
-                method, url, headers=headers, params=params, json=payload, data=form,
+                method, url, headers=headers, params=params, json=payload,
                 timeout=timeout, allow_redirects=True,
             )
             if response.status_code not in TRANSIENT_STATUS or attempt == self.retries:
@@ -144,85 +141,6 @@ class ApolloConnector:
             "status": "NOT_EXPOSED_IN_PUBLIC_OPENAPI",
             "message": "Do not fabricate Buying Intent API data; use plan-enabled export/UI or a vendor-approved endpoint.",
         }
-
-
-class AlibabaRfqConnector:
-    """Authorized Alibaba ICBU RFQ API client using TOP HMAC-MD5 signing."""
-
-    provider = "alibaba_rfq"
-    endpoint = "https://eco.taobao.com/router/rest"
-    search_method = "alibaba.icbu.rfq.search"
-    detail_method = "alibaba.icbu.rfqdetail.get"
-
-    def __init__(self, app_key: str | None = None, app_secret: str | None = None,
-                 session_key: str | None = None, client: JsonHttpClient | None = None):
-        self.app_key = app_key or os.getenv("ALIBABA_ICBU_APP_KEY", "")
-        self.app_secret = app_secret or os.getenv("ALIBABA_ICBU_APP_SECRET", "")
-        self.session_key = session_key or os.getenv("ALIBABA_ICBU_SESSION_KEY", "")
-        self.client = client or JsonHttpClient()
-
-    @property
-    def configured(self) -> bool:
-        return bool(self.app_key and self.app_secret and self.session_key)
-
-    def health(self) -> ConnectorHealth:
-        if not self.configured:
-            return _health(
-                self.provider, "WAITING_CREDENTIALS", False, False,
-                "Set ALIBABA_ICBU_APP_KEY, ALIBABA_ICBU_APP_SECRET, and ALIBABA_ICBU_SESSION_KEY.",
-            )
-        return _health(
-            self.provider, "CONFIGURED_UNVERIFIED", True, False,
-            "Credentials are present; run an explicit RFQ search smoke test to verify API scope.",
-        )
-
-    @staticmethod
-    def sign(params: dict[str, Any], app_secret: str) -> str:
-        canonical = "".join(f"{key}{params[key]}" for key in sorted(params) if key != "sign")
-        return hmac.new(
-            app_secret.encode("utf-8"), canonical.encode("utf-8"), hashlib.md5,
-        ).hexdigest().upper()
-
-    def _execute(self, method: str, business_params: dict[str, Any]) -> tuple[int, Any]:
-        if not self.configured:
-            raise RuntimeError("Alibaba ICBU App Key, App Secret, and Session Key are required")
-        params: dict[str, Any] = {
-            "method": method,
-            "app_key": self.app_key,
-            "session": self.session_key,
-            "timestamp": datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S"),
-            "format": "json",
-            "v": "2.0",
-            "sign_method": "hmac",
-            **business_params,
-        }
-        params["sign"] = self.sign(params, self.app_secret)
-        return self.client.request(
-            "POST", self.endpoint,
-            headers={"Content-Type": "application/x-www-form-urlencoded;charset=utf-8"},
-            form=params,
-        )
-
-    def search(self, search_text: str, *, page: int = 1, page_size: int = 20,
-               country: str | None = None, category_id: str | None = None) -> tuple[int, Any]:
-        if not search_text.strip():
-            raise ValueError("search_text is required")
-        cond: dict[str, Any] = {
-            "search_text": search_text.strip(),
-            "current_page": max(1, page),
-            "page_size": min(max(1, page_size), 100),
-        }
-        if country:
-            cond["country"] = country
-        if category_id:
-            cond["category_id"] = category_id
-        return self._execute(self.search_method, {"cond": json.dumps(cond, separators=(",", ":"))})
-
-    def get_detail(self, rfq_id: str) -> tuple[int, Any]:
-        if not rfq_id.strip():
-            raise ValueError("rfq_id is required")
-        query = json.dumps({"rfq_id": rfq_id.strip()}, separators=(",", ":"))
-        return self._execute(self.detail_method, {"rfq_query_dto": query})
 
 
 class VolzaConnector:
@@ -368,10 +286,7 @@ def normalize_opportunity(source: dict[str, Any]) -> dict[str, Any]:
 
 
 def all_health() -> list[ConnectorHealth]:
-    return [
-        AlibabaRfqConnector().health(), ApolloConnector().health(), VolzaConnector().health(),
-        TrademoConnector().health(), ClayConnector().health(),
-    ]
+    return [ApolloConnector().health(), VolzaConnector().health(), TrademoConnector().health(), ClayConnector().health()]
 
 
 def main() -> int:

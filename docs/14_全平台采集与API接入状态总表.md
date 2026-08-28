@@ -24,8 +24,6 @@
 | TED 欧盟招标 | 官方开放 API | 33 条初筛，18 条精准 | `LIVE_API` | 欧洲公共采购；当前精准结果集中在辣椒类 |
 | Walmart Supplier Portal | 公开网页采集 | 1 条采购入口 | `LIMITED_LIVE` | 只能证明存在供应商准入渠道，不能证明当前正在采购五品类 |
 | 独立买家公司官网 | 公开官网联系方式补全 | Berry Fresh LLC 找到 5 个公开企业渠道 | `LIMITED_LIVE` | 买家实体和公开业务联系方式补全，不是 RFQ 主来源 |
-| HKTDC Sourcing | Playwright 公开 RFQ 浏览器采集 | 当前公开页 20 条 RFQ；五品类 5 次精准搜索均 0 条 | `LIVE_PUBLIC_SEARCH` | 列表和搜索公开；Quote Now 需要供应商登录 |
-| JETRO e-Venue | Playwright 公开案件搜索 | 当前公开页 20 条案件；五品类均启用采购意向筛选，5 次搜索均 0 条 | `LIVE_PUBLIC_SEARCH` | 搜索公开；联系案件发布者需要注册/登录 |
 
 ### 已实现来源的合计说明
 
@@ -41,7 +39,7 @@
 
 | 平台 | 当前进度 | 缺少内容 | 下一步 |
 |---|---|---|---|
-| Alibaba.com RFQ | 正式 API 连接器已写；公开 RFQ 列表/详情采集器已真实运行；最新 12/12 请求成功，122 条原始记录、11 条产品候选 | API 仍缺 ICBU/GGS 开发者资格与密钥；公开页报价动作要求登录 | 无账号时采集公开字段并保留页面快照；以后有资质再切正式 API，报价与联系人解锁不做绕过 |
+| Alibaba.com RFQ | 已找到正式 RFQ API；尚未创建应用 | ICBU/GGS 开发者资格、应用类目、App Key、App Secret、Session Key | 用国际站卖家/供应商账号申请 `alibaba.icbu.rfq.search` 和 `rfqdetail.get` |
 | Trademo | 连接器已写 | 商务 API 合同、Key、Base URL、鉴权与端点路径 | 联系 Sales 申请 Sandbox/Production 参数 |
 | Volza | 连接器已写 | `VOLZA_API_TOKEN` 和付费业务端点权限 | 购买/开通正式 API；禁止抓取其付费网站 |
 | Apollo | 连接器已写 | `APOLLO_API_KEY`、套餐权限和 credits | 接公司搜索、企业补全和人员补全；公开 OpenAPI 暂无 Buying Intent 读取端点 |
@@ -53,7 +51,7 @@
 |---|---|---|---|
 | RangeMe | 未采集 | 封闭零售买家网络；未发现公开需求 API | 注册 Supplier，人工验证 Immediate Opportunities/合法导出能力 |
 | Made-in-China | 未采集 | Sourcing Request 在供应商账号内；未发现普通供应商 RFQ API | 注册 Supplier，优先检查 CSV/Excel 导出，再评估授权会话采集 |
-| Amazon Business | 已用真实浏览器验证 RFQ 官方说明页，0 条公开需求 | RFQ 是买家在商品页发起并在账号 Quotes Dashboard 管理；未发现卖家公开搜索全平台 Custom Quotes 的入口 | 只有真实 Business/Professional 账号且功能开放后才能继续，公开页面不计采购数据 |
+| Amazon Business | 只访问过 RFQ 说明页，0 条数据 | 未发现卖家搜索全平台 Custom Quotes 的公开 SP-API | 已有 Professional Seller 且功能开放后再评估 |
 
 ### C. 已发现或试探，但尚无稳定采集器
 
@@ -61,12 +59,14 @@
 |---|---|---|
 | ExportHub | 搜索索引发现过 RFQ 线索 | 源站 Cloudflare 403，未形成稳定详情采集器 |
 | FreshDI | 搜索索引发现过买家公司/需求线索 | 源站 403，当前记录仍需源站补证 |
-| Global Trade Plaza | Playwright 访问买家线索页和指定抹茶 lead | 两条官方入口均进入 Cloudflare 安全验证并返回 403；停止，不绕过 |
-| ConnectAmericas | Playwright 访问 tea 商机详情 | 官方源站返回 403；搜索索引文本不作为源站已验证机会 |
-| TradeFord | Playwright 访问 importer 专用入口 | Cloudflare 安全验证 403；停止，不绕过 |
-| eWorldTrade | Playwright 访问 importer 入口 | 当前域名展示美国执法机构查封页，来源标记为不可用 |
-| UN Global Marketplace | 公开页面 XHR 采集器已写并真实试跑 | Matcha 1 次、Tea 4 次搜索均 HTTP 200；精准关键词 0 条，当前不能计作采购机会 |
-| USDA AMS Solicitations | Playwright 访问官方 Solicitations 与 Vendor 页面 | 两个官方页面均由 CDN 返回 Access Denied 403；停止，不绕过 |
+| Global Trade Plaza | 建立来源登记 | Cloudflare 403，未采集 |
+| ConnectAmericas | 建立来源登记 | 需要进一步验证公开详情和账号边界 |
+| TradeFord | 建立来源登记 | 页面质量和阻断情况尚未通过验收 |
+| eWorldTrade | 建立来源登记 | 尚未开发和运行采集器 |
+| HKTDC Sourcing | 建立来源登记 | 需要账号/公开边界验证 |
+| UN Global Marketplace | 建立来源登记 | 尚未接公开搜索或 OAuth API |
+| JETRO Business Matching | 建立来源登记 | 日本业务撮合入口，尚未形成采集器 |
+| USDA AMS Solicitations | 已发现官方采购文档入口 | 尚未开发文档/附件采集器 |
 | ImportYeti | 只访问首页，0 条贸易记录 | 尚未实现具体公司/产品搜索采集器 |
 | Sysco Supplier Portal | 页面抓取 HTTP 200，但解析 0 条 | 静态正文不足，尚未做动态页面适配 |
 | Target / Whole Foods / Kroger / Costco | 仅列入独立零售采购入口 | 尚未开发；即使采集也只能算采购渠道，不算当前需求 |
@@ -85,7 +85,7 @@
 |---:|---|---|
 | P0 | 稳定 TradeKey、go4WorldBusiness、TradeWheel、EC21 | 已有真实数据，继续扩量成本最低 |
 | P0 | 保持 SAM、TED、USAspending API 定时运行 | 官方证据强，可作为四维验真的交叉证据 |
-| P0 | 稳定 Alibaba 公开 RFQ 采集，并择机办理 ICBU API 权限 | 公开页已经能取需求证据；API 用于提高稳定性，报价仍需真实供应商账号 |
+| P0 | 办理 Alibaba ICBU RFQ 权限 | 能直接获得平台 RFQ，是最重要的账号型缺口 |
 | P1 | 接通 Volza/Trademo | 用真实贸易记录证明买家“确实买过/近期在买” |
 | P1 | 接通 Apollo 后只补 A/B 级买家 | 控制 credits，补全公司和决策人 |
 | P1 | 用 Clay 承接最终 A/B 级机会 | Clay 是编排出口，不是原始买家需求来源 |
@@ -96,5 +96,5 @@
 
 - **已实现采集**不等于数据全部合格：EC21 和 SAM 已跑通，但当前五品类精准结果很少。
 - **尚未连 API**不等于没有代码：Trademo、Volza、Apollo、Clay 已有连接器，但没有凭据，不能宣称 `HEALTHY`。
-- **公开页面采集有明确边界**：Alibaba 已取得公开 RFQ 列表和详情字段，但报价、联系人解锁仍要求真实登录；Amazon、ImportYeti 仍只有说明页/首页，不能计作有效需求。
+- **公开说明页可访问**不等于采到需求：Alibaba、Amazon、ImportYeti 的说明页/首页均为 0 条有效记录。
 - **买家目录/供应商入口**不等于采购需求：必须与 RFQ、招标公告、近期贸易记录分层保存。

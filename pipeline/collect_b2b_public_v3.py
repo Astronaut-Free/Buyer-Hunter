@@ -21,8 +21,6 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from parser_quality_v1_1 import extract_go4worldbusiness_card, extract_tradekey_card
-
 
 USER_AGENT = "BuyerHunterDemo/1.0 (+public-data-research; contact: repository-owner)"
 TRANSIENT = {429, 500, 502, 503, 504}
@@ -101,14 +99,17 @@ def parse_tradekey(html: bytes, listing_url: str) -> list[dict]:
         if not anchor:
             continue
         text = clean_text(card.get_text(" ", strip=True))
-        fields = extract_tradekey_card(card)
+        date_match = re.search(r"Posted\s+on\s*:\s*(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})", text, re.I)
         rows.append({
             "source_url": clean_text(anchor.get("href", "")),
             "listing_url": listing_url,
             "title": clean_text(anchor.get_text(" ", strip=True)),
             "description_raw": text[:4000],
+            "buyer_country_raw": None,
+            "buyer_name_raw": None,
+            "published_at_raw": date_match.group(1) if date_match else None,
+            "quantity_raw": None,
             "contact_gate": "platform_login_or_membership",
-            **fields,
         })
     return rows
 
@@ -121,14 +122,20 @@ def parse_go4worldbusiness(html: bytes, listing_url: str) -> list[dict]:
         if not anchor:
             continue
         text = clean_text(card.get_text(" ", strip=True))
-        fields = extract_go4worldbusiness_card(card)
+        country = COUNTRY_RE.search(text)
+        quantity = QUANTITY_RE.search(str(card))
+        date_match = DATE_RE.search(text)
+        contact = re.search(r"\bContact\s*:\s*([A-Za-z][A-Za-z .'-]{1,80})", text, re.I)
         rows.append({
             "source_url": urljoin(listing_url, anchor.get("href", "")),
             "listing_url": listing_url,
             "title": clean_text(anchor.get_text(" ", strip=True)),
             "description_raw": text[:4000],
+            "buyer_country_raw": clean_text(country.group(1)) if country else None,
+            "buyer_name_raw": clean_text(contact.group(1)) if contact else None,
+            "published_at_raw": date_match.group(1) if date_match else None,
+            "quantity_raw": clean_text(quantity.group(1)) if quantity else None,
             "contact_gate": "platform_login_or_membership",
-            **fields,
         })
     return rows
 
@@ -200,7 +207,7 @@ def main() -> int:
                 "category_code": category,
                 "record_kind": "DIRECT_BUY_REQUIREMENT" if demand_ok else "REJECTED_SELLER_OR_UNCLEAR",
                 "exact_product_match": product_ok,
-                "published_at": row.get("published_at") or parse_date(row["published_at_raw"]),
+                "published_at": parse_date(row["published_at_raw"]),
                 "observed_at": observed_at,
                 "snapshot_sha256": digest,
                 "snapshot_path": str(snapshot_path) if snapshot_path else None,
@@ -228,9 +235,8 @@ def main() -> int:
 
     columns = [
         "source_code", "category_code", "record_kind", "exact_product_match",
-        "qualification_status", "title", "description_raw", "buyer_name_raw", "buyer_name_span",
-        "contact_person_raw", "contact_person_span", "buyer_country_raw", "buyer_country_span",
-        "quantity_raw", "quantity_span", "published_at_raw", "published_at", "published_at_span",
+        "qualification_status", "title", "description_raw", "buyer_name_raw",
+        "buyer_country_raw", "quantity_raw", "published_at_raw", "published_at",
         "contact_gate", "source_url", "listing_url", "verification_status",
         "observed_at", "snapshot_sha256", "snapshot_path", "data_mode",
     ]
