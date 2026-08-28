@@ -42,3 +42,15 @@ GET    /api/crm/opportunities?stage=waiting_reply
 ```
 
 统一返回建议包含 `id`、`status`、`updated_at`；匹配结果保留 `fit_score`、`intent_score`、`conversation_score`、`evidence_score`、`decision` 和 `reasons`。证据接口必须区分 `facts`（原文事实）、`inferences`（AI 推断）和 `recommendations`（行动建议），避免把推断误认为事实。
+
+## DeepSeek Agent 服务
+
+目录中的 `server/index.js` 是可运行的 Node.js API 骨架，使用 DeepSeek OpenAI 兼容接口。启动方式：
+
+```bash
+cp .env.example .env
+# 在 .env 中填写 DEEPSEEK_API_KEY
+npm start
+```
+
+可用接口：`POST /api/agent/parse-demand`、`/qualify-buyer`、`/draft-reply`、`/match-explain`、`/handoff-summary`，以及 `GET /api/health`。没有配置 Key 时，解析、草稿和解释接口会返回安全的规则兜底；不会把 Key 暴露给浏览器。
