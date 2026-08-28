@@ -1,53 +1,52 @@
 ---
 name: buyer-hunter-deal-action
 description: >-
-  综合采购窗口、供需匹配、市场准入、联系方式和缺口，生成可执行的成交路径、触达策略及跟进节点。只在上游证据和门禁状态允许时给出行动。
+  综合采购窗口、Buyer Buying Profile、真实 Seller×SKU 匹配、市场准入、公开响应渠道和缺口，生成可执行的机会决策、触达路径及高价值全球采购商机简报。只在上游证据和门禁允许时给出行动。
 ---
 
-# 成交路径与行动判断
+# 成交行动与商机简报
 
-把已完成的机会判断转换为销售今天能执行的动作，更新 Opportunity 的 `deal_action`。联系方式属于执行资源，不是机会价值本身。
+把已完成的判断转换为销售今天能执行的动作。联系方式是执行资源，机会价值来自“现在追谁、为什么、能不能做、下一步做什么”。
 
 ## 前置输入
 
-- `buying_window.window_score`、状态与 Why Now
-- `seller_fit.fit_score`、硬缺口和软缺口
-- `market_access.access_status`、风险与所需文件
-- 已验证的联系人或官方采购渠道
-- 预算、截止时间、交期及待确认问题
+- Current Demand、`demand_confidence`、买家身份状态
+- Buyer Buying Profile 及每项事实层级
+- 采购窗口、交易阶段、Why Now 与反证
+- 实际入围 Seller×SKU、硬缺口和软缺口
+- 市场准入状态、风险项、公开采购/响应渠道
 
-任一前置结果缺失时，不得假装已完成全链路判断。
+前置结果缺失时保留待核验项，不得假装全链路已完成。
 
-## 行动路由
+## 决策状态
 
-- `QUOTE_NOW`: 条件明确且可报价
-- `ASK_SPEC_FIRST`: 关键规格未明确
-- `SEND_SAMPLE`: 样品验证是合理下一步
-- `SECOND_SOURCE_ENTRY`: 存在第二供应源切入信号
-- `FIX_COMPLIANCE`: 先补认证、检测或文件
-- `FOLLOW_UP_LATER`: 窗口尚未打开或需等待
-- `HOLD`: 风险或缺口不支持投入
+- `PURSUE_NOW`: 时机、匹配和准入支持立即投入
+- `VERIFY_FIRST`: 机会有价值，但报价/触达前需补关键核验
+- `WATCH`: 暂不投入，按明确时间或事件复核
+- `PASS`: 窗口关闭或存在不可接受硬阻断
 
-## 输出
+## 行动输出
 
 - `primary_action`、`secondary_action`
-- `action_reasoning`: 引用上游事实与判断，不引入新事实
-- `contact_strategy`: 渠道、对象、目标和所需材料
-- `message_drafts`: 按要求生成中文、英文或日文草稿
-- `follow_up`: 下一节点、时间、成功条件和停止条件
-- `required_assets`、`owner`、`human_approval_required`
+- `action_reasoning`: 只引用上游事实和判断
+- `contact_strategy`: 公开渠道、对象、目标、材料和待确认问题
+- `follow_up`: 时间、负责人、成功条件和停止条件
+- `required_assets`、`human_approval_required`
 
-文案中未知字段必须留为占位或提问，不得虚构价格、认证、交期、公司身份或联系人。
+Buyer Buying Profile 用于调整规格提问、样品、包装和跟进节奏；推断不得写成买家已确认事实。
 
-## 判断边界
+## 全球采购商机简报
 
-- 允许：行动排序、触达策略、沟通草稿和跟进计划。
-- 禁止：绕过 `BLOCK`；使用未验证私人联系方式；代表用户实际发送消息、报价或承诺，除非用户另行明确授权。
+对高价值机会生成 2–3 页 PDF 数据包，至少包含：
 
-## 完成条件
+1. 商机摘要、决策状态、为什么现在和证据链
+2. 当前需求、Buyer Buying Profile、身份状态与公开响应渠道
+3. 入围 Seller×SKU、硬/软缺口、市场准入风险和下一步行动
 
-- 第一行动可在当前条件下直接执行，且有成功/停止标准。
-- `BLOCK` 优先路由至 `FIX_COMPLIANCE` 或 `HOLD`。
-- 所有文案清晰区分事实、条件和待确认问题。
+PDF 必须标注生成时间、数据模式、未知项和证据 URL；身份未确认时显示“待核验”，不得补造公司名称。
 
-API 输出字段参考 `contracts/opportunity-decision-api-v1.yaml`。
+## 边界与完成条件
+
+- 不绕过 `BLOCK`，不使用未授权私人联系方式，不自动发送消息、报价或承诺。
+- 第一行动可执行且有成功/停止标准。
+- 高价值简报中的事实均可回溯，推断与未知明确标注。

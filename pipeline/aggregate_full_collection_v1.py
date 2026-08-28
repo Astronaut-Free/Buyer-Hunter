@@ -16,11 +16,14 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
+from clean_and_score_buyer_signals_v1 import clean_row
+
 
 ROOT = Path(__file__).resolve().parent
 TODAY = date.today()
 CURRENT_ROLES = {"DIRECT_RFQ", "OFFICIAL_PROCUREMENT"}
 SUPPORTING_ROLES = {"HISTORICAL_PURCHASE", "BUYER_BACKGROUND", "PROCUREMENT_ENTRY"}
+QUALIFIED_STATUSES = {"FORMALLY_QUALIFIED", "QUALIFIED_PENDING_ENTITY"}
 ISO3_TO_ISO2 = {
     "BEL": "BE", "FRA": "FR", "HRV": "HR", "HUN": "HU",
     "NLD": "NL", "POL": "PL", "ROU": "RO",
@@ -160,17 +163,76 @@ def base_record(**values) -> dict:
         "product_match": False,
         "timely": False,
         "entity_resolved": False,
+        "account_holder_type": "UNKNOWN",
+        "business_context_status": "UNCONFIRMED",
+        "buyer_entity_status": "UNRESOLVED",
+        "buyer_identity_status": "UNRESOLVED",
         "quality_status": "REJECTED",
         "quality_reason": None,
+        "d1_demand_explicitness": None,
+        "d2_account_business_context": None,
+        "d2_entity_authenticity": None,
+        "d3_recency": None,
+        "d4_corroboration": None,
         "truth_score": None,
         "truth_level": None,
     }
     row.update(values)
+    if row["entity_resolved"]:
+        row["buyer_entity_status"] = "CONFIRMED"
+        row["buyer_identity_status"] = "LEGAL_VERIFIED" if row.get("source_role") == "OFFICIAL_PROCUREMENT" else "DOMAIN_LINKED"
+    if row["buyer_name_raw"]:
+        row["account_holder_type"] = "ORGANIZATION"
+    elif row["contact_person_raw"]:
+        row["account_holder_type"] = "PERSON_OR_AGENT"
+        row["buyer_identity_status"] = "PLATFORM_ACCOUNT" if row.get("source_url") else "PERSON_ONLY"
+    if row["quality_status"] in QUALIFIED_STATUSES:
+        row["business_context_status"] = "CONFIRMED"
+    elif row["quality_status"] == "SUPPORTING_EVIDENCE":
+        row["business_context_status"] = "SUPPORTING_ONLY"
     row["record_id"] = row["record_id"] or hashlib.sha256(
         f"{row['source_code']}|{row['source_url']}|{row['title']}".encode("utf-8")
     ).hexdigest()[:32]
     return row
 
+
+def score_missing_truth(rows: list[dict]) -> None:
+    """Run the shared four-dimension truth model for qualified public RFQs."""
+    for row in rows:
+        if row.get("quality_status") not in QUALIFIED_STATUSES or text(row.get("truth_score")):
+            continue
+        scored = clean_row(
+            {
+                "source_code": row.get("source_code"),
+                "category_code": row.get("category_code"),
+                "title": row.get("title"),
+                "description_raw": row.get("description_raw"),
+                "source_url": row.get("source_url"),
+                "observed_at": row.get("observed_at"),
+                "published_at": row.get("published_at"),
+                "buyer_country_raw": row.get("buyer_country_raw"),
+                "buyer_name_raw": row.get("buyer_name_raw"),
+                "contact_person_raw": row.get("contact_person_raw"),
+                "quantity_raw": row.get("quantity_raw"),
+                "record_kind": "DIRECT_BUY_REQUIREMENT",
+                "contact_gate": "platform_public_response",
+                "verification_status": row.get("verification_status"),
+                "data_mode": "LIVE",
+            },
+            TODAY,
+        )
+        for field in (
+            "d1_demand_explicitness", "d2_account_business_context", "d2_entity_authenticity", "d3_recency",
+            "d4_corroboration", "truth_score", "truth_level",
+        ):
+            row[field] = scored.get(field)
+        if scored.get("truth_level") not in {"A", "B"}:
+            row["quality_status"] = "NEEDS_VERIFICATION"
+            row["business_context_status"] = "UNCONFIRMED"
+        row["quality_reason"] = (
+            f"four-dimension truth={scored.get('truth_level')} score={scored.get('truth_score')}; "
+            f"{row.get('quality_reason') or ''}"
+        ).strip()
 
 def normalize_b2b(run: Path) -> tuple[list[dict], dict[str, int]]:
     cleaned = read_csv(run / "cleaned_v1" / "buyer_signals_cleaned_scored.csv")
@@ -178,7 +240,7 @@ def normalize_b2b(run: Path) -> tuple[list[dict], dict[str, int]]:
     raw_counts = Counter(row.get("source_code") for row in raw)
     out = []
     for row in cleaned:
-        useful = row.get("truth_level") in {"A", "B"}
+        useful = row.get("qualification_status") in QUALIFIED_STATUSES | {"QUALIFIED"}
         resolved = row.get("entity_resolution_status") == "RESOLVED"
         out.append(base_record(
             record_id=row.get("signal_id"), source_code=row.get("source_code"),
@@ -190,8 +252,13 @@ def normalize_b2b(run: Path) -> tuple[list[dict], dict[str, int]]:
             source_url=row.get("evidence_url"), observed_at=row.get("observed_at"),
             verification_status=row.get("verification_status"), product_match=True,
             timely=(row.get("d3_recency") or "0") != "0", entity_resolved=resolved,
-            quality_status="FORMALLY_QUALIFIED" if useful and resolved else "USEFUL_NEEDS_ENTITY" if useful else row.get("qualification_status") or "REJECTED",
+            quality_status="FORMALLY_QUALIFIED" if useful and resolved else "QUALIFIED_PENDING_ENTITY" if useful else row.get("qualification_status") or "REJECTED",
             quality_reason=f"truth={row.get('truth_level')} score={row.get('truth_score')}",
+            buyer_identity_status=row.get("buyer_identity_status"),
+            d1_demand_explicitness=row.get("d1_demand_explicitness"),
+            d2_account_business_context=row.get("d2_account_business_context"),
+            d2_entity_authenticity=row.get("d2_entity_authenticity"),
+            d3_recency=row.get("d3_recency"), d4_corroboration=row.get("d4_corroboration"),
             truth_score=row.get("truth_score"), truth_level=row.get("truth_level"),
         ))
     return out, dict(raw_counts)
@@ -216,7 +283,7 @@ def normalize_alibaba(run: Path) -> tuple[list[dict], int]:
             buyer_country_raw=row.get("buyer_country_raw"), quantity_raw=" ".join(filter(None, [row.get("quantity_raw"), row.get("quantity_unit_raw")])),
             published_at=published, source_url=row.get("source_url"), observed_at=row.get("observed_at"),
             verification_status=row.get("verification_status"), product_match=product, timely=timely,
-            quality_status="USEFUL_NEEDS_ENTITY" if useful else "REJECTED_OR_STALE",
+            quality_status="QUALIFIED_PENDING_ENTITY" if useful else "REJECTED_OR_STALE",
             quality_reason="public Alibaba RFQ; buyer value is a contact person, not a resolved company",
         ))
     return out, len(all_rows)
@@ -239,7 +306,7 @@ def normalize_ec21(run: Path | None) -> tuple[list[dict], int]:
             source_url=row.get("source_url"), observed_at=row.get("observed_at"),
             verification_status=row.get("verification_status"), product_match=product,
             timely=row.get("age_days", "").isdigit() and int(row["age_days"]) <= 365,
-            quality_status="USEFUL_NEEDS_ENTITY" if useful else row.get("qualification_status") or "REJECTED",
+            quality_status="QUALIFIED_PENDING_ENTITY" if useful else row.get("qualification_status") or "REJECTED",
             quality_reason=row.get("qualification_reason_zh"),
         ))
     return out, len(rows)
@@ -312,8 +379,8 @@ def normalize_samples(run: Path) -> tuple[list[dict], dict[str, int]]:
                 source_code="tradewheel", source_role="DIRECT_RFQ", category_code=category,
                 title=row.get("title"), description_raw=row.get("description_raw"), contact_person_raw=buyer,
                 buyer_country_code="US", buyer_country_raw="United States", quantity_raw=row.get("quantity_raw"),
-                published_at=published, source_url=row.get("source_url"), verification_status=row.get("verification_status"),
-                product_match=product, timely=timely, quality_status="USEFUL_NEEDS_ENTITY" if useful else "REJECTED_PRODUCT_OR_STALE",
+                published_at=published, source_url=row.get("source_url"), observed_at=row.get("observed_at"), verification_status=row.get("verification_status"),
+                product_match=product, timely=timely, quality_status="QUALIFIED_PENDING_ENTITY" if useful else "REJECTED_PRODUCT_OR_STALE",
                 quality_reason="public TradeWheel buyer post; company identity remains gated",
             ))
         elif source == "usaspending":
@@ -338,7 +405,7 @@ def normalize_samples(run: Path) -> tuple[list[dict], dict[str, int]]:
 
 def dedupe(rows: list[dict]) -> list[dict]:
     winners = {}
-    rank = {"FORMALLY_QUALIFIED": 4, "USEFUL_NEEDS_ENTITY": 3, "SUPPORTING_EVIDENCE": 2}
+    rank = {"FORMALLY_QUALIFIED": 4, "QUALIFIED_PENDING_ENTITY": 3, "SUPPORTING_EVIDENCE": 2}
     for row in rows:
         # API query endpoints can be shared by many distinct records (for
         # example USAspending). Collector-stable record IDs are therefore the
@@ -389,9 +456,11 @@ def main() -> int:
     for source, count in counts.items():
         raw_counts["tradewheel" if source == "tradewheel_matcha_blueberry_us" else source] = count
 
+    score_missing_truth(rows)
     deduped = dedupe(rows)
-    useful = [row for row in deduped if row["quality_status"] in {"FORMALLY_QUALIFIED", "USEFUL_NEEDS_ENTITY"}]
+    useful = [row for row in deduped if row["quality_status"] in {"FORMALLY_QUALIFIED", "QUALIFIED_PENDING_ENTITY"}]
     formal = [row for row in useful if row["quality_status"] == "FORMALLY_QUALIFIED"]
+    pending = [row for row in useful if row["quality_status"] == "QUALIFIED_PENDING_ENTITY"]
     supporting = [row for row in deduped if row["quality_status"] == "SUPPORTING_EVIDENCE"]
 
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -401,6 +470,7 @@ def main() -> int:
     write_csv(output / "all_platform_records_cleaned.csv", deduped, columns)
     write_csv(output / "useful_current_opportunities.csv", useful, columns)
     write_csv(output / "formally_qualified_opportunities.csv", formal, columns)
+    write_csv(output / "qualified_pending_entity_opportunities.csv", pending, columns)
     write_csv(output / "supporting_evidence.csv", supporting, columns)
 
     grouped = defaultdict(list)
@@ -414,8 +484,9 @@ def main() -> int:
             "source_code": source,
             "fetched_raw_count": raw_counts.get(source, 0),
             "cleaned_unique_count": len(items),
-            "useful_current_count": sum(row["quality_status"] in {"FORMALLY_QUALIFIED", "USEFUL_NEEDS_ENTITY"} for row in items),
+            "useful_current_count": sum(row["quality_status"] in {"FORMALLY_QUALIFIED", "QUALIFIED_PENDING_ENTITY"} for row in items),
             "formally_qualified_count": sum(row["quality_status"] == "FORMALLY_QUALIFIED" for row in items),
+            "qualified_pending_entity_count": sum(row["quality_status"] == "QUALIFIED_PENDING_ENTITY" for row in items),
             "supporting_evidence_count": sum(row["quality_status"] == "SUPPORTING_EVIDENCE" for row in items),
         })
     write_csv(output / "platform_summary.csv", platform_rows, list(platform_rows[0]))
@@ -425,6 +496,7 @@ def main() -> int:
         "input_runs": {name: str(path) if path else None for name, path in runs.items()},
         "definitions": {
             "useful_current": "current direct RFQ or official procurement with strict product match and traceable source",
+            "qualified_pending_entity": "useful current commercial demand allowed into ranking while the represented legal buyer entity remains unresolved",
             "formally_qualified": "useful current demand plus resolved legal/official buyer entity",
             "supporting_evidence": "historical purchase, buyer background, or procurement entry; not counted as current demand",
         },
@@ -433,7 +505,7 @@ def main() -> int:
         "cleaned_unique_count": len(deduped),
         "useful_current_count": len(useful),
         "formally_qualified_count": len(formal),
-        "useful_needs_entity_count": len(useful) - len(formal),
+        "qualified_pending_entity_count": len(pending),
         "supporting_evidence_count": len(supporting),
         "rejected_or_stale_count": len(deduped) - len(useful) - len(supporting),
         "counts_by_quality_status": dict(Counter(row["quality_status"] for row in deduped)),

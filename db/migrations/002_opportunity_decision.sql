@@ -1,7 +1,7 @@
 PRAGMA foreign_keys = ON;
 
--- Immutable decision snapshots. Existing opportunity rows remain workflow
--- containers; each ruleset run writes a new auditable decision.
+-- Immutable, auditable phase-1 decision snapshots. Truth is a front gate;
+-- component columns implement the 30/30/20/10/10 opportunity model.
 CREATE TABLE IF NOT EXISTS opportunity_decision (
   id TEXT PRIMARY KEY,
   opportunity_id TEXT NOT NULL,
@@ -14,11 +14,9 @@ CREATE TABLE IF NOT EXISTS opportunity_decision (
   opportunity_score REAL NOT NULL CHECK (opportunity_score BETWEEN 0 AND 100),
   timing_score REAL NOT NULL CHECK (timing_score BETWEEN 0 AND 100),
   seller_fit_score REAL NOT NULL CHECK (seller_fit_score BETWEEN 0 AND 100),
-  buyer_strength_score REAL NOT NULL CHECK (buyer_strength_score BETWEEN 0 AND 100),
-  commercial_value_score REAL NOT NULL CHECK (commercial_value_score BETWEEN 0 AND 100),
-  market_readiness_score REAL NOT NULL CHECK (market_readiness_score BETWEEN 0 AND 100),
-  actionability_score REAL NOT NULL CHECK (actionability_score BETWEEN 0 AND 100),
-  risk_penalty REAL NOT NULL CHECK (risk_penalty BETWEEN 0 AND 30),
+  commercial_execution_score REAL NOT NULL CHECK (commercial_execution_score BETWEEN 0 AND 100),
+  procurement_channel_actionability_score REAL NOT NULL CHECK (procurement_channel_actionability_score BETWEEN 0 AND 100),
+  market_access_score REAL NOT NULL CHECK (market_access_score BETWEEN 0 AND 100),
   why_now_json TEXT NOT NULL CHECK (json_valid(why_now_json)),
   gaps_json TEXT NOT NULL CHECK (json_valid(gaps_json)),
   blockers_json TEXT NOT NULL CHECK (json_valid(blockers_json)),
@@ -34,7 +32,6 @@ CREATE TABLE IF NOT EXISTS opportunity_decision (
 CREATE INDEX IF NOT EXISTS idx_opportunity_decision_today
 ON opportunity_decision(decision_date, decision_status, rank_position, opportunity_score DESC);
 
--- Decision entitlement and contact credits are separate commercial objects.
 CREATE TABLE IF NOT EXISTS decision_entitlement (
   id TEXT PRIMARY KEY,
   subscription_id TEXT NOT NULL,

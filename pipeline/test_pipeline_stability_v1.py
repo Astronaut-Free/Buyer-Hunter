@@ -72,11 +72,14 @@ class CleaningAndTruthTests(unittest.TestCase):
         self.assertEqual(first["quantity_raw"], "500 Kilograms")
         self.assertEqual(first["published_at"], "2026-08-27")
         self.assertEqual(first["d1_demand_explicitness"], 35)
+        self.assertEqual(first["d2_account_business_context"], 25)
         self.assertEqual(first["d2_entity_authenticity"], 5)
         self.assertEqual(first["d3_recency"], 25)
         self.assertEqual(first["d4_corroboration"], 4)
-        self.assertEqual(first["truth_score"], 69)
-        self.assertEqual(first["truth_level"], "B")
+        self.assertEqual(first["truth_score"], 89)
+        self.assertEqual(first["truth_level"], "A")
+        self.assertEqual(first["buyer_identity_status"], "PLATFORM_ACCOUNT")
+        self.assertEqual(first["buyer_entity_status"], "UNRESOLVED")
 
     def test_broad_tea_page_does_not_accept_unrelated_product(self):
         self.assertFalse(cleaner.product_matches("TEA", "Import Inquiry: Turmeric", "Buyer Of Tea"))

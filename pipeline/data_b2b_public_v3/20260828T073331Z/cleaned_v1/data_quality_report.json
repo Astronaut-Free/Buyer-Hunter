@@ -1,30 +1,34 @@
 {
-  "input": "pipeline\\data_b2b_public_v3\\20260828T073331Z\\B2B公开渠道_待清洗候选.csv",
+  "input": "pipeline\\data_b2b_public_v3\\20260828T073331Z\\B2B公开渠道_全量.csv",
   "grain": "one deduplicated public buyer-demand signal per category/title/country/buyer fingerprint",
-  "raw_count": 59,
-  "deduplicated_count": 58,
+  "raw_count": 85,
+  "deduplicated_count": 84,
   "duplicate_rows_removed": 1,
-  "qualified_count": 0,
-  "demand_quality_pass_count": 15,
+  "qualified_count": 42,
+  "formally_qualified_count": 0,
+  "qualified_pending_entity_count": 42,
+  "demand_quality_pass_count": 45,
   "entity_resolved_count": 0,
   "levels": {
-    "B": 15,
-    "C": 33,
-    "D": 10
+    "A": 17,
+    "B": 28,
+    "C": 18,
+    "D": 21
   },
   "statuses": {
-    "NEEDS_VERIFICATION": 42,
-    "REJECT_NOT_DIRECT_REQUIREMENT": 9,
+    "QUALIFIED_PENDING_ENTITY": 42,
+    "REJECT_NOT_DIRECT_REQUIREMENT": 33,
     "BACKGROUND_OR_STALE": 6,
-    "WEAK_SIGNAL": 1
+    "NEEDS_VERIFICATION": 3
   },
   "sources": {
-    "go4worldbusiness": 35,
-    "tradekey": 23
+    "go4worldbusiness": 59,
+    "tradekey": 25
   },
   "categories": {
-    "CHILI": 16,
-    "TEA": 42
+    "CHILI": 19,
+    "TEA": 45,
+    "ROSA_ROXBURGHII": 20
   },
   "required_field_null_rates": {
     "evidence_url": 0.0,
@@ -32,13 +36,13 @@
     "evidence_excerpt": 0.0,
     "category_code": 0.0,
     "published_at": 0.0,
-    "buyer_country_code": 0.0,
+    "buyer_country_code": 0.0952,
     "buyer_name_raw": 1.0,
-    "contact_person_raw": 0.3966
+    "contact_person_raw": 0.2976
   },
   "hard_gate_failure_count": 0,
   "future_date_count": 0,
   "invalid_quantity_count": 0,
-  "buyer_identity_coverage_rate": 0.6034,
+  "buyer_identity_coverage_rate": 0.7024,
   "ruleset_version": "truth-v1.1.0"
 }

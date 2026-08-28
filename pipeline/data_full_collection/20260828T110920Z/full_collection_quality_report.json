@@ -1,0 +1,161 @@
+{
+  "run_id": "20260828T110920Z",
+  "input_runs": {
+    "b2b": "E:\\贵客松-买家猎手\\pipeline\\data_b2b_public_v3\\20260828T073331Z",
+    "alibaba": "E:\\贵客松-买家猎手\\pipeline\\data_alibaba_public\\20260828T080253Z",
+    "ec21": "E:\\贵客松-买家猎手\\pipeline\\data_ec21_regions\\20260828T080531Z",
+    "ted": "E:\\贵客松-买家猎手\\pipeline\\data_ted\\20260828T080243Z",
+    "sam": "E:\\贵客松-买家猎手\\pipeline\\data_sam_precise\\20260828T080533Z",
+    "ungm": "E:\\贵客松-买家猎手\\pipeline\\data_ungm\\20260828T080251Z",
+    "samples": "E:\\贵客松-买家猎手\\pipeline\\data_v2\\20260828T080244Z"
+  },
+  "definitions": {
+    "useful_current": "current direct RFQ or official procurement with strict product match and traceable source",
+    "qualified_pending_entity": "useful current commercial demand allowed into ranking while the represented legal buyer entity remains unresolved",
+    "formally_qualified": "useful current demand plus resolved legal/official buyer entity",
+    "supporting_evidence": "historical purchase, buyer background, or procurement entry; not counted as current demand"
+  },
+  "fetched_raw_count": 323,
+  "normalized_before_dedupe_count": 210,
+  "cleaned_unique_count": 210,
+  "useful_current_count": 51,
+  "formally_qualified_count": 0,
+  "qualified_pending_entity_count": 51,
+  "supporting_evidence_count": 24,
+  "rejected_or_stale_count": 135,
+  "counts_by_quality_status": {
+    "QUALIFIED_PENDING_ENTITY": 51,
+    "REJECT_NOT_DIRECT_REQUIREMENT": 33,
+    "BACKGROUND_OR_STALE": 6,
+    "NEEDS_VERIFICATION": 9,
+    "WATCHLIST_STALE": 39,
+    "GAP_ORIGIN_REQUIREMENT": 2,
+    "REJECT_SELLER_OR_UNCLEAR": 14,
+    "REJECT_PRODUCT_MISMATCH": 14,
+    "REJECTED_OR_STALE": 13,
+    "SUPPORTING_EVIDENCE": 24,
+    "REJECTED_PRODUCT_OR_STALE": 5
+  },
+  "counts_by_source_role": {
+    "DIRECT_RFQ": 173,
+    "OFFICIAL_PROCUREMENT": 26,
+    "HISTORICAL_PURCHASE": 10,
+    "BUYER_BACKGROUND": 1
+  },
+  "counts_by_category_useful": {
+    "CHILI": 9,
+    "TEA": 36,
+    "BLUEBERRY": 1,
+    "MATCHA": 5
+  },
+  "platform_summary": [
+    {
+      "source_code": "alibaba_rfq",
+      "fetched_raw_count": 123,
+      "cleaned_unique_count": 11,
+      "useful_current_count": 6,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 6,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "amazon_business_rfq",
+      "fetched_raw_count": 0,
+      "cleaned_unique_count": 0,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "ec21",
+      "fetched_raw_count": 69,
+      "cleaned_unique_count": 69,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "go4worldbusiness",
+      "fetched_raw_count": 60,
+      "cleaned_unique_count": 59,
+      "useful_current_count": 23,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 23,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "importyeti",
+      "fetched_raw_count": 0,
+      "cleaned_unique_count": 0,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "independent_buyer_sites",
+      "fetched_raw_count": 1,
+      "cleaned_unique_count": 1,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 1
+    },
+    {
+      "source_code": "sam_gov",
+      "fetched_raw_count": 0,
+      "cleaned_unique_count": 0,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "ted_eu",
+      "fetched_raw_count": 26,
+      "cleaned_unique_count": 26,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 13
+    },
+    {
+      "source_code": "tradekey",
+      "fetched_raw_count": 25,
+      "cleaned_unique_count": 25,
+      "useful_current_count": 19,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 19,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "tradewheel",
+      "fetched_raw_count": 9,
+      "cleaned_unique_count": 9,
+      "useful_current_count": 3,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 3,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "ungm",
+      "fetched_raw_count": 0,
+      "cleaned_unique_count": 0,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 0
+    },
+    {
+      "source_code": "usaspending",
+      "fetched_raw_count": 10,
+      "cleaned_unique_count": 10,
+      "useful_current_count": 0,
+      "formally_qualified_count": 0,
+      "qualified_pending_entity_count": 0,
+      "supporting_evidence_count": 10
+    }
+  ]
+}

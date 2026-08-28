@@ -12,14 +12,14 @@
 | 公开列表入口 | 9 | 9/9 HTTP 200 |
 | 原始记录 | 167 | 全部保留来源 URL 和页面快照 hash |
 | 去重后记录 | 161 | 删除 6 条同指纹重复记录 |
-| B 级可用需求 | 21 | 可进入候选排序，但仍显示公司主体缺口 |
+| B 级可用需求 | 21 | 新规则标记为 `QUALIFIED_PENDING_ENTITY`，可进入候选排序并显示公司主体缺口 |
 | C 级待核验 | 65 | 不进入 Top 5 |
 | TED 官方 API 查询 | 13 | 13/13 成功 |
 | TED 初始全文命中 | 33 | 不能直接当精准需求 |
 | TED 精准复核通过 | 18 | 均为辣椒相关食品采购公告 |
 | 稳定性自动测试 | 8 | 8/8 通过 |
 
-重要限制：B2B 平台通常公开国家、采购品、规格、数量、日期和平台联系入口，但隐藏公司名。联系人姓名不能当作法律实体，公司主体缺失时 D2 不得给公司分。
+重要限制：B2B 平台通常公开国家、采购品、规格、数量、日期和平台联系入口，但隐藏公司名。联系人姓名不能当作法律实体，公司主体缺失时 D2 不得给公司分。自 `truth-v1.1.0` 起，这类商业需求不再被主体门槛淘汰，而是进入 `QUALIFIED_PENDING_ENTITY`；主体核验后才升级为 `FORMALLY_QUALIFIED`。
 
 ## 2. 渠道分层与接入顺序
 
@@ -78,7 +78,7 @@
 | 买方主体 | `buyer_name_raw`, `contact_person_raw`, `buyer_country_code`, `buyer_domain`, `registration_id` |
 | 时间 | `published_at`, `observed_at`, `age_days`, `time_precision` |
 | 证据 | `evidence_excerpt`, `snapshot_sha256`, `verification_status`, `data_mode` |
-| 验真 | `d1_demand_explicitness`, `d2_entity_authenticity`, `d3_recency`, `d4_corroboration`, `truth_score`, `truth_level` |
+| 验真 | `d1_demand_explicitness`, `d2_account_business_context`, `d3_recency`, `d4_corroboration`, `truth_score`, `truth_level`；法定身份另用 `buyer_identity_status` / `buyer_entity_status` |
 | 治理 | `hard_gate_pass`, `qualification_status`, `dedupe_fingerprint`, `duplicate_count`, `ruleset_version` |
 
 ### 4.3 清洗原则
@@ -97,7 +97,7 @@
 | 维度 | 满分 | 固定规则 |
 |---|---:|---|
 | D1 需求明确性 | 35 | 产品 10；采购动作 10；规格 5；数量/频次 5；目的地/交付条件 5 |
-| D2 主体真实性 | 25 | 公司名 5；官网域名 7；国家/地址 5；权威主体页/注册号 5；业务关联 3 |
+| D2 账户/商业场景可信度 | 25 | 可追溯平台采购入口 10；公开账户/联系人 5；国家 5；明确采购动作 5。只证明商业场景，不证明法定公司 |
 | D3 时间有效性 | 25 | ≤7 天 25；8–30 天 18；31–90 天 8；>90 天/未知 0 |
 | D4 交叉印证 | 15 | 第二独立来源 7；90 天内重复 4；公开业务联系/采购入口 4 |
 
@@ -105,7 +105,7 @@
 
 硬门槛：`evidence_url`、`observed_at`、`evidence_excerpt` 任一缺失即拒绝；过期或未知日期只能作为背景；规格/认证硬冲突不得进入 Top 5。
 
-本轮 21 条 B 级记录的典型结构是：D1=30–35、D2=5（国家）、D3=18/25、D4=4。它们有明确产品、数量、日期和采购入口，但公司主体仍需补证，因此不能升 A。
+本轮全量统一重算后，51 条 A/B 级且资格状态合格的当前需求进入排序。D2 使用可观测的平台账户和商业场景证据；公司主体是否解析不再改变需求可信等级，而由 `QUALIFIED_PENDING_ENTITY` 与身份状态单独表达。
 
 ## 6. 数据库映射
 
@@ -160,7 +160,7 @@ Authorization: Bearer <token>
       "published_at": "2026-08-04",
       "truth_score": 69,
       "truth_level": "B",
-      "qualification_status": "QUALIFIED",
+      "qualification_status": "QUALIFIED_PENDING_ENTITY",
       "access_status": "PREVIEW"
     }
   ],

@@ -21,7 +21,8 @@
         "country_code": {"type": ["string", "null"], "pattern": "^[A-Z]{2}$"},
         "canonical_company_id": {"type": ["string", "null"]},
         "parent_company_id": {"type": ["string", "null"]},
-        "subsidiary_evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+        "subsidiary_evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "identity_status": {"enum": ["LEGAL_VERIFIED", "DOMAIN_LINKED", "PLATFORM_ACCOUNT", "PERSON_ONLY", "UNRESOLVED", null]}
       }
     },
     "demand": {
@@ -52,7 +53,7 @@
           "additionalProperties": false,
           "properties": {
             "d1_demand_explicitness": {"type": ["integer", "null"], "minimum": 0, "maximum": 35},
-            "d2_entity_authenticity": {"type": ["integer", "null"], "minimum": 0, "maximum": 25},
+            "d2_account_business_context": {"type": ["integer", "null"], "minimum": 0, "maximum": 25},
             "d3_recency": {"type": ["integer", "null"], "minimum": 0, "maximum": 25},
             "d4_corroboration": {"type": ["integer", "null"], "minimum": 0, "maximum": 15}
           }

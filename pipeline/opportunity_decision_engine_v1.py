@@ -1,8 +1,7 @@
-"""Deterministic opportunity decisions for Buyer Hunter.
+"""Deterministic seller-specific opportunity decisions for Buyer Hunter.
 
-Truth answers "is this demand credible?". Opportunity scoring answers a
-seller-specific question: "is this worth pursuing now?". Truth is therefore a
-gate and is never silently blended into the opportunity score.
+Demand truth is a front gate. Opportunity score answers whether this seller
+should pursue the demand now and contains no buyer-strength proxy.
 """
 
 from __future__ import annotations
@@ -13,15 +12,14 @@ from dataclasses import asdict, dataclass
 from typing import Any, Iterable
 
 
-RULESET_VERSION = "opportunity-v1.0.0"
+RULESET_VERSION = "opportunity-v1.1.0"
 TRUTH_GATE = 60.0
 WEIGHTS = {
-    "timing": 25.0,
-    "seller_fit": 25.0,
-    "buyer_strength": 15.0,
-    "commercial_value": 15.0,
-    "market_readiness": 10.0,
-    "actionability": 10.0,
+    "timing": 30.0,
+    "seller_fit": 30.0,
+    "commercial_execution": 20.0,
+    "procurement_channel_actionability": 10.0,
+    "market_access": 10.0,
 }
 
 
@@ -46,7 +44,6 @@ class OpportunityDecision:
     decision_status: str
     hard_gate_passed: bool
     component_scores: dict[str, float]
-    risk_penalty: float
     why_now: list[str]
     gaps: list[str]
     blockers: list[str]
@@ -124,31 +121,57 @@ def calculate_fit(matches: Iterable[MatchResult]) -> float:
     return round(achieved / total_weight * 100.0, 2)
 
 
-def timing_score(age_days: Any, window_status: str) -> float:
+def timing_score(
+    age_days: Any,
+    window_status: str,
+    explicit_urgency: bool = False,
+    transaction_stage: str = "INQUIRY",
+    continuity_signals: Iterable[str] | None = None,
+    staleness: bool = False,
+) -> float:
+    """Observable window model: recency + urgency + stage + continuity - staleness."""
     if str(window_status).upper() == "CLOSED":
         return 0.0
     try:
         age = max(0, int(age_days))
     except (TypeError, ValueError):
-        return 35.0
-    if age <= 3:
-        return 100.0
-    if age <= 7:
-        return 90.0
-    if age <= 14:
-        return 75.0
-    if age <= 30:
-        return 55.0
-    if age <= 60:
-        return 30.0
-    return 10.0
+        recency = 21.0
+    else:
+        if age <= 3:
+            recency = 60.0
+        elif age <= 7:
+            recency = 54.0
+        elif age <= 14:
+            recency = 45.0
+        elif age <= 30:
+            recency = 33.0
+        elif age <= 60:
+            recency = 18.0
+        else:
+            recency = 6.0
+
+    stage_points = {
+        "INQUIRY": 4.0,
+        "SPEC_CONFIRMATION": 8.0,
+        "SAMPLE": 10.0,
+        "TRIAL_ORDER": 12.0,
+        "BULK_RFQ": 15.0,
+        "LONG_TERM_SUPPLY": 15.0,
+    }
+    continuity = list(continuity_signals or [])
+    continuity_points = min(10.0, len(set(continuity)) * 5.0)
+    score = recency + (15.0 if explicit_urgency else 0.0)
+    score += stage_points.get(str(transaction_stage).upper(), 4.0)
+    score += continuity_points
+    score -= 20.0 if staleness else 0.0
+    return clamp(score)
 
 
-def market_readiness(matches: Iterable[MatchResult], explicit_score: Any = None) -> float:
+def market_access_score(matches: Iterable[MatchResult], explicit_score: Any = None) -> float:
     if explicit_score is not None:
         return clamp(explicit_score)
     market_items = [item for item in matches if item.requirement_type == "MARKET_ACCESS"]
-    return calculate_fit(market_items) if market_items else 50.0
+    return calculate_fit(market_items) if market_items else 35.0
 
 
 def choose_decision(score: float, blockers: list[str], gaps: list[str]) -> str:
@@ -186,10 +209,17 @@ def assess_opportunity(signal: dict[str, Any], seller_profile: dict[str, Any]) -
     matches = [compare_requirement(item, seller_profile) for item in requirements]
     truth = clamp(signal.get("truth_score"))
     fit = calculate_fit(matches)
-    window_status = str(signal.get("buying_window", {}).get("status", "UNKNOWN")).upper()
-    timing = timing_score(signal.get("age_days"), window_status)
-    market = market_readiness(matches, signal.get("market_readiness"))
-    risk_penalty = clamp(signal.get("risk_penalty"), 0.0, 30.0)
+    window = signal.get("buying_window", {})
+    window_status = str(window.get("status", "UNKNOWN")).upper()
+    timing = timing_score(
+        signal.get("age_days"),
+        window_status,
+        bool(window.get("explicit_urgency", False)),
+        str(window.get("transaction_stage", "INQUIRY")),
+        window.get("continuity_signals", []),
+        bool(window.get("staleness", False)),
+    )
+    market = market_access_score(matches, signal.get("market_access", signal.get("market_readiness")))
 
     blockers: list[str] = []
     if truth < TRUTH_GATE:
@@ -208,13 +238,12 @@ def assess_opportunity(signal: dict[str, Any], seller_profile: dict[str, Any]) -
     components = {
         "timing": timing,
         "seller_fit": fit,
-        "buyer_strength": clamp(signal.get("buyer_strength")),
-        "commercial_value": clamp(signal.get("commercial_value")),
-        "market_readiness": market,
-        "actionability": clamp(signal.get("actionability")),
+        "commercial_execution": clamp(signal.get("commercial_execution", signal.get("actionability"))),
+        "procurement_channel_actionability": clamp(signal.get("procurement_channel_actionability", 50.0)),
+        "market_access": market,
     }
     weighted = sum(components[key] * weight / 100.0 for key, weight in WEIGHTS.items())
-    score = round(max(0.0, min(100.0, weighted - risk_penalty)), 2)
+    score = round(max(0.0, min(100.0, weighted)), 2)
     decision = choose_decision(score, blockers, gaps)
 
     why_now = [str(item) for item in signal.get("why_now", []) if str(item).strip()]
@@ -231,7 +260,6 @@ def assess_opportunity(signal: dict[str, Any], seller_profile: dict[str, Any]) -
         decision_status=decision,
         hard_gate_passed=not blockers,
         component_scores=components,
-        risk_penalty=risk_penalty,
         why_now=why_now,
         gaps=gaps,
         blockers=blockers,

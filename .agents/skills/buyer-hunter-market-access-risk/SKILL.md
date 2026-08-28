@@ -1,46 +1,52 @@
 ---
 name: buyer-hunter-market-access-risk
 description: >-
-  按目的地、产品规格、认证、标签、食安和进口文件审查市场准入与风险。用于 PASS、CONDITIONAL、BLOCK 结论；法规证据不足时必须要求人工复核。
+  分离买家所在国与实际目的市场，按产品规格、认证、标签、食安、进口文件和商业冲突审查市场准入及风险，输出 PASS、CONDITIONAL 或 BLOCK。法规证据不足时要求人工复核。
 ---
 
-# 市场准入与风险判断
+# 市场准入与风险
 
-判断指定产品进入目标市场是否存在硬阻断，更新 Opportunity 的 `market_access`。法规属于高风险时效信息，必须使用当前官方来源或明确标记待核验。
+`buyer_country` 只描述买家所在地，`destination_market` 才决定进口法规。两者不得互相替代。
 
 ## 输入
 
-- 目的地国家或地区
-- 品类、用途、成分、规格、包装与标签声称
-- 卖家现有认证、检测、追溯和出口文件
-- 带发布日期、适用范围与版本的官方法规证据
+- Current Demand 的产品、用途、规格、数量、目的地、认证、包装、标签、付款和交付条件
+- 入围 Seller×SKU 的真实能力、证书和证据日期
+- 目的市场的适用法规、官方指南或人工确认记录
+- 买家身份状态和公开响应渠道
 
-## 审查维度
+## 风险项
 
-- 强制认证或许可
-- 标签、营养、原产地及功能声称
-- 农残、污染物、微生物与其他食品安全限制
-- 进口商责任、报关、检疫、检测和随附文件
-- 法规版本、过渡期和适用产品边界
+- `IDENTITY_UNKNOWN`
+- `PLATFORM_ONLY_CONTACT`
+- `QUANTITY_SUSPECT`
+- `SPECIFICATION_GAP`
+- `CERTIFICATION_GAP`
+- `MARKET_ACCESS_UNKNOWN`
+- `PAYMENT_TERM_RISK`
+- `ORIGIN_CONFLICT`
+- `DELIVERY_CONFLICT`
+
+身份未知不是自动高风险或自动 `BLOCK`。若存在平台公开响应渠道，机会可继续进入 `CONDITIONAL`，但报价或承诺前必须完成必要核验。
+
+## 处理顺序
+
+1. 明确区分买家所在国、交付地和最终目的市场；缺失时标记未知。
+2. 先查目的市场硬性要求，再比较 SKU 证书、规格、标签和文件。
+3. 审查数量、付款、原产地、交付条件与需求之间的冲突。
+4. 每个风险项记录严重度、证据、责任方、补救动作和复核时间。
+5. 只有可靠法规证据明确禁止或硬条件明确失败时输出 `BLOCK`。
 
 ## 输出
 
+- `buyer_country`、`destination_market`
 - `access_status`: `PASS | CONDITIONAL | BLOCK | UNKNOWN`
-- `risks`: 风险项、严重度、适用条件与证据
-- `required_docs`
-- `certification_gaps`
-- `official_evidence`: 官方 URL、机构、发布日期、版本和证据片段
-- `human_review_required` 与复核原因
+- `risk_items`: 风险代码、严重度、证据、原因、补救动作
+- `required_documents`、`missing_evidence`
+- `human_review_required`、`review_by`
 
-`PASS` 仅表示当前已知信息未发现硬阻断，不代表法律保证。`CONDITIONAL` 必须列出可执行的补齐条件；`BLOCK` 必须指出明确硬阻断及官方依据。
+## 边界与完成条件
 
-## 判断边界
-
-- 允许：准入门禁、合规缺口、文件清单和风险分级。
-- 禁止：无官方证据时猜法规；把行业经验写成强制要求；生成报价或触达文案。
-
-## 完成条件
-
-- 每个强制性结论都有当前、适用的官方证据。
-- 法规版本未知、产品边界不清或证据冲突时输出 `UNKNOWN`/`CONDITIONAL` 并要求人工复核。
-- 存在硬阻断时 Opportunity 状态进入 `BLOCKED`，交回总 Agent。
+- 不把买家所在地当进口目的国；不把身份未知当虚假需求。
+- 不虚构法规、证书或检测结果；高影响未知项必须人工复核。
+- `BLOCK` 有明确硬依据，`CONDITIONAL` 有可执行的补齐清单。

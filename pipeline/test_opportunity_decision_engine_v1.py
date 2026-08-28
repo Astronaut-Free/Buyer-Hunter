@@ -30,11 +30,9 @@ def signal(opportunity_id: str = "opp-001") -> dict:
         "exact_product_match": True,
         "age_days": 5,
         "buying_window": {"status": "OPEN"},
-        "buyer_strength": 80,
-        "commercial_value": 75,
-        "market_readiness": 80,
-        "actionability": 90,
-        "risk_penalty": 5,
+        "commercial_execution": 85,
+        "procurement_channel_actionability": 80,
+        "market_access": 80,
         "why_now": ["5 天前发布明确采购需求"],
         "requirements": [
             {"field_code": "product.form", "operator": "EQ", "value": "beverage_grade_matcha", "hard": True, "requirement_type": "PRODUCT"},
@@ -54,6 +52,35 @@ class OpportunityDecisionTests(unittest.TestCase):
         high = engine.assess_opportunity(second, SELLER)
         self.assertEqual(low.opportunity_score, high.opportunity_score)
         self.assertTrue(low.hard_gate_passed)
+
+    def test_phase1_weights_and_components_are_exact(self):
+        decision = engine.assess_opportunity(signal(), SELLER)
+        self.assertEqual(decision.opportunity_score, 80.4)
+        self.assertEqual(
+            set(decision.component_scores),
+            {"timing", "seller_fit", "commercial_execution", "procurement_channel_actionability", "market_access"},
+        )
+
+    def test_buyer_strength_is_not_a_component_or_weight(self):
+        first = signal()
+        second = deepcopy(first)
+        first["buyer_strength"] = 0
+        second["buyer_strength"] = 100
+        low = engine.assess_opportunity(first, SELLER)
+        high = engine.assess_opportunity(second, SELLER)
+        self.assertEqual(low.opportunity_score, high.opportunity_score)
+        self.assertNotIn("buyer_strength", low.component_scores)
+
+    def test_observable_window_signals_raise_timing(self):
+        baseline = engine.assess_opportunity(signal(), SELLER)
+        active = signal()
+        active["buying_window"].update({
+            "explicit_urgency": True,
+            "transaction_stage": "BULK_RFQ",
+            "continuity_signals": ["LONG_TERM_SIGNAL"],
+        })
+        decision = engine.assess_opportunity(active, SELLER)
+        self.assertGreater(decision.component_scores["timing"], baseline.component_scores["timing"])
 
     def test_truth_below_gate_passes_no_sales_time(self):
         item = signal()

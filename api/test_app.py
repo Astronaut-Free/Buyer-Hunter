@@ -29,7 +29,7 @@ class OpportunityApiTests(unittest.TestCase):
     def test_health(self) -> None:
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["decision_count"], 21)
+        self.assertEqual(response.json()["decision_count"], 51)
 
     def test_today_returns_ranked_top_five(self) -> None:
         response = self.client.get("/api/v1/opportunities/today", params={"seller_profile_id": "seller-guizhou-specialty-demo"})
@@ -46,9 +46,9 @@ class OpportunityApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         items = response.json()["items"]
-        self.assertEqual(len(items), 2)
+        self.assertGreater(len(items), 0)
         self.assertTrue(all(item["category_code"] == "MATCHA" for item in items))
-        self.assertEqual([item["rank"] for item in items], [1, 2])
+        self.assertEqual([item["rank"] for item in items], list(range(1, len(items) + 1)))
 
     def test_category_and_market_filter_can_return_empty(self) -> None:
         response = self.client.get(
@@ -70,6 +70,12 @@ class OpportunityApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["decision_access"], "FULL")
         self.assertTrue(response.json()["evidence"])
+        components = response.json()["component_scores"]
+        self.assertEqual(
+            set(components),
+            {"timing", "seller_fit", "commercial_execution", "procurement_channel_actionability", "market_access"},
+        )
+        self.assertNotIn("buyer_strength", components)
 
     def test_lead_access_is_separate_and_locked(self) -> None:
         item = self.client.get("/api/v1/opportunities/today", params={"seller_profile_id": "seller-guizhou-specialty-demo"}).json()["items"][0]

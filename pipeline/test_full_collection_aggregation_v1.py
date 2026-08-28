@@ -52,6 +52,19 @@ class FullCollectionAggregationTests(unittest.TestCase):
         )
         self.assertEqual(len(aggregate.dedupe([first, second])), 2)
 
+    def test_commercial_contact_can_enter_ranking_without_becoming_a_company(self):
+        row = aggregate.base_record(
+            source_code="alibaba_rfq", source_role="DIRECT_RFQ",
+            contact_person_raw="Jane Doe", product_match=True, timely=True,
+            source_url="https://example.test/rfq/1",
+            quality_status="QUALIFIED_PENDING_ENTITY",
+        )
+        self.assertEqual(row["account_holder_type"], "PERSON_OR_AGENT")
+        self.assertEqual(row["business_context_status"], "CONFIRMED")
+        self.assertEqual(row["buyer_entity_status"], "UNRESOLVED")
+        self.assertFalse(row["entity_resolved"])
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

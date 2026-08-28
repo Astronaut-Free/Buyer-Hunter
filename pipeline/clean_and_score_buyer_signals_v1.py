@@ -148,11 +148,26 @@ def clean_row(row: dict, observed_default: date) -> dict:
     company_clear = bool(buyer_name and (COMPANY_MARKERS.search(buyer_name) or len(buyer_name.split()) >= 2))
     stable_entity_page = bool(company_clear and source_url)
     business_relation = bool(company_clear and BUY_ACTION.search(combined))
-    d2 = 5 * company_clear + 7 * bool(domain) + 5 * bool(country_code) + 5 * stable_entity_page + 3 * business_relation
+    d2_entity = 5 * company_clear + 7 * bool(domain) + 5 * bool(country_code) + 5 * stable_entity_page + 3 * business_relation
 
     procurement_entry = bool(source_url and row.get("contact_gate"))
+    account_present = bool(buyer_name or contact_person)
+    # Phase 1 separates observable business context from legal-entity resolution.
+    # A platform account and traceable response route can support a real demand,
+    # but never promote the represented buyer to a verified company.
+    d2_business_context = min(
+        25,
+        10 * procurement_entry + 5 * account_present + 5 * bool(country_code) + 5 * action_clear,
+    )
     d4 = 4 * procurement_entry
-    total = int(d1 + d2 + recency + d4)
+    buyer_identity_status = (
+        "LEGAL_VERIFIED" if registration_id
+        else "DOMAIN_LINKED" if company_clear and domain
+        else "PLATFORM_ACCOUNT" if procurement_entry
+        else "PERSON_ONLY" if contact_person
+        else "UNRESOLVED"
+    )
+    total = int(d1 + d2_business_context + recency + d4)
     hard_gate = bool(source_url and observed_at and description)
     if not hard_gate:
         total = 0
@@ -166,9 +181,9 @@ def clean_row(row: dict, observed_default: date) -> dict:
     elif recency == 0:
         decision = "BACKGROUND_OR_STALE"
     elif level in {"A", "B"} and company_clear:
-        decision = "QUALIFIED"
+        decision = "FORMALLY_QUALIFIED"
     elif level in {"A", "B"}:
-        decision = "NEEDS_VERIFICATION"
+        decision = "QUALIFIED_PENDING_ENTITY"
     elif level == "C":
         decision = "NEEDS_VERIFICATION"
     else:
@@ -196,6 +211,10 @@ def clean_row(row: dict, observed_default: date) -> dict:
         "buyer_name_raw": buyer_name,
         "buyer_name_source_span": norm(row.get("buyer_name_span")),
         "contact_person_raw": contact_person,
+        "account_holder_type": "ORGANIZATION" if company_clear else "PERSON_OR_AGENT" if contact_person else "UNKNOWN",
+        "business_context_status": "CONFIRMED" if hard_gate and product_clear and action_clear and recency > 0 else "UNCONFIRMED",
+        "buyer_entity_status": "CONFIRMED" if company_clear else "UNRESOLVED",
+        "buyer_identity_status": buyer_identity_status,
         "entity_resolution_status": "RESOLVED" if company_clear else "PERSON_ONLY" if contact_person else "UNRESOLVED",
         "contact_person_source_span": norm(row.get("contact_person_span")),
         "buyer_country_raw": country_raw,
@@ -218,7 +237,8 @@ def clean_row(row: dict, observed_default: date) -> dict:
         "verification_status": row.get("verification_status") or "UNVERIFIED_MARKETPLACE_POST",
         "contact_gate": row.get("contact_gate"),
         "d1_demand_explicitness": d1,
-        "d2_entity_authenticity": d2,
+        "d2_account_business_context": d2_business_context,
+        "d2_entity_authenticity": d2_entity,
         "d3_recency": recency,
         "d4_corroboration": d4,
         "truth_score": total,
@@ -268,7 +288,8 @@ def main() -> int:
     out_dir.mkdir(exist_ok=True)
     columns = list(deduped[0].keys()) if deduped else ["signal_id"]
     write_csv(out_dir / "buyer_signals_cleaned_scored.csv", deduped, columns)
-    qualified = [r for r in deduped if r["qualification_status"] == "QUALIFIED"]
+    qualified_statuses = {"QUALIFIED", "FORMALLY_QUALIFIED", "QUALIFIED_PENDING_ENTITY"}
+    qualified = [r for r in deduped if r["qualification_status"] in qualified_statuses]
     write_csv(out_dir / "buyer_signals_qualified.csv", qualified, columns)
 
     required = ["evidence_url", "observed_at", "evidence_excerpt", "category_code", "published_at", "buyer_country_code", "buyer_name_raw", "contact_person_raw"]
@@ -283,6 +304,8 @@ def main() -> int:
         "deduplicated_count": len(deduped),
         "duplicate_rows_removed": duplicate_rows,
         "qualified_count": len(qualified),
+        "formally_qualified_count": sum(r["qualification_status"] in {"QUALIFIED", "FORMALLY_QUALIFIED"} for r in deduped),
+        "qualified_pending_entity_count": sum(r["qualification_status"] == "QUALIFIED_PENDING_ENTITY" for r in deduped),
         "demand_quality_pass_count": sum(r["truth_level"] in {"A", "B"} for r in deduped),
         "entity_resolved_count": sum(r.get("entity_resolution_status") == "RESOLVED" for r in deduped),
         "levels": dict(Counter(r["truth_level"] for r in deduped)),

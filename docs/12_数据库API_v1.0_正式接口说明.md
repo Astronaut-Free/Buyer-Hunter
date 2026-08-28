@@ -1,8 +1,8 @@
-# Buyer Hunter 数据库与机会决策 API v1.0
+# Buyer Hunter 数据库与机会决策 API v1.1
 
 更新时间：2026-08-28
 
-接口版本：`1.0.0`
+接口版本：`1.1.0`
 
 运行实现：`api/app.py`
 
@@ -14,26 +14,27 @@
 
 | 层级 | 当前状态 | 本次真实结果 | 对外用途 |
 |---|---|---:|---|
-| 全平台采集与清洗产物 | 已实现 | 原始结构化记录 323 条；去重清洗后 184 条；当前有效机会 30 条；佐证记录 24 条 | 数据审计、质量复核、后续入库 |
-| SQLite 机会决策库 | 已实现 | 默认输入快照 21 条；生成 21 条机会决策和 Top 5 | 当前 React Demo 与 FastAPI |
-| 全平台 30 条自动写入 SQLite | 尚未自动衔接 | 0 条自动迁移 | 下一版本的数据适配任务 |
+| 全平台采集与清洗产物 | 已实现 | 原始结构化记录 323 条；去重清洗后 210 条；四维验真后当前有效机会 51 条；待实体核验机会 51 条；佐证记录 24 条 | 数据审计、质量复核、机会入库 |
+| SQLite 机会决策库 | 已实现 | 默认输入全平台 51 条；生成 51 条机会决策并按卖方档案返回 Top 5 | 当前 React Demo 与 FastAPI |
+| 全平台有效机会自动写入 SQLite | 已实现 | 51 条自动适配并写入 | 当前机会决策 API |
 
-因此：`pipeline/data_full_collection/20260828T083242Z/useful_current_opportunities.csv` 中的 30 条是本次全平台有效机会；当前 `/api/v1/opportunities/*` 返回的是 SQLite 默认输入快照生成的决策，不能宣称已经自动返回这 30 条。
+因此：`pipeline/data_full_collection/20260828T110920Z/useful_current_opportunities.csv` 中的 51 条是通过统一四维验真的当前机会，已由 `build_opportunity_store_v1.py` 自动适配进入 SQLite；`/api/v1/opportunities/*` 返回的就是这批机会的卖方特定决策。
 
 ## 2. 数据产物
 
-全平台聚合运行：`20260828T083242Z`。
+全平台聚合运行：`20260828T110920Z`。
 
 | 文件 | 记录数 | 定义 |
 |---|---:|---|
-| `all_platform_records_cleaned.csv` | 184 | 标准化、严格品类匹配、去重后的全部记录 |
-| `useful_current_opportunities.csv` | 30 | 当前、直接采购需求或仍开放的官方采购机会 |
+| `all_platform_records_cleaned.csv` | 210 | 标准化、严格品类匹配、去重后的全部记录 |
+| `useful_current_opportunities.csv` | 51 | 当前、直接采购需求或仍开放的官方采购机会 |
+| `qualified_pending_entity_opportunities.csv` | 51 | 商业需求已确认并允许进入排序，但法定买方主体仍待核验 |
 | `formally_qualified_opportunities.csv` | 0 | 当前有效需求且法定/官方买方主体已经解析 |
 | `supporting_evidence.csv` | 24 | 历史采购、买家背景或已结束的官方采购证据，不作为当前需求 |
 | `platform_summary.csv` | 按平台汇总 | 原始量、清洗量、有效量、正式合格量和佐证量 |
 | `full_collection_quality_report.json` | 1 | 运行 ID、输入批次、质量口径和总量统计 |
 
-当前 30 条有效机会按品类分布：`TEA=17`、`MATCHA=6`、`CHILI=4`、`BLUEBERRY=3`、`ROSA_ROXBURGHII=0`。
+当前 51 条有效机会按品类分布：`TEA=36`、`MATCHA=5`、`CHILI=9`、`BLUEBERRY=1`、`ROSA_ROXBURGHII=0`；按平台为 Go4WorldBusiness 23、TradeKey 19、Alibaba 6、TradeWheel 3。
 
 ### 2.1 全平台标准记录字段
 
@@ -58,8 +59,12 @@
 | `product_match` | boolean | 是否严格命中五类产品，排除口味、器具等噪声 |
 | `timely` | boolean | 是否仍处于当前采购窗口 |
 | `entity_resolved` | boolean | 是否已解析法定/官方买方主体 |
-| `quality_status` | string | 当前有效、待核验、佐证、过期或拒绝原因 |
+| `account_holder_type` | enum | `ORGANIZATION`、`PERSON_OR_AGENT`、`UNKNOWN`；只描述账户/联系人形态 |
+| `business_context_status` | enum | `CONFIRMED`、`SUPPORTING_ONLY`、`UNCONFIRMED` |
+| `buyer_entity_status` | enum | `CONFIRMED`、`UNRESOLVED`；与账户持有人类型分离 |
+| `quality_status` | string | `FORMALLY_QUALIFIED`、`QUALIFIED_PENDING_ENTITY`、佐证、过期或拒绝状态 |
 | `quality_reason` | string | 质量状态的可解释原因 |
+| `d1_demand_explicitness` / `d2_account_business_context` / `d3_recency` / `d4_corroboration` | integer/null | 四维需求证据分；D2 只证明账户/商业场景，不证明法定公司 |
 | `truth_score` | integer/null | 四维需求证据可信度，不是成交概率 |
 | `truth_level` | enum/null | `A`、`B`、`C`、`D` |
 
@@ -111,7 +116,7 @@ GET /health
 ```json
 {
   "status": "ok",
-  "decision_count": 21,
+  "decision_count": 51,
   "latest_decision_date": "2026-08-28"
 }
 ```
@@ -159,7 +164,7 @@ X-Demo-Member: true
       "category_code": "MATCHA",
       "quantity_raw": "未披露",
       "published_at": "2026-08-27",
-      "decision_status": "CONDITIONAL",
+      "decision_status": "VERIFY_FIRST",
       "opportunity_score": 72.5,
       "truth_score": 69.0,
       "why_now": ["..."],
@@ -185,7 +190,7 @@ X-Demo-Member: true
 不带 `X-Demo-Member: true` 时只返回列表摘要字段，`decision_access=SUMMARY`。会员响应额外包含：
 
 - `hard_gate_passed`
-- `component_scores`：timing、seller_fit、buyer_strength、commercial_value、market_readiness、actionability、risk_penalty
+- `component_scores`：`timing`（30%）、`seller_fit`（30%）、`commercial_execution`（20%）、`procurement_channel_actionability`（10%）、`market_access`（10%）；`truth_score` 仅作前置门禁
 - `gaps`、`blockers`、`risks`
 - `evidence[]`：source_url、claim、observed_at
 - `match_results[]`：field_code、buyer_value、seller_value、status、hard、reason
@@ -248,4 +253,4 @@ python -m unittest api.test_app pipeline.test_opportunity_decision_engine_v1 pip
 4. 非会员详情不返回完整决策字段；
 5. 未授权访问渠道必须返回 `403`；
 6. 每条事实有 `source_url`，缺失字段保持 `null`；
-7. 全平台 30 条接入 SQLite 前，必须增加字段适配与回归测试，不得静默填造真实性维度。
+7. 全平台 51 条已通过字段适配接入 SQLite；缺失四维子分必须由统一规则重算，不得由总分反推或平均填造。

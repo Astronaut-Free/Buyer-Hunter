@@ -1,45 +1,36 @@
 ---
 name: buyer-hunter-supply-demand-fit
 description: >-
-  对比买方 Atomic Demand 与卖方 SKU、产能、MOQ、价格、认证和交付能力，输出硬缺口、软缺口及供需匹配结论。仅用于 Seller Fit，不负责市场法规最终裁定。
+  将买方 Current Demand 与指定卖家的真实 Seller×SKU 档案逐项比较，先审硬条件，再评软条件，输出可入围 SKU、缺口和供需匹配结论。仅负责 Seller Fit，不负责市场法规最终裁定。
 ---
 
-# 供需机会匹配
+# Seller × SKU 供需匹配
 
-将买方要求与指定卖家能力逐字段比较，更新 Opportunity 的 `seller_fit`。不得用通用品类印象替代卖家真实能力数据。
+一期必须使用可追溯的真实卖家和 SKU 数据；抹茶作为首个完整品类。通用 Demo 档案只能测试流程，必须明确标记，不能冒充企业能力。
 
-## 输入
+## 卖家档案最小字段
 
-- 买方：品类、规格、数量、预算、交期、认证及包装要求
-- 卖方：SKU、等级、用途、MOQ、产能、价格、认证、包装、OEM 与交期
-- 采购需求证据及卖家能力资料的版本、更新时间和来源
+`company`、`location`、`product`、`sku`、`specification`、`grade`、`moq`、`capacity`、`price_range`、`packaging`、`certifications`、`oem`、`sample`、`delivery_days`、`target_markets`、`evidence_refs`、`updated_at`。
 
-## 匹配规则
+## 匹配顺序
 
-1. 先检查硬条件：强制认证、关键规格、数量能力、MOQ、交期和已知准入必要条件。
-2. 任一硬条件明确不满足时，记录 `HARD_GAP`；不得用其他优势抵消。
-3. 再比较软条件：价格优势、包装、OEM、样品政策和交期弹性。
-4. `UNKNOWN` 与 `MISMATCH` 必须分开；资料缺失不能判定为不匹配，也不能默认通过。
-5. 每项比较保留 `buyer_value`、`seller_value`、单位、状态和双方证据。
+1. 从 Current Demand 提取硬条件：精准品类、关键规格、强制认证、MOQ/数量能力、交期和明确目的地必要条件。
+2. 对同一卖家的每个实际 SKU 单独比较硬条件；任一明确失败记 `HARD_GAP`，不得被总分抵消。
+3. 对硬条件未失败的 SKU 比较软条件：价格区间、包装、OEM、样品、用途适配和交期弹性。
+4. 每项保留买方值、卖方值、单位、状态及双方证据；`UNKNOWN` 与 `MISMATCH` 分开。
+5. 返回所有符合条件的 SKU，不强制凑 Top 3；入围数为零时明确输出“暂无合格 SKU”。
 
 ## 输出
 
-- `fit_score`: 0–100，并附分项
-- `match_results`: 字段级 `MATCH | PARTIAL | MISMATCH | UNKNOWN`
+- `eligible_sku_count`
+- `eligible_skus`: 卖家、SKU、`fit_score`、字段级匹配及证据
 - `hard_gaps`、`soft_gaps`、`unknowns`
-- `commercial_value`: 可解释的商业价值判断
 - `recommendation`: `FIT | CONDITIONAL_FIT | NOT_FIT | NEED_MORE_DATA`
-- `seller_profile_version`、`evidence_refs`
+- `seller_profile_version`、`evaluated_at`
 
-## 判断边界
+## 边界与完成条件
 
-- 允许：产品、规格、数量、商业条件和交付能力的供需对比。
-- 禁止：猜测卖家未提供的认证、产能或价格；以匹配分替代市场准入；决定最终联系动作。
-
-## 完成条件
-
-- 每个硬条件都有明确状态和证据。
-- 所有单位在比较前完成兼容换算，并保留原值。
-- 存在未解决硬缺口时，不得输出无条件 `FIT`。
-
-卖方字段参考 `pipeline/seller_capability_profile_demo_v1.json`；当前 Demo 画像必须明确标记为演示配置，不能冒充真实企业资料。
+- 不猜测卖家未提供的认证、产能、价格或市场能力。
+- 市场准入由准入 Skill 最终裁定；本 Skill 只消费其明确硬条件。
+- 每个硬条件都有状态，单位已换算且保留原值。
+- 演示画像必须输出 `data_mode=DEMO`，真实画像输出来源与更新时间。

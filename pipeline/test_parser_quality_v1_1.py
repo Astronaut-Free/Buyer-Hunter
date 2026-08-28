@@ -82,9 +82,12 @@ class CleanerQualityTests(unittest.TestCase):
         self.assertEqual(cleaned["contact_person_raw"], "Jane Doe")
         self.assertIsNone(cleaned["buyer_name_raw"])
         self.assertEqual(cleaned["published_at"], "2026-08-27")
-        self.assertEqual(cleaned["truth_score"], 69)
+        self.assertEqual(cleaned["truth_score"], 89)
         self.assertEqual(cleaned["entity_resolution_status"], "PERSON_ONLY")
-        self.assertEqual(cleaned["qualification_status"], "NEEDS_VERIFICATION")
+        self.assertEqual(cleaned["qualification_status"], "QUALIFIED_PENDING_ENTITY")
+        self.assertEqual(cleaned["account_holder_type"], "PERSON_OR_AGENT")
+        self.assertEqual(cleaned["business_context_status"], "CONFIRMED")
+        self.assertEqual(cleaned["buyer_entity_status"], "UNRESOLVED")
 
     def test_non_positive_quantity_is_a_conflict_not_coverage(self):
         row = {

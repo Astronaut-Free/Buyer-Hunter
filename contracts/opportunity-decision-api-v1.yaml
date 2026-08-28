@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Buyer Hunter Opportunity Decision API
-  version: 1.0.0
+  version: 1.1.0
   description: >-
     Seller-specific daily purchase opportunity decisions. Truth score gates
     evidence credibility; opportunity score ranks commercial pursuit. Lead
@@ -123,18 +123,27 @@ components:
             hard_gate_passed: {type: boolean}
             component_scores:
               type: object
-              required: [timing, seller_fit, buyer_strength, commercial_value, market_readiness, actionability, risk_penalty]
+              description: Phase-1 opportunity score components with weights 30/30/20/10/10; truth is a front gate.
+              required: [timing, seller_fit, commercial_execution, procurement_channel_actionability, market_access]
               properties:
-                timing: {type: number, minimum: 0, maximum: 100}
-                seller_fit: {type: number, minimum: 0, maximum: 100}
-                buyer_strength: {type: number, minimum: 0, maximum: 100}
-                commercial_value: {type: number, minimum: 0, maximum: 100}
-                market_readiness: {type: number, minimum: 0, maximum: 100}
-                actionability: {type: number, minimum: 0, maximum: 100}
-                risk_penalty: {type: number, minimum: 0, maximum: 30}
+                timing: {type: number, minimum: 0, maximum: 100, description: Weight 30}
+                seller_fit: {type: number, minimum: 0, maximum: 100, description: Weight 30}
+                commercial_execution: {type: number, minimum: 0, maximum: 100, description: Weight 20}
+                procurement_channel_actionability: {type: number, minimum: 0, maximum: 100, description: Weight 10}
+                market_access: {type: number, minimum: 0, maximum: 100, description: Weight 10}
             gaps: {type: array, items: {type: string}}
             blockers: {type: array, items: {type: string}}
-            risks: {type: array, items: {type: string}}
+            risks:
+              type: array
+              items:
+                type: object
+                required: [code, severity, reason]
+                properties:
+                  code:
+                    type: string
+                    enum: [IDENTITY_UNKNOWN, PLATFORM_ONLY_CONTACT, QUANTITY_SUSPECT, SPECIFICATION_GAP, CERTIFICATION_GAP, MARKET_ACCESS_UNKNOWN, PAYMENT_TERM_RISK, ORIGIN_CONFLICT, DELIVERY_CONFLICT]
+                  severity: {type: string, enum: [LOW, MEDIUM, HIGH]}
+                  reason: {type: string}
             evidence:
               type: array
               items:

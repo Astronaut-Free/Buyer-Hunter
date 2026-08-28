@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB = ROOT / "runtime/buyer_hunter.db"
 
-app = FastAPI(title="Buyer Hunter Opportunity Decision API", version="1.0.0")
+app = FastAPI(title="Buyer Hunter Opportunity Decision API", version="1.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:4173", "http://127.0.0.1:4174", "http://localhost:4173", "http://localhost:4174"],
@@ -156,10 +156,11 @@ def opportunity_decision(opportunity_id: str, x_demo_member: str | None = Header
         {
             "hard_gate_passed": bool(row["hard_gate_passed"]),
             "component_scores": {
-                "timing": row["timing_score"], "seller_fit": row["seller_fit_score"],
-                "buyer_strength": row["buyer_strength_score"], "commercial_value": row["commercial_value_score"],
-                "market_readiness": row["market_readiness_score"], "actionability": row["actionability_score"],
-                "risk_penalty": row["risk_penalty"],
+                "timing": row["timing_score"],
+                "seller_fit": row["seller_fit_score"],
+                "commercial_execution": row["commercial_execution_score"],
+                "procurement_channel_actionability": row["procurement_channel_actionability_score"],
+                "market_access": row["market_access_score"],
             },
             "gaps": loads(row["gaps_json"], []),
             "blockers": loads(row["blockers_json"], []),

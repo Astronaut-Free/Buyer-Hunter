@@ -21,7 +21,7 @@ if str(ROOT / "pipeline") not in sys.path:
 from opportunity_decision_engine_v1 import assess_opportunity  # noqa: E402
 
 
-DEFAULT_INPUT = ROOT / "pipeline/data_b2b_public_v3/20260827T212941Z/cleaned_v1/buyer_signals_qualified.csv"
+DEFAULT_INPUT = ROOT / "pipeline/data_full_collection/20260828T110920Z/qualified_pending_entity_opportunities.csv"
 DEFAULT_PROFILE = ROOT / "pipeline/seller_capability_profile_demo_v1.json"
 DEFAULT_DB = ROOT / "runtime/buyer_hunter.db"
 
@@ -50,9 +50,50 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def normalize_input_row(raw: dict[str, str]) -> dict[str, str]:
+    """Map full-collection opportunity rows to the evidence-store contract."""
+    row = dict(raw)
+    description = row.get("description_raw", "")
+    title = row.get("title", "")
+    text = f"{title} {description}".casefold()
+    source_url = row.get("source_url", "") or row.get("evidence_url", "")
+    published = row.get("published_at", "")
+    observed = row.get("observed_at", "") or utc_now()
+    try:
+        age_days = max(0, (datetime.fromisoformat(observed.replace("Z", "+00:00")).date() - date.fromisoformat(published[:10])).days)
+    except (TypeError, ValueError):
+        age_days = 999
+
+    row.setdefault("signal_id", row.get("record_id", "") or stable_id("signal", source_url or f"{title}|{observed}"))
+    row.setdefault("source_type", row.get("source_role", "") or "PUBLIC_RFQ")
+    row.setdefault("buying_action", "BUY")
+    row.setdefault("product_terms", row.get("category_code", ""))
+    row.setdefault("specs_present", str(contains_any(text, ["specification", "specifications", "grade", "type:", "type :"])))
+    row.setdefault("quantity_status", "DISCLOSED" if row.get("quantity_raw", "").strip() else "UNKNOWN")
+    row.setdefault("quantity_source_span", row.get("quantity_raw", ""))
+    row.setdefault("field_warnings", "")
+    row.setdefault("destination_present", str(contains_any(text, ["destination", "destination port", "ship to", "delivery to"])))
+    row.setdefault("buyer_name_source_span", row.get("buyer_name_raw", ""))
+    row.setdefault("contact_person_source_span", row.get("contact_person_raw", ""))
+    row.setdefault("buyer_country_source_span", row.get("buyer_country_raw", ""))
+    row.setdefault("buyer_domain", "")
+    row.setdefault("registration_id", "")
+    row.setdefault("public_business_emails", "")
+    row.setdefault("public_business_phones", "")
+    row.setdefault("age_days", str(age_days))
+    row.setdefault("time_precision", "DATE" if published else "UNKNOWN")
+    row.setdefault("evidence_url", source_url)
+    row.setdefault("listing_url", source_url)
+    row.setdefault("evidence_excerpt", description[:1000] or title)
+    row.setdefault("snapshot_sha256", hashlib.sha256(f"{source_url}|{title}|{description}".encode("utf-8")).hexdigest())
+    row.setdefault("data_mode", "LIVE")
+    row.setdefault("contact_gate", "platform_public_response" if source_url else "")
+    return row
+
+
 def load_rows(path: Path) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as handle:
-        return list(csv.DictReader(handle))
+        return [normalize_input_row(row) for row in csv.DictReader(handle)]
 
 
 def country_code_for(row: dict[str, str]) -> str:
@@ -68,18 +109,69 @@ def buyer_display_name(row: dict[str, str]) -> str:
     return f"{country}{CATEGORY_NAMES.get(row['category_code'], row['category_code'])}采购方{suffix}"
 
 
-def commercial_value(quantity: str) -> float:
-    value = quantity.casefold()
-    if "container" in value:
-        return 88.0
-    if re.search(r"\b(?:ton|tonne|mt)\b", value):
-        return 82.0
-    kg = re.search(r"([\d,.]+)\s*kg\b", value)
-    if kg:
-        amount = float(kg.group(1).replace(",", ""))
-        return 80.0 if amount >= 1000 else 68.0 if amount >= 100 else 52.0
-    return 40.0 if quantity.strip() else 25.0
+def contains_any(text: str, needles: list[str]) -> bool:
+    folded = text.casefold()
+    return any(needle in folded for needle in needles)
 
+
+def commercial_execution_score(row: dict[str, str]) -> float:
+    """Score only disclosed terms that make the RFQ executable."""
+    text = f"{row.get('title', '')} {row.get('description_raw', '')}".casefold()
+    dimensions = {
+        "specification": row.get("specs_present") == "True",
+        "quantity": bool(row.get("quantity_raw", "").strip()),
+        "purpose": contains_any(text, ["purpose", "application", "for retail", "for beverage", "for bakery"]),
+        "destination": row.get("destination_present") == "True",
+        "packaging": contains_any(text, ["packaging", "packing", "carton", "bag", "drum", "sachet"]),
+        "certification": bool(extract_certifications(text)) or contains_any(text, ["certificate", "certification"]),
+        "price_request": contains_any(text, ["quote", "quotation", "target price", "budget", "price offer"]),
+        "payment_and_trade": contains_any(text, ["payment terms", "l/c", "letter of credit", "t/t", "shipping terms", "incoterm", "cif", "fob", "exw"]),
+        "sample": contains_any(text, ["sample", "trial order"]),
+        "oem": contains_any(text, ["oem", "private label", "custom label", "customized packaging"]),
+    }
+    return float(sum(10 for present in dimensions.values() if present))
+
+
+def procurement_channel_actionability(row: dict[str, str]) -> float:
+    if row.get("public_business_emails", "").strip() or row.get("public_business_phones", "").strip():
+        return 95.0
+    gate = row.get("contact_gate", "").strip().casefold()
+    if gate and row.get("evidence_url", "").strip():
+        return 70.0
+    if row.get("evidence_url", "").strip():
+        return 50.0
+    return 0.0
+
+
+def buying_window_fields(row: dict[str, str]) -> dict[str, Any]:
+    text = f"{row.get('title', '')} {row.get('description_raw', '')}".casefold()
+    quantity = row.get("quantity_raw", "").strip()
+    if contains_any(text, ["long term", "long-term", "regular supply", "annual contract"]):
+        stage = "LONG_TERM_SUPPLY"
+    elif "trial order" in text:
+        stage = "TRIAL_ORDER"
+    elif "sample" in text:
+        stage = "SAMPLE"
+    elif quantity or contains_any(text, ["bulk", "wholesale", "quotation", "please quote"]):
+        stage = "BULK_RFQ"
+    elif row.get("specs_present") == "True":
+        stage = "SPEC_CONFIRMATION"
+    else:
+        stage = "INQUIRY"
+
+    continuity: list[str] = []
+    if contains_any(text, ["long term", "long-term", "regular supply", "annual contract"]):
+        continuity.append("LONG_TERM_SIGNAL")
+    if contains_any(text, ["future volume", "larger order", "scale up", "monthly requirement"]):
+        continuity.append("FUTURE_VOLUME_SIGNAL")
+    age_days = int(row.get("age_days") or 999)
+    return {
+        "status": "OPEN" if age_days <= 30 else "CLOSED" if age_days > 60 else "MONITOR",
+        "explicit_urgency": contains_any(text, ["urgent", "urgently", "asap", "immediate", "immediately"]),
+        "transaction_stage": stage,
+        "continuity_signals": continuity,
+        "staleness": age_days > 60,
+    }
 
 def extract_certifications(text: str) -> list[str]:
     folded = text.casefold()
@@ -144,7 +236,6 @@ def requirements_for(row: dict[str, str]) -> list[dict[str, Any]]:
 def opportunity_input(row: dict[str, str], buyer_id: str) -> dict[str, Any]:
     description = row.get("description_raw", "")
     has_entity = bool(row.get("buyer_name_raw", "").strip())
-    has_contact = bool(row.get("contact_person_raw", "").strip())
     country = country_code_for(row)
     target_markets = {"US", "JP", "GB", "AU", "DE", "NL", "FR", "IT", "ES", "PL", "BE", "FI", "HU"}
     gaps: list[str] = []
@@ -161,34 +252,27 @@ def opportunity_input(row: dict[str, str], buyer_id: str) -> dict[str, Any]:
     if row.get("destination_present") == "True":
         why_now.append("已披露交付目的地")
 
-    actionability = 35.0
-    actionability += 15.0 if row.get("specs_present") == "True" else 0.0
-    actionability += 15.0 if row.get("quantity_raw", "").strip() else 0.0
-    actionability += 15.0 if row.get("destination_present") == "True" else 0.0
-    actionability += 10.0 if has_contact else 0.0
-
+    destination_known = row.get("destination_present") == "True"
+    market_access = 60.0 if destination_known and country in target_markets else 35.0 if country in target_markets else 25.0
     return {
         "opportunity_id": stable_id("opp", row["signal_id"]),
         "buyer_id": buyer_id,
         "truth_score": float(row["truth_score"]),
         "exact_product_match": True,
         "age_days": int(row.get("age_days") or 999),
-        "buying_window": {"status": "OPEN" if int(row.get("age_days") or 999) <= 30 else "CLOSED" if int(row.get("age_days") or 999) > 60 else "UNKNOWN"},
+        "buying_window": buying_window_fields(row),
         "requirements": requirements_for(row),
-        "buyer_strength": min(100.0, float(row.get("d2_entity_authenticity") or 0) * 4.0),
-        "commercial_value": commercial_value(row.get("quantity_raw", "")),
-        "market_readiness": 85.0 if country in target_markets else 42.0,
-        "actionability": actionability,
-        "risk_penalty": 4.0 + (0.0 if has_entity else 8.0) + (0.0 if row.get("buyer_domain") else 4.0),
+        "commercial_execution": commercial_execution_score(row),
+        "procurement_channel_actionability": procurement_channel_actionability(row),
+        "market_access": market_access,
         "why_now": why_now,
         "gaps": gaps,
         "next_action": {
             "action_type": "VERIFY_AND_PREPARE",
-            "summary": "核验买家主体后，准备对应规格、报价与交付证明",
-            "checklist": ["核验公司主体", "确认最终规格与认证", "准备报价和样品方案"],
+            "summary": "核验待确认项，同时准备匹配 SKU 的规格、报价与交付证明",
+            "checklist": ["确认采购主体或平台账户", "确认最终规格与认证", "准备匹配 SKU 报价和样品方案"],
         },
     }
-
 
 def normalized_profile(profile: dict[str, Any]) -> dict[str, Any]:
     copied = json.loads(json.dumps(profile))
@@ -245,13 +329,13 @@ def build_store(input_csv: Path = DEFAULT_INPUT, profile_path: Path = DEFAULT_PR
                 (evidence_id, source_id, row["source_type"], row["evidence_url"], row["title"], row["published_at"], row["observed_at"], row["time_precision"], row["evidence_excerpt"], row["snapshot_sha256"], row["data_mode"], now),
             )
             display_name = buyer_display_name(row)
-            buyer_key = row.get("buyer_domain") or f"{display_name}|{row.get('buyer_country_code')}"
+            buyer_key = row.get("buyer_domain") or f"unresolved|{row['source_code']}|{row['signal_id']}"
             buyer_id = stable_id("buyer", buyer_key)
             conn.execute(
                 "INSERT OR IGNORE INTO buyer(id,canonical_name,normalized_name,domain,country_code,registration_id,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
                 (buyer_id, display_name, display_name.casefold(), row.get("buyer_domain") or None, country_code_for(row), row.get("registration_id") or None, now, now),
             )
-            truth_breakdown = {key: float(row[key]) for key in ["d1_demand_explicitness", "d2_entity_authenticity", "d3_recency", "d4_corroboration"]}
+            truth_breakdown = {key: (float(row[key]) if row.get(key, "").strip() else None) for key in ["d1_demand_explicitness", "d2_account_business_context", "d3_recency", "d4_corroboration"]}
             conn.execute(
                 "INSERT INTO signal(id,buyer_id,signal_type,buying_action,product_terms_json,published_at,latest_observed_at,truth_score,truth_level,truth_breakdown_json,extraction_version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (row["signal_id"], buyer_id, row["source_type"], row["buying_action"], json.dumps([row["category_code"]]), row["published_at"], row["observed_at"], float(row["truth_score"]), row["truth_level"], json.dumps(truth_breakdown), "qualified-csv-v1", now, now),
@@ -278,11 +362,15 @@ def build_store(input_csv: Path = DEFAULT_INPUT, profile_path: Path = DEFAULT_PR
         top_ids = {item[2].opportunity_id: rank for rank, item in enumerate(eligible[:5], 1)}
         for row, signal_input, decision in decisions:
             opportunity_id = decision.opportunity_id
-            risk_items = []
+            risk_items: list[dict[str, str]] = []
             if not row.get("buyer_name_raw", "").strip():
-                risk_items.append("买家公司主体未完成独立核验")
-            if row["verification_status"] != "VERIFIED":
-                risk_items.append("需求来自市场平台，尚缺第二来源佐证")
+                risk_items.append({"code": "IDENTITY_UNKNOWN", "severity": "MEDIUM", "reason": "买家公司法定主体未完成独立核验"})
+            if row.get("contact_gate", "").strip():
+                risk_items.append({"code": "PLATFORM_ONLY_CONTACT", "severity": "LOW", "reason": "当前需经平台公开响应渠道联系"})
+            if row.get("specs_present") != "True":
+                risk_items.append({"code": "SPECIFICATION_GAP", "severity": "MEDIUM", "reason": "关键规格仍需买家确认"})
+            if row.get("destination_present") != "True":
+                risk_items.append({"code": "MARKET_ACCESS_UNKNOWN", "severity": "MEDIUM", "reason": "最终目的市场尚未明确"})
             conn.execute(
                 "INSERT INTO opportunity VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (opportunity_id, profile["id"], decision.buyer_id, row["signal_id"], "NEW", "；".join(decision.why_now), json.dumps(decision.gaps, ensure_ascii=False), json.dumps(risk_items, ensure_ascii=False), decision.next_action["summary"], row["published_at"], now, now),
@@ -302,12 +390,18 @@ def build_store(input_csv: Path = DEFAULT_INPUT, profile_path: Path = DEFAULT_PR
                     ),
                 )
             conn.execute(
-                "INSERT INTO opportunity_decision VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                """INSERT INTO opportunity_decision(
+                     id,opportunity_id,seller_capability_profile_id,decision_date,rank_position,
+                     decision_status,hard_gate_passed,truth_score,opportunity_score,timing_score,
+                     seller_fit_score,commercial_execution_score,procurement_channel_actionability_score,
+                     market_access_score,why_now_json,gaps_json,blockers_json,next_action_json,
+                     ruleset_version,input_snapshot_sha256,created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     stable_id("dec", decision.input_snapshot_sha256), opportunity_id, profile["id"], decision_date, rank,
                     decision.decision_status, int(decision.hard_gate_passed), decision.truth_score, decision.opportunity_score,
-                    components["timing"], components["seller_fit"], components["buyer_strength"], components["commercial_value"],
-                    components["market_readiness"], components["actionability"], decision.risk_penalty,
+                    components["timing"], components["seller_fit"], components["commercial_execution"],
+                    components["procurement_channel_actionability"], components["market_access"],
                     json.dumps(decision.why_now, ensure_ascii=False), json.dumps(decision.gaps, ensure_ascii=False),
                     json.dumps(decision.blockers, ensure_ascii=False), json.dumps(decision.next_action, ensure_ascii=False),
                     decision.ruleset_version, decision.input_snapshot_sha256, now,

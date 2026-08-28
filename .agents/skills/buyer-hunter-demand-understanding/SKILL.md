@@ -1,51 +1,46 @@
 ---
 name: buyer-hunter-demand-understanding
 description: >-
-  将 RFQ、求购详情、贸易记录或官网事件拆成可追溯的标准采购需求。用于回答买家明确要什么；不负责机会评分、采购窗口、供需匹配或行动建议。
+  将 RFQ、求购详情、贸易记录或官网事件拆成可追溯的当前采购需求，并在可靠同账户关联成立时形成公开采购历史与 Buyer Buying Profile。用于回答买家现在明确要什么；不负责机会评分、采购窗口、供需匹配或行动建议。
 ---
 
 # 采购需求理解
 
-把来源文本转换为忠于证据的 `Standard Demand` 与一个或多个 `Atomic Demand`，只更新 Opportunity 的 `buyer`、`atomic_demands` 和对应证据引用。
+把公开信号加工为可追溯的 `Current Demand`，并在证据允许时补充同一账户的公开采购历史。公司法定身份不是一期进入需求理解的前置条件。
 
 ## 输入
 
-- RFQ、求购详情、贸易记录、官网事件或其他原始信号
-- 原始正文、来源 URL、发布时间、抓取时间及证据片段
-- 卖家目标商品，仅用于品类范围提示，不得反向改写买家需求
+- RFQ、招标、求购详情、平台公开帖子、贸易记录或官网采购事件
+- 页面 URL、发布时间、抓取时间、正文与公开账户/联系人标识
+- 已存在的买家实体候选和字段级证据
 
-## 工作规则
+## 处理顺序
 
-1. 区分直接采购需求、历史采购背景和一般性企业信息；背景信息不能冒充当前需求。
-2. 一条来源包含多个产品、交付批次或不同条件时，拆成独立 `atomic_demands`，并保留共同来源。
-3. 标准化品类、规格、数量、单位、币种、地区和时间；同时保留原始值。
-4. 每个非空事实必须关联 `source_url` 和尽可能精确的 `source_span`。
-5. 来源未披露的字段使用 `null` 或 `UNKNOWN`，不得根据常识补齐。
-6. 将字段标记为 `FACT`；由单位换算、日期计算等确定性规则得到的值标记为 `DERIVED`。
+1. 先确认存在明确采购动作与精准产品命中；目录、供应广告和泛行业文章不算当前需求。
+2. 原样保留产品、规格、数量/单位、用途、目的地、交付/付款、包装、认证、OEM、样品、截止时间、发布时间、来源和平台响应渠道。
+3. 将复合需求拆成最小可判断单元；未知字段保持 `UNKNOWN`，不得按行业常识补全。
+4. 只有域名、平台账户 ID、官方页面或可复核联系方式能可靠关联时，才合并同账户历史。
+5. 姓名加国家、相似公司名或产品相似不得单独用于实体合并。
+6. 基于可追溯历史形成 Buyer Buying Profile；重复发布只能记为公开行为，不能写成已成交或真实采购频率。
 
 ## 输出
 
-每个 Atomic Demand 至少包含：
+- `current_demand`: 产品、规格、数量/单位、用途、目的地、交付/付款、包装、认证、OEM、样品、截止时间、发布时间、来源、平台采购/响应渠道
+- `buyer_identity_status`: `LEGAL_VERIFIED | DOMAIN_LINKED | PLATFORM_ACCOUNT | PERSON_ONLY | UNRESOLVED`
+- `same_account_public_history`: 每条记录含关联键、时间、需求摘要和证据
+- `buyer_buying_profile`: 品类连续性、常见规格、数量区间、市场、交易阶段、长期/放量信号及其证据
+- `field_observations`: 原值、标准值、置信度、证据定位、抽取版本
+- `missing_fields`、`conflicts`、`human_review_required`
 
-- `demand_title`、`buyer_subject`、`category_code`
-- `product_specifications`、`quantity_raw`、`quantity_normalized`
-- `budget_or_price_range`、`currency`
-- `delivery_region`、`delivery_at`、`deadline_at`
-- `contact_or_official_channel`
-- `published_at`、`source_url`、`source_span`、`source_text`
-- `source_language`、`fact_status`、`missing_fields`
+Buyer Buying Profile 中每个事实必须由证据覆盖 Skill 标注为 `FACT | DERIVED | INFERENCE | UNKNOWN`。
 
-同时返回 `buyer_what` 摘要与 `source_refs`。
+## 边界
 
-## 判断边界
-
-- 允许：抽取、拆分、字段标准化、确定性换算、描述 Buyer WHAT。
-- 禁止：猜预算、数量、联系人、公司主体或认证要求；生成真实性总分、机会分、窗口分或最终推荐。
+- 允许：抽取、单位标准化、需求拆分、可靠同账户历史归并和采购画像。
+- 禁止：用公司身份缺失否定需求；把联系人视为法定公司；输出机会分、成交概率、准入结论或触达动作。
 
 ## 完成条件
 
-- 所有输出事实都能回指原始证据。
-- 未披露信息被明确标为空缺，而不是被推断填充。
-- 无法证明存在采购动作时，返回 `MORE_EVIDENCE`，不得继续包装成商机。
-
-项目字段以 `contracts/buyer-signal-api-v1.yaml` 和 `db/schema.sql` 为准。
+- 当前需求每个关键字段能回到原始证据。
+- 当前需求与历史记录分开存储。
+- 不可靠关联不合并；身份未知保留为状态而非拒绝理由。

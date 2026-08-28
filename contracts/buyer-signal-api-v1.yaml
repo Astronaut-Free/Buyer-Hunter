@@ -86,7 +86,7 @@ paths:
         - {name: source_code, in: query, schema: {type: string}}
         - {name: min_truth_score, in: query, schema: {type: integer, minimum: 0, maximum: 100, default: 40}}
         - {name: truth_level, in: query, schema: {type: string, enum: [A, B, C, D]}}
-        - {name: qualification_status, in: query, schema: {type: string, enum: [QUALIFIED, NEEDS_VERIFICATION, BACKGROUND_OR_STALE, WEAK_SIGNAL, REJECT_NOT_DIRECT_REQUIREMENT, REJECT_MISSING_EVIDENCE]}}
+        - {name: qualification_status, in: query, schema: {type: string, enum: [FORMALLY_QUALIFIED, QUALIFIED_PENDING_ENTITY, NEEDS_VERIFICATION, BACKGROUND_OR_STALE, WEAK_SIGNAL, REJECT_NOT_DIRECT_REQUIREMENT, REJECT_MISSING_EVIDENCE]}}
         - {name: published_after, in: query, schema: {type: string, format: date}}
         - {name: cursor, in: query, schema: {type: string}}
         - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
@@ -211,10 +211,10 @@ components:
         completed_at: {type: [string, 'null'], format: date-time}
     TruthDimensions:
       type: object
-      required: [demand_explicitness, entity_authenticity, recency, corroboration]
+      required: [demand_explicitness, account_business_context, recency, corroboration]
       properties:
         demand_explicitness: {type: integer, minimum: 0, maximum: 35, description: 'D1: product 10 + action 10 + specs 5 + quantity/frequency 5 + destination/terms 5'}
-        entity_authenticity: {type: integer, minimum: 0, maximum: 25, description: 'D2: company 5 + domain 7 + country/address 5 + authoritative entity evidence 5 + business relation 3'}
+        account_business_context: {type: integer, minimum: 0, maximum: 25, description: 'D2: traceable procurement route 10 + public account/contact 5 + country 5 + explicit buying action 5; does not verify a legal entity'}
         recency: {type: integer, enum: [0, 8, 18, 25], description: 'D3: <=7d 25; 8-30d 18; 31-90d 8; older/unknown 0'}
         corroboration: {type: integer, minimum: 0, maximum: 15, description: 'D4: independent source 7 + repeat within 90d 4 + public business channel 4'}
     BuyerSignalSummary:
@@ -231,6 +231,10 @@ components:
         truth_score: {type: integer, minimum: 0, maximum: 100}
         truth_level: {type: string, enum: [A, B, C, D]}
         qualification_status: {type: string}
+        account_holder_type: {type: string, enum: [ORGANIZATION, PERSON_OR_AGENT, UNKNOWN]}
+        business_context_status: {type: string, enum: [CONFIRMED, SUPPORTING_ONLY, UNCONFIRMED]}
+        buyer_entity_status: {type: string, enum: [CONFIRMED, UNRESOLVED]}
+        buyer_identity_status: {type: string, enum: [LEGAL_VERIFIED, DOMAIN_LINKED, PLATFORM_ACCOUNT, PERSON_ONLY, UNRESOLVED]}
         access_status: {type: string, enum: [PREVIEW, UNLOCKED]}
     BuyerSignalDetail:
       allOf:
