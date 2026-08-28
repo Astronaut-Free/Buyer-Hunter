@@ -1,20 +1,34 @@
 import { createJsonClient } from './http.js';
 
 function normalizeCompany(company = {}) {
+  const providerId = company.companyId || company.id || null;
+  const matchedProductKeywords = company.matchedProductKeyword || [];
+  const matchedHsCodes = company.matchedHsCodes || [];
+  const productMatched = matchedProductKeywords.length > 0 || matchedHsCodes.length > 0;
+  const companyEvidence = providerId ? [`trademo:company:${providerId}`] : [];
+  const productEvidence = productMatched && providerId ? [`trademo:company:${providerId}:product-match`] : [];
+  const tradeEvidence = Number(company.numberOfShipments || 0) > 0 && providerId ? [`trademo:company:${providerId}:trade`] : [];
+  const website = company.website || company.websiteUrl || company.companyWebsite || company.domain || '';
   return {
-    buyer_company_id: company.companyId || company.id || null,
+    buyer_company_id: providerId,
     legal_or_display_name: company.companyName || company.name || '',
     country: company.country || '',
     state: company.state || '',
     city: company.city || '',
     address: company.addressList || company.address || '',
+    domain: company.domain || website,
+    website,
     number_of_shipments: company.numberOfShipments ?? null,
     shipment_value: company.shipmentValue ?? null,
-    matched_product_keywords: company.matchedProductKeyword || [],
-    matched_hs_codes: company.matchedHsCodes || [],
+    matched_product_keywords: matchedProductKeywords,
+    matched_hs_codes: matchedHsCodes,
     trading_partner_count: company.tradingPartnerCount ?? null,
+    sells_or_uses_product: productMatched ? true : undefined,
+    evidence_refs: companyEvidence,
+    product_evidence: productEvidence,
+    trade_evidence: tradeEvidence,
     provider: 'trademo',
-    provider_company_id: company.companyId || company.id || null,
+    provider_company_id: providerId,
     raw: company
   };
 }
