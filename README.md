@@ -25,3 +25,20 @@ AI 工作台入口使用 `index.html#workspace`，首页使用 `index.html#home`
 - `CRM 接管看板`：按待接管、已接管、已联系、等待回复、样品/报价阶段查看机会。
 
 当前模块使用浏览器内存中的演示数据；接入后端时，将 `DATA`、保存档案、发布需求和 CRM 状态替换为 API 请求即可。
+
+## 后端接口契约（建议 v0.1）
+
+前端模块已经按以下资源边界组织，数据库完成后可以逐步替换本地状态：
+
+```text
+GET    /api/opportunities?market=US&category=matcha
+GET    /api/opportunities/:id/evidence
+POST   /api/sellers/:sellerId/products
+PATCH  /api/sellers/:sellerId/profile
+POST   /api/buyer-demands
+POST   /api/matches/:id/handoff
+PATCH  /api/crm/opportunities/:id   { stage, owner_id, next_follow_up_at, note }
+GET    /api/crm/opportunities?stage=waiting_reply
+```
+
+统一返回建议包含 `id`、`status`、`updated_at`；匹配结果保留 `fit_score`、`intent_score`、`conversation_score`、`evidence_score`、`decision` 和 `reasons`。证据接口必须区分 `facts`（原文事实）、`inferences`（AI 推断）和 `recommendations`（行动建议），避免把推断误认为事实。
