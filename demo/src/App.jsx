@@ -103,7 +103,7 @@ function OpportunityCard({ item, isMember, onOpen }) {
           <Pill tone={item.decisionTone}>{item.decisionLabel}</Pill>
           <Pill>{item.window}</Pill>
           <Pill tone={isMember ? "success" : "neutral"}>{isMember ? "完整判断" : "决策摘要"}</Pill>
-          {!isMember && item.leadAccessStatus !== "UNAVAILABLE" && <Pill tone="warning">订阅可解锁联系方式</Pill>}
+          {!isMember && (item.contact || item.procurementUrl) && <Pill tone="warning">订阅可解锁联系方式或网页</Pill>}
         </div>
         <h3>{item.buyerName}</h3>
         <p>{item.demand} · {item.quantity}</p>
@@ -213,6 +213,9 @@ function DecisionDetails({ item }) {
 
 function DetailPanel({ item, isMember, accessUnlocked, onClose, onUnlockAccess, onMembership, onSetStage, stage }) {
   if (!item) return null;
+  const hasDirectContact = Boolean(item.contact?.includes("@"));
+  const hasProcurementPage = Boolean(item.procurementUrl);
+  const hasUnlockableResource = hasDirectContact || hasProcurementPage;
   return (
     <div className="drawer-backdrop" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <aside className="detail-drawer" role="dialog" aria-modal="true" aria-label="采购机会决策详情">
@@ -233,43 +236,42 @@ function DetailPanel({ item, isMember, accessUnlocked, onClose, onUnlockAccess, 
           <section className="detail-section accent-section"><span className="section-icon"><Sparkle size={17} weight="fill" /></span><div><h3>为什么是现在</h3><ul className="reason-list">{item.whyNowReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div></section>
           <section className="detail-section"><h3>采购需求</h3><div className="tag-row">{item.tags.map((t) => <span key={t}>{t}</span>)}</div></section>
           <DecisionDetails item={item} />
-          {!isMember && item.leadAccessStatus !== "UNAVAILABLE" && (
+          {!isMember && hasUnlockableResource && (
             <section className="unlock-card subscriber-lock-card">
               <div className="lock-orb"><IdentificationCard size={24} /></div>
               <div>
                 <span className="eyebrow">SUBSCRIBER CONTACT ACCESS</span>
-                <h3>订阅会员可解锁商家联系方式</h3>
-                <p>当前可用资源：采购入口 · 商务邮箱 <span className="masked-contact">bu***@{item.contact?.split("@")[1] || "company.com"}</span></p>
+                <h3>订阅会员解锁买家联系方式或采购网页</h3>
+                <p>解锁后展开当前已验证的企业官网、采购入口、站内询盘路径或公开商务邮箱。</p>
+                <div className="locked-resource-preview"><span>买家联系方式</span><strong>••••••••</strong><span>企业 / 采购网页</span><strong>••••••••</strong></div>
               </div>
               <button className="primary" onClick={onMembership}>订阅并解锁</button>
             </section>
           )}
-          {!isMember && item.leadAccessStatus === "UNAVAILABLE" && (
+          {!isMember && !hasUnlockableResource && (
             <section className="unlock-card execution-card">
               <div className="lock-orb"><IdentificationCard size={24} /></div>
               <div><span className="eyebrow">CONTACT STATUS</span><h3>该机会暂无可验证联系方式</h3><p>订阅不会解锁虚构数据；可先查看原始需求页面，等待企业主体补全。</p></div>
-              <a className="primary access-link" href={item.procurementUrl} target="_blank" rel="noreferrer">查看原始需求</a>
             </section>
           )}
-          {isMember && !accessUnlocked && item.leadAccessStatus === "UNAVAILABLE" && (
+          {isMember && !accessUnlocked && hasUnlockableResource && (
             <section className="unlock-card execution-card">
               <div className="lock-orb"><IdentificationCard size={24} /></div>
-              <div><span className="eyebrow">LEAD ACCESS · 执行层</span><h3>暂无可验证的站外触达资源</h3><p>系统不会伪造邮箱或电话；当前先通过原始需求页面询盘，并继续补全公司主体。</p></div>
-              <a className="primary access-link" href={item.procurementUrl} target="_blank" rel="noreferrer">查看原始需求</a>
+              <div><span className="eyebrow">LEAD ACCESS · 会员资源</span><h3>解锁买家联系方式或采购网页</h3><p>使用 1 次额度，展开已验证的企业官网、采购入口、站内询盘路径或公开商务邮箱。</p></div>
+              <button className="primary" onClick={onUnlockAccess}>使用 1 次额度解锁</button>
             </section>
           )}
-          {isMember && !accessUnlocked && item.leadAccessStatus !== "UNAVAILABLE" && (
+          {isMember && !accessUnlocked && !hasUnlockableResource && (
             <section className="unlock-card execution-card">
               <div className="lock-orb"><IdentificationCard size={24} /></div>
-              <div><span className="eyebrow">LEAD ACCESS · 执行层</span><h3>需要触达时，再解锁公开商务渠道</h3><p>1 次额度仅用于采购入口与已经验证的公开商务邮箱。</p></div>
-              <button className="primary" onClick={onUnlockAccess}>使用 1 次触达额度</button>
+              <div><span className="eyebrow">LEAD ACCESS · 会员资源</span><h3>暂无可验证的联系资源</h3><p>当前不消耗额度，系统会继续补全企业主体与公开触达渠道。</p></div>
             </section>
           )}
           {isMember && accessUnlocked && (
             <section className="access-card">
               <div className="access-title"><CheckCircle size={22} weight="fill" /><div><span>已解锁触达资源</span><small>联系方式来自公开企业渠道</small></div></div>
-              <div className="access-row"><span>采购入口</span><a href={item.procurementUrl} target="_blank" rel="noreferrer">{item.procurementUrl}</a></div>
-              <div className="access-row"><span>商务邮箱</span><strong>{item.contact}</strong></div>
+              {hasProcurementPage && <div className="access-row"><span>企业 / 采购网页</span><a href={item.procurementUrl} target="_blank" rel="noreferrer">打开已验证网页 <ArrowSquareOut size={14} /></a></div>}
+              <div className="access-row"><span>买家联系方式</span>{hasDirectContact ? <strong>{item.contact}</strong> : <strong>通过上述网页进入站内询盘或企业联系页</strong>}</div>
               <button className="primary wide" onClick={() => onSetStage("FOLLOW_UP")}>{stage ? `当前状态：${stage === "FOLLOW_UP" ? "已跟进" : stage === "NEGOTIATING" ? "洽谈中" : stage === "WON" ? "已成交" : "未成交"}` : "记录为已开始跟进"}</button>
               {stage && <div className="stage-row"><button className={stage === "NEGOTIATING" ? "active" : ""} onClick={() => onSetStage("NEGOTIATING")}>洽谈中</button><button className={stage === "WON" ? "active" : ""} onClick={() => onSetStage("WON")}>已成交</button><button className={stage === "LOST" ? "active" : ""} onClick={() => onSetStage("LOST")}>未成交</button></div>}
             </section>
@@ -295,7 +297,7 @@ function MembershipModal({ onClose, onActivate }) {
           <div><Lightning size={19} /><span>关键 Gap 与下一步行动方案</span></div>
           <div><IdentificationCard size={19} /><span>每月 20 次商家联系方式解锁额度</span></div>
         </div>
-        <div className="quota-note">另含每月 20 次 Lead Access 触达资源额度</div>
+        <div className="quota-note">另含每月 20 次联系方式或采购网页解锁额度</div>
         <div className="price"><strong>¥599</strong><span>/ 月 · Demo 套餐</span></div>
         <button className="primary wide" onClick={onActivate}>切换至演示会员</button>
         <small>本 Demo 不接真实支付，只模拟决策权限与触达额度。</small>
@@ -314,7 +316,7 @@ function ProfilePage() {
 
 function AccessPage({ accessIds, opportunities: liveItems, onOpen }) {
   const items = liveItems.filter((o) => accessIds.has(o.id));
-  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">LEAD ACCESS · EXECUTION LAYER</span><h1>触达资源</h1><p>只在决定执行机会后，管理已解锁的采购入口和公开商务渠道。</p></div></section>{items.length ? <div className="unlocked-grid">{items.map((item) => <button key={item.id} onClick={() => onOpen(item)}><div className="buyer-avatar">{item.buyerName.slice(0, 1)}</div><div><strong>{item.buyerName}</strong><span>{item.country} · {item.demand}</span><small>{item.contact}</small></div><ArrowRight size={18} /></button>)}</div> : <div className="empty-state"><IdentificationCard size={32} /><h3>尚未解锁触达资源</h3><p>先完成机会判断，决定执行后再消耗额度获取采购入口。</p></div>}</div>;
+  return <div className="page-content"><section className="page-title-row"><div><span className="eyebrow">LEAD ACCESS · EXECUTION LAYER</span><h1>触达资源</h1><p>管理已解锁的买家联系方式、企业官网与采购入口。</p></div></section>{items.length ? <div className="unlocked-grid">{items.map((item) => <button key={item.id} onClick={() => onOpen(item)}><div className="buyer-avatar">{item.buyerName.slice(0, 1)}</div><div><strong>{item.buyerName}</strong><span>{item.country} · {item.demand}</span><small>{item.contact?.includes("@") ? item.contact : "企业 / 采购网页已解锁"}</small></div><ArrowRight size={18} /></button>)}</div> : <div className="empty-state"><IdentificationCard size={32} /><h3>尚未解锁触达资源</h3><p>订阅后可使用额度展开买家联系方式或采购网页。</p></div>}</div>;
 }
 
 function MembershipPage({ isMember, quota, onActivate }) {
