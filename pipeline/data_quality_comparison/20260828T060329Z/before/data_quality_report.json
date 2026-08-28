@@ -1,0 +1,39 @@
+{
+  "input": "pipeline\\data_b2b_public_v3\\20260828T060329Z\\B2B公开渠道_待清洗候选.csv",
+  "grain": "one deduplicated public buyer-demand signal per category/title/country/buyer fingerprint",
+  "raw_count": 79,
+  "deduplicated_count": 63,
+  "duplicate_rows_removed": 16,
+  "qualified_count": 0,
+  "levels": {
+    "C": 6,
+    "D": 57
+  },
+  "statuses": {
+    "NEEDS_VERIFICATION": 6,
+    "BACKGROUND_OR_STALE": 56,
+    "WEAK_SIGNAL": 1
+  },
+  "sources": {
+    "tradekey": 7,
+    "go4worldbusiness": 56
+  },
+  "categories": {
+    "BLUEBERRY": 24,
+    "MATCHA": 15,
+    "TEA": 15,
+    "CHILI": 9
+  },
+  "required_field_null_rates": {
+    "evidence_url": 0.0,
+    "observed_at": 0.0,
+    "evidence_excerpt": 0.0,
+    "category_code": 0.0,
+    "published_at": 0.8889,
+    "buyer_country_code": 1.0,
+    "buyer_name_raw": 1.0
+  },
+  "hard_gate_failure_count": 0,
+  "future_date_count": 0,
+  "ruleset_version": "truth-v1.0.0"
+}

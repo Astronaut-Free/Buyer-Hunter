@@ -1,0 +1,254 @@
+[
+  {
+    "source_code": "tradekey",
+    "category_code": "MATCHA",
+    "listing_url": "https://www.tradekey.com/matcha-buyer/",
+    "http_status": null,
+    "bytes": 0,
+    "parsed_count": 0,
+    "candidate_count": 0,
+    "attempt_count": 3,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 2541,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /matcha-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 2,
+        "status": null,
+        "elapsed_ms": 2548,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /matcha-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 3,
+        "status": null,
+        "elapsed_ms": 1528,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /matcha-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      }
+    ],
+    "snapshot_sha256": null,
+    "observed_at": "2026-08-28T07:33:31+00:00"
+  },
+  {
+    "source_code": "tradekey",
+    "category_code": "BLUEBERRY",
+    "listing_url": "https://www.tradekey.com/blueberry-buyer/",
+    "http_status": null,
+    "bytes": 0,
+    "parsed_count": 0,
+    "candidate_count": 0,
+    "attempt_count": 3,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 1501,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /blueberry-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 2,
+        "status": null,
+        "elapsed_ms": 1537,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /blueberry-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 3,
+        "status": null,
+        "elapsed_ms": 2315,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /blueberry-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      }
+    ],
+    "snapshot_sha256": null,
+    "observed_at": "2026-08-28T07:33:43+00:00"
+  },
+  {
+    "source_code": "tradekey",
+    "category_code": "CHILI",
+    "listing_url": "https://www.tradekey.com/chili-buyer/",
+    "http_status": null,
+    "bytes": 0,
+    "parsed_count": 0,
+    "candidate_count": 0,
+    "attempt_count": 3,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 1504,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /chili-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 2,
+        "status": null,
+        "elapsed_ms": 1542,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /chili-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 3,
+        "status": null,
+        "elapsed_ms": 1482,
+        "error": "SSLError: HTTPSConnectionPool(host='www.tradekey.com', port=443): Max retries exceeded with url: /chili-buyer/ (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      }
+    ],
+    "snapshot_sha256": null,
+    "observed_at": "2026-08-28T07:33:54+00:00"
+  },
+  {
+    "source_code": "tradekey",
+    "category_code": "TEA",
+    "listing_url": "https://www.tradekey.com/tea-buyer/",
+    "http_status": 200,
+    "bytes": 476078,
+    "parsed_count": 25,
+    "candidate_count": 23,
+    "attempt_count": 2,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 5006,
+        "error": "ConnectionError: ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))"
+      },
+      {
+        "attempt": 2,
+        "status": 200,
+        "elapsed_ms": 12395,
+        "error": null
+      }
+    ],
+    "snapshot_sha256": "ea0b1f3f60fff12f082d72611c741918fc9ea0b7c6330ffd330844c8d6d29071",
+    "observed_at": "2026-08-28T07:34:03+00:00"
+  },
+  {
+    "source_code": "go4worldbusiness",
+    "category_code": "MATCHA",
+    "listing_url": "https://www.go4worldbusiness.com/buyers/matcha.html",
+    "http_status": null,
+    "bytes": 0,
+    "parsed_count": 0,
+    "candidate_count": 0,
+    "attempt_count": 3,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 2537,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/matcha.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 2,
+        "status": null,
+        "elapsed_ms": 4573,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/matcha.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 3,
+        "status": null,
+        "elapsed_ms": 1569,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/matcha.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      }
+    ],
+    "snapshot_sha256": null,
+    "observed_at": "2026-08-28T07:34:24+00:00"
+  },
+  {
+    "source_code": "go4worldbusiness",
+    "category_code": "BLUEBERRY",
+    "listing_url": "https://www.go4worldbusiness.com/buyers/blueberries.html",
+    "http_status": null,
+    "bytes": 0,
+    "parsed_count": 0,
+    "candidate_count": 0,
+    "attempt_count": 3,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 2555,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/blueberries.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 2,
+        "status": null,
+        "elapsed_ms": 4524,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/blueberries.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 3,
+        "status": null,
+        "elapsed_ms": 1527,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/blueberries.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      }
+    ],
+    "snapshot_sha256": null,
+    "observed_at": "2026-08-28T07:34:38+00:00"
+  },
+  {
+    "source_code": "go4worldbusiness",
+    "category_code": "ROSA_ROXBURGHII",
+    "listing_url": "https://www.go4worldbusiness.com/buyers/rosa-roxburghii.html",
+    "http_status": 200,
+    "bytes": 244085,
+    "parsed_count": 20,
+    "candidate_count": 0,
+    "attempt_count": 2,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": null,
+        "elapsed_ms": 4637,
+        "error": "SSLError: HTTPSConnectionPool(host='www.go4worldbusiness.com', port=443): Max retries exceeded with url: /buyers/rosa-roxburghii.html (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+      },
+      {
+        "attempt": 2,
+        "status": 200,
+        "elapsed_ms": 1835,
+        "error": null
+      }
+    ],
+    "snapshot_sha256": "d685c90aa240e85e95e7b5b63c24f3b5ca0e4150dfc4318054b1f9d06f93d2b5",
+    "observed_at": "2026-08-28T07:34:52+00:00"
+  },
+  {
+    "source_code": "go4worldbusiness",
+    "category_code": "CHILI",
+    "listing_url": "https://www.go4worldbusiness.com/buyers/chili.html",
+    "http_status": 200,
+    "bytes": 260086,
+    "parsed_count": 20,
+    "candidate_count": 17,
+    "attempt_count": 1,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": 200,
+        "elapsed_ms": 879,
+        "error": null
+      }
+    ],
+    "snapshot_sha256": "7f5c2b04c97cb4427b2ad13425d56fee5f2f0172e1034c7b6114babaf342f8ad",
+    "observed_at": "2026-08-28T07:35:01+00:00"
+  },
+  {
+    "source_code": "go4worldbusiness",
+    "category_code": "TEA",
+    "listing_url": "https://www.go4worldbusiness.com/buyers/tea.html",
+    "http_status": 200,
+    "bytes": 332528,
+    "parsed_count": 20,
+    "candidate_count": 19,
+    "attempt_count": 1,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": 200,
+        "elapsed_ms": 505,
+        "error": null
+      }
+    ],
+    "snapshot_sha256": "8cf8c1e57a21564b99ebfaaa9d599cb004ad5a6f7933aefd90ebb87b8ab580e5",
+    "observed_at": "2026-08-28T07:35:04+00:00"
+  }
+]

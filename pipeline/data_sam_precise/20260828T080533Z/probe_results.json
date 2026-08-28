@@ -1,0 +1,72 @@
+[
+  {
+    "query": "matcha",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "2668c12069972ed970bb1d0b1c1fa20169827ade0b9fc1c4ca461ed6fc647153",
+    "error": null
+  },
+  {
+    "query": "matcha powder",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "d7379cc5872daff7b28b2f80a24f82afe5067f58e4dce64e5171000ae5c2b274",
+    "error": null
+  },
+  {
+    "query": "green tea powder",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "d98342cd0b0435ebe7ec64c0ce2edb17ffa74a2838e9c9017b28ea6aedd506ae",
+    "error": null
+  },
+  {
+    "query": "tea powder",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "c22aedfe111b62129500afc5edee58838ea3c465b673cb80b34d983431ae571b",
+    "error": null
+  },
+  {
+    "query": "blueberry",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "330b512bfce95adf0ceae3a85973624f25feeaad453ad3476d54b630c3e8ac34",
+    "error": null
+  },
+  {
+    "query": "blueberries",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "ab853da91d7034b86ea86f6a271cd32de54bb28444c2eeb72b0157a401af9b68",
+    "error": null
+  },
+  {
+    "query": "blueberry powder",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "14624689bd4ab27b0d862065e4b99e302fe7d8901c3da06e71fb327851beada8",
+    "error": null
+  },
+  {
+    "query": "dried blueberry",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "1129f860756897e7ccc960a6db52a01c9553475254cd42350e59d6ae89919d60",
+    "error": null
+  },
+  {
+    "query": "frozen blueberry",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "86d88f8cd63d538d945a439d979c2fca6a94d42dcb16bf56301d18fc0d63e6e0",
+    "error": null
+  },
+  {
+    "query": "berry powder",
+    "http_status": 200,
+    "record_count": 0,
+    "snapshot_sha256": "093c32744f4470736ea9cc845131a27d81f8ef472bc62024b149a5d968dc46f6",
+    "error": null
+  }
+]

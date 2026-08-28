@@ -49,9 +49,9 @@
   },
   {
     "code": "alibaba_rfq",
-    "kind": "ACCOUNT_RFQ",
-    "access": "public_boundary_probe",
-    "seed_urls": ["https://seller.alibaba.com/rfq"]
+    "kind": "PUBLIC_RFQ_WITH_LOGIN_QUOTE_GATE",
+    "access": "public_html",
+    "seed_urls": ["https://sourcing.alibaba.com/rfq/onepage/rfq_search_list.htm"]
   },
   {
     "code": "amazon_business_rfq",

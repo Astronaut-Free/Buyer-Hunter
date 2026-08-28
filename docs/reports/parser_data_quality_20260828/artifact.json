@@ -1,0 +1,498 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Buyer Hunter 解析器数据质量修复报告",
+    "description": "同一批79条B2B候选在truth-v1.0.0与truth-v1.1.0解析规则下的字段覆盖、冲突门禁与实体解析对比。",
+    "generatedAt": "2026-08-28T07:00:00Z",
+    "sources": [
+      {
+        "id": "quality-comparison",
+        "label": "Buyer Hunter parser quality before/after snapshots",
+        "path": "pipeline/data_quality_comparison/20260828T060329Z",
+        "query": {
+          "language": "python",
+          "description": "Compare non-empty normalized fields and quality statuses in the frozen before and after CSV snapshots.",
+          "tables_used": [
+            "pipeline/data_quality_comparison/20260828T060329Z/before/buyer_signals_cleaned_scored.csv",
+            "pipeline/data_quality_comparison/20260828T060329Z/after/buyer_signals_cleaned_scored.csv"
+          ],
+          "filters": [
+            "Same 79 collected candidate rows from collection run 20260828T060329Z",
+            "One deduplicated public buyer-demand signal per category/title/country/buyer fingerprint"
+          ],
+          "metric_definitions": [
+            "Field coverage rate = non-empty normalized field count / deduplicated row count",
+            "Demand quality pass = truth level A or B under truth-v1.1.0",
+            "Formal qualified = demand quality pass plus resolved legal buyer entity",
+            "Buyer contact is a public contact person and is not treated as a legal buyer entity"
+          ],
+          "sql": "WITH before AS (\n  SELECT * FROM read_csv_auto('pipeline/data_quality_comparison/20260828T060329Z/before/buyer_signals_cleaned_scored.csv', header=true)\n), after AS (\n  SELECT * FROM read_csv_auto('pipeline/data_quality_comparison/20260828T060329Z/after/buyer_signals_cleaned_scored.csv', header=true)\n)\nSELECT 'before' AS ruleset_version, COUNT(*) AS total_rows,\n       AVG(CASE WHEN published_at IS NOT NULL AND TRIM(CAST(published_at AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS published_coverage,\n       AVG(CASE WHEN buyer_country_code IS NOT NULL AND TRIM(CAST(buyer_country_code AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS country_coverage,\n       AVG(CASE WHEN contact_person IS NOT NULL AND TRIM(CAST(contact_person AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS contact_coverage,\n       AVG(CASE WHEN buyer_name IS NOT NULL AND TRIM(CAST(buyer_name AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS legal_entity_coverage\nFROM before\nUNION ALL\nSELECT 'after' AS ruleset_version, COUNT(*) AS total_rows,\n       AVG(CASE WHEN published_at IS NOT NULL AND TRIM(CAST(published_at AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END),\n       AVG(CASE WHEN buyer_country_code IS NOT NULL AND TRIM(CAST(buyer_country_code AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END),\n       AVG(CASE WHEN contact_person IS NOT NULL AND TRIM(CAST(contact_person AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END),\n       AVG(CASE WHEN buyer_name IS NOT NULL AND TRIM(CAST(buyer_name AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END)\nFROM after;"
+        }
+      }
+    ],
+    "cards": [
+      {
+        "id": "published-coverage",
+        "description": "标准发布时间字段非空的去重信号占比。",
+        "dataset": "headline",
+        "sourceId": "quality-comparison",
+        "metrics": [
+          {
+            "label": "发布时间覆盖",
+            "field": "published_after",
+            "format": "percent"
+          },
+          {
+            "label": "修复前",
+            "field": "published_before",
+            "format": "percent"
+          },
+          {
+            "label": "提升",
+            "field": "published_delta",
+            "format": "percent",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "country-coverage",
+        "description": "可映射为ISO国家代码的买家国家字段占比。",
+        "dataset": "headline",
+        "sourceId": "quality-comparison",
+        "metrics": [
+          {
+            "label": "国家覆盖",
+            "field": "country_after",
+            "format": "percent"
+          },
+          {
+            "label": "修复前",
+            "field": "country_before",
+            "format": "percent"
+          },
+          {
+            "label": "提升",
+            "field": "country_delta",
+            "format": "percent",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "demand-pass",
+        "description": "需求证据达到A/B级但尚未全部完成企业主体解析。",
+        "dataset": "headline",
+        "sourceId": "quality-comparison",
+        "metrics": [
+          {
+            "label": "需求质量通过",
+            "field": "demand_quality_pass",
+            "format": "number"
+          },
+          {
+            "label": "正式合格",
+            "field": "formal_qualified",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "country-coverage-chart",
+        "title": "修复后国家字段覆盖",
+        "subtitle": "75条去重信号中71条可映射ISO国家代码，4条来源未披露",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "修复后还有多少条国家字段缺失？",
+        "rationale": "两柱仅表达修复后已提取与仍缺失记录数。",
+        "type": "bar",
+        "dataset": "country_coverage_chart",
+        "sourceId": "quality-comparison",
+        "encodings": {
+          "x": {
+            "field": "status",
+            "type": "nominal",
+            "label": "状态"
+          },
+          "y": {
+            "field": "records",
+            "type": "quantitative",
+            "label": "记录数"
+          },
+          "color": {
+            "field": "status",
+            "type": "nominal",
+            "label": "状态"
+          },
+          "tooltip": [
+            {
+              "field": "records",
+              "type": "quantitative",
+              "label": "记录数"
+            },
+            {
+              "field": "coverage_rate",
+              "type": "quantitative",
+              "format": "percent",
+              "label": "占比"
+            }
+          ]
+        },
+        "combinationRationale": "颜色与X轴共同强调已提取和缺失状态。",
+        "valueFormat": "number",
+        "layout": "full",
+        "maxRows": 2
+      }
+    ],
+    "tables": [
+      {
+        "id": "coverage-table",
+        "title": "核心字段覆盖率对比",
+        "subtitle": "同一批79条候选；各版本分母为该版本去重记录数",
+        "showDescription": true,
+        "dataset": "coverage_summary",
+        "defaultSort": {
+          "field": "field_label",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "sourceId": "quality-comparison",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "field_label",
+            "label": "字段",
+            "type": "text"
+          },
+          {
+            "field": "before_rate",
+            "label": "修复前",
+            "type": "percent"
+          },
+          {
+            "field": "after_rate",
+            "label": "修复后",
+            "type": "percent"
+          },
+          {
+            "field": "delta_rate",
+            "label": "提升",
+            "type": "percent"
+          },
+          {
+            "field": "interpretation",
+            "label": "质量判断",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "quality-gate-table",
+        "title": "数据质量门禁结果",
+        "subtitle": "修复后75条去重信号；正式合格仍要求法律买家主体解析",
+        "showDescription": true,
+        "dataset": "quality_gates",
+        "defaultSort": {
+          "field": "check",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "sourceId": "quality-comparison",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "check",
+            "label": "检查项",
+            "type": "text"
+          },
+          {
+            "field": "result",
+            "label": "结果",
+            "type": "text"
+          },
+          {
+            "field": "interpretation",
+            "label": "判断",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Buyer Hunter 解析器数据质量修复报告",
+        "layout": "full"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "body": "## 技术摘要\n\n同一批79条候选重跑后，发布时间覆盖率从11.1%提升到100%，国家代码覆盖率从0提升到94.7%，联系人覆盖率从88.9%提升到90.7%。解析器同时识别出1条非正数量冲突。20条需求达到A/B级证据分，但企业主体解析仍为0，因此全部保留在待核验状态，没有进入正式机会库。",
+        "layout": "full",
+        "sourceId": "quality-comparison"
+      },
+      {
+        "id": "headline-strip",
+        "type": "metric-strip",
+        "cardIds": [
+          "published-coverage",
+          "country-coverage",
+          "demand-pass"
+        ],
+        "layout": "full"
+      },
+      {
+        "id": "coverage-finding",
+        "type": "markdown",
+        "body": "## 发布时间与国家字段已恢复，企业主体仍是硬缺口\n\n发布时间和国家字段的提升来自有边界的页面模式：TradeKey读取`.location`与`Posted on`，Go4WorldBusiness读取`Buyer From … Quantity Required`与`VERIFIED Mon-DD-YY`。联系人保持为联系人，不升级为买家公司。图中企业主体覆盖率仍为0，这是来源限制而不是继续猜值的理由。",
+        "layout": "full",
+        "sourceId": "quality-comparison"
+      },
+      {
+        "id": "coverage-table-block",
+        "type": "table",
+        "tableId": "coverage-table",
+        "layout": "full"
+      },
+      {
+        "id": "country-coverage-chart-block",
+        "type": "chart",
+        "chartId": "country-coverage-chart",
+        "layout": "full"
+      },
+      {
+        "id": "gate-finding",
+        "type": "markdown",
+        "body": "## 质量门禁阻止20条需求被误标为已核验买家\n\n20条记录的需求明确性与时效性达到A/B级，但没有法律买家公司名称、官网或注册主体证据。新版将`需求质量通过`和`正式合格`拆开：前者可进入补证流程，后者必须等待实体解析。",
+        "layout": "full",
+        "sourceId": "quality-comparison"
+      },
+      {
+        "id": "gate-table-block",
+        "type": "table",
+        "tableId": "quality-gate-table",
+        "layout": "full"
+      },
+      {
+        "id": "scope-definitions",
+        "type": "markdown",
+        "body": "## 范围、数据与指标定义\n\n比较对象是2026-08-28同一次采集产生的79条公开B2B候选。修复前后的去重数不同，因为旧版国家全空导致不同国家的相同标题发生错误合并；新版保留国家后，去重结果由63条变为75条。覆盖率分母分别使用各版本去重后的记录数。",
+        "layout": "full",
+        "sourceId": "quality-comparison"
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## 方法：证据片段优先，脏旧值不得覆盖精确匹配\n\n修复包含四项：一是两平台独立解析器；二是发布时间、国家、数量与联系人均保留来源片段；三是ISO国家别名标准化；四是非正数量进入`CONFLICT`而不是计入字段覆盖。所有比较使用冻结的before/after CSV，未重新采集或更换样本。",
+        "layout": "full",
+        "sourceId": "quality-comparison"
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## 限制与稳健性检查\n\n当前公开列表页通常不提供法律买家公司，因此企业主体覆盖仍为0。联系人覆盖不等于企业主体真实性。4条记录仍缺国家；系统保留为空。异常数量检查目前覆盖可解析的明确数值，后续仍需扩展单位与范围表达。18项解析、管线稳定性和机会决策回归测试全部通过。",
+        "layout": "full",
+        "sourceId": "quality-comparison"
+      },
+      {
+        "id": "next-steps",
+        "type": "markdown",
+        "body": "## 下一步：实体补全优先于继续扩大列表页抓取\n\n1. 对20条A/B级需求执行官网域名、企业注册主体和平台详情页补证。\n2. 只有`entity_resolution_status=RESOLVED`才允许进入正式机会库。\n3. 将国家、发布时间、联系人、非正数量和来源片段检查加入每次采集回归。",
+        "layout": "full"
+      },
+      {
+        "id": "further-questions",
+        "type": "markdown",
+        "body": "## 待确认问题\n\n- TradeKey和Go4WorldBusiness登录后是否提供可合法使用的公司主体字段？\n- 对仅有联系人但无公司的需求，产品前端应展示为`买家待核验`还是完全隐藏？",
+        "layout": "full"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-28T07:00:00Z",
+    "status": "ready",
+    "datasets": {
+      "headline": [
+        {
+          "published_after": 1.0,
+          "published_before": 0.111,
+          "published_delta": 0.889,
+          "country_after": 0.947,
+          "country_before": 0.0,
+          "country_delta": 0.947,
+          "demand_quality_pass": 20,
+          "formal_qualified": 0
+        }
+      ],
+      "coverage_comparison": [
+        {
+          "field_label": "发布时间",
+          "version": "修复前",
+          "coverage_rate": 0.111,
+          "covered_rows": 7,
+          "total_rows": 63,
+          "ruleset": "truth-v1.0.0"
+        },
+        {
+          "field_label": "发布时间",
+          "version": "修复后",
+          "coverage_rate": 1.0,
+          "covered_rows": 75,
+          "total_rows": 75,
+          "ruleset": "truth-v1.1.0"
+        },
+        {
+          "field_label": "买家国家",
+          "version": "修复前",
+          "coverage_rate": 0.0,
+          "covered_rows": 0,
+          "total_rows": 63,
+          "ruleset": "truth-v1.0.0"
+        },
+        {
+          "field_label": "买家国家",
+          "version": "修复后",
+          "coverage_rate": 0.947,
+          "covered_rows": 71,
+          "total_rows": 75,
+          "ruleset": "truth-v1.1.0"
+        },
+        {
+          "field_label": "联系人",
+          "version": "修复前",
+          "coverage_rate": 0.889,
+          "covered_rows": 56,
+          "total_rows": 63,
+          "ruleset": "truth-v1.0.0"
+        },
+        {
+          "field_label": "联系人",
+          "version": "修复后",
+          "coverage_rate": 0.907,
+          "covered_rows": 68,
+          "total_rows": 75,
+          "ruleset": "truth-v1.1.0"
+        },
+        {
+          "field_label": "企业主体",
+          "version": "修复前",
+          "coverage_rate": 0.0,
+          "covered_rows": 0,
+          "total_rows": 63,
+          "ruleset": "truth-v1.0.0"
+        },
+        {
+          "field_label": "企业主体",
+          "version": "修复后",
+          "coverage_rate": 0.0,
+          "covered_rows": 0,
+          "total_rows": 75,
+          "ruleset": "truth-v1.1.0"
+        }
+      ],
+      "quality_gates": [
+        {
+          "order": 1,
+          "check": "需求质量A/B级",
+          "result": "20条",
+          "interpretation": "可进入主体补证流程，不等于买家已核验"
+        },
+        {
+          "order": 2,
+          "check": "法律买家主体已解析",
+          "result": "0条",
+          "interpretation": "禁止进入正式机会库"
+        },
+        {
+          "order": 3,
+          "check": "非正数量冲突",
+          "result": "1条",
+          "interpretation": "quantity_status=CONFLICT，强制待核验"
+        },
+        {
+          "order": 4,
+          "check": "仍缺国家",
+          "result": "4条",
+          "interpretation": "来源未披露，保持空值"
+        },
+        {
+          "order": 5,
+          "check": "回归测试",
+          "result": "18/18通过",
+          "interpretation": "解析、稳定性和机会门禁未回退"
+        }
+      ],
+      "coverage_summary": [
+        {
+          "field_label": "发布时间",
+          "before_rate": 0.111,
+          "after_rate": 1.0,
+          "delta_rate": 0.889,
+          "interpretation": "已恢复"
+        },
+        {
+          "field_label": "买家国家",
+          "before_rate": 0.0,
+          "after_rate": 0.947,
+          "delta_rate": 0.947,
+          "interpretation": "4条来源未披露，保持空值"
+        },
+        {
+          "field_label": "联系人",
+          "before_rate": 0.889,
+          "after_rate": 0.907,
+          "delta_rate": 0.018,
+          "interpretation": "仅联系人，不等于企业主体"
+        },
+        {
+          "field_label": "企业主体",
+          "before_rate": 0.0,
+          "after_rate": 0.0,
+          "delta_rate": 0.0,
+          "interpretation": "未猜值，需详情页或官网补证"
+        }
+      ],
+      "country_coverage_chart": [
+        {
+          "status": "已提取",
+          "records": 71,
+          "coverage_rate": 0.947
+        },
+        {
+          "status": "缺失",
+          "records": 4,
+          "coverage_rate": 0.053
+        }
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "quality-comparison",
+      "label": "Buyer Hunter parser quality before/after snapshots",
+      "path": "pipeline/data_quality_comparison/20260828T060329Z",
+      "query": {
+        "language": "python",
+        "description": "Compare non-empty normalized fields and quality statuses in the frozen before and after CSV snapshots.",
+        "tables_used": [
+          "pipeline/data_quality_comparison/20260828T060329Z/before/buyer_signals_cleaned_scored.csv",
+          "pipeline/data_quality_comparison/20260828T060329Z/after/buyer_signals_cleaned_scored.csv"
+        ],
+        "filters": [
+          "Same collection run 20260828T060329Z"
+        ],
+        "metric_definitions": [
+          "Field coverage rate = non-empty normalized field count / deduplicated row count"
+        ],
+        "sql": "WITH before AS (\n  SELECT * FROM read_csv_auto('pipeline/data_quality_comparison/20260828T060329Z/before/buyer_signals_cleaned_scored.csv', header=true)\n), after AS (\n  SELECT * FROM read_csv_auto('pipeline/data_quality_comparison/20260828T060329Z/after/buyer_signals_cleaned_scored.csv', header=true)\n)\nSELECT 'before' AS ruleset_version, COUNT(*) AS total_rows,\n       AVG(CASE WHEN published_at IS NOT NULL AND TRIM(CAST(published_at AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS published_coverage,\n       AVG(CASE WHEN buyer_country_code IS NOT NULL AND TRIM(CAST(buyer_country_code AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS country_coverage,\n       AVG(CASE WHEN contact_person IS NOT NULL AND TRIM(CAST(contact_person AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS contact_coverage,\n       AVG(CASE WHEN buyer_name IS NOT NULL AND TRIM(CAST(buyer_name AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END) AS legal_entity_coverage\nFROM before\nUNION ALL\nSELECT 'after' AS ruleset_version, COUNT(*) AS total_rows,\n       AVG(CASE WHEN published_at IS NOT NULL AND TRIM(CAST(published_at AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END),\n       AVG(CASE WHEN buyer_country_code IS NOT NULL AND TRIM(CAST(buyer_country_code AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END),\n       AVG(CASE WHEN contact_person IS NOT NULL AND TRIM(CAST(contact_person AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END),\n       AVG(CASE WHEN buyer_name IS NOT NULL AND TRIM(CAST(buyer_name AS VARCHAR)) <> '' THEN 1.0 ELSE 0.0 END)\nFROM after;"
+      }
+    }
+  ]
+}

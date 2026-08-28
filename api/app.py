@@ -90,6 +90,8 @@ def health() -> dict[str, Any]:
 def today_opportunities(
     seller_profile_id: str = Query(...),
     limit: int = Query(5, ge=1, le=20),
+    category_code: str | None = Query(default=None, pattern="^(MATCHA|BLUEBERRY|ROSA_ROXBURGHII|CHILI|TEA)$"),
+    market_code: str | None = Query(default=None, pattern="^(US|JP|GB|AU|EU)$"),
     x_demo_member: str | None = Header(default=None),
 ) -> dict[str, Any]:
     full = x_demo_member == "true"
@@ -100,12 +102,38 @@ def today_opportunities(
         ).fetchone()[0]
         if not latest:
             raise HTTPException(404, "Seller profile has no decisions")
-        rows = conn.execute(
-            BASE_QUERY + " WHERE od.seller_capability_profile_id=? AND od.decision_date=? AND od.rank_position IS NOT NULL ORDER BY od.rank_position LIMIT ?",
-            (seller_profile_id, latest, limit),
-        ).fetchall()
-    return {"decision_date": latest, "seller_profile_id": seller_profile_id, "data_mode": "LIVE_PIPELINE", "items": [summary_from(row, full) for row in rows]}
 
+        clauses = ["od.seller_capability_profile_id=?", "od.decision_date=?", "od.decision_status!='PASS'"]
+        params: list[Any] = [seller_profile_id, latest]
+        if category_code:
+            clauses.append("json_extract(s.product_terms_json, '$[0]')=?")
+            params.append(category_code)
+        if market_code == "EU":
+            eu_codes = ["DE", "NL", "FR", "IT", "ES", "PL", "BE", "FI", "HU"]
+            clauses.append(f"b.country_code IN ({','.join('?' for _ in eu_codes)})")
+            params.extend(eu_codes)
+        elif market_code:
+            clauses.append("b.country_code=?")
+            params.append(market_code)
+        params.append(limit)
+        rows = conn.execute(
+            BASE_QUERY + " WHERE " + " AND ".join(clauses) + " ORDER BY od.opportunity_score DESC, od.opportunity_id LIMIT ?",
+            params,
+        ).fetchall()
+
+    items = []
+    for rank, row in enumerate(rows, 1):
+        item = summary_from(row, full)
+        item["rank"] = rank
+        items.append(item)
+    return {
+        "decision_date": latest,
+        "seller_profile_id": seller_profile_id,
+        "category_code": category_code,
+        "market_code": market_code,
+        "data_mode": "LIVE_PIPELINE",
+        "items": items,
+    }
 
 @app.get("/api/v1/opportunities/{opportunity_id}/decision")
 def opportunity_decision(opportunity_id: str, x_demo_member: str | None = Header(default=None)) -> dict[str, Any]:

@@ -1,0 +1,11 @@
+﻿source_code,category_code,search_term,buying_intent_filter_confirmed,result_count,snapshot_path,observed_at
+hktdc_sourcing,MATCHA,matcha,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\hktdc_matcha_results.yml,2026-08-28T08:05:49+00:00
+japan_jetro,MATCHA,matcha,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\jetro_matcha_buy_results.yml,2026-08-28T08:05:49+00:00
+hktdc_sourcing,BLUEBERRY,blueberry,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\hktdc_blueberry_results.yml,2026-08-28T08:05:49+00:00
+japan_jetro,BLUEBERRY,blueberry,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\jetro_blueberry_buy_results.yml,2026-08-28T08:05:49+00:00
+hktdc_sourcing,ROSA_ROXBURGHII,rosa roxburghii,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\hktdc_rosa_results.yml,2026-08-28T08:05:49+00:00
+japan_jetro,ROSA_ROXBURGHII,rosa roxburghii,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\jetro_rosa_buy_results.yml,2026-08-28T08:05:49+00:00
+hktdc_sourcing,CHILI,chili pepper,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\hktdc_chili_results.yml,2026-08-28T08:05:49+00:00
+japan_jetro,CHILI,chili pepper,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\jetro_chili_buy_results.yml,2026-08-28T08:05:49+00:00
+hktdc_sourcing,TEA,tea,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\hktdc_tea_results.yml,2026-08-28T08:05:49+00:00
+japan_jetro,TEA,tea,True,0,E:\贵客松-买家猎手\output\playwright\seven_platforms_20260828\jetro_tea_buy_results.yml,2026-08-28T08:05:49+00:00

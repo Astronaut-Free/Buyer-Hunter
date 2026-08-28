@@ -24,6 +24,7 @@ import {
 import { countrySignals, opportunities } from "./data.js";
 import { loadOpportunityDetail, loadTodayOpportunities } from "./api.js";
 import "./decision.css";
+import "./filters.css";
 
 const navItems = [
   ["opportunities", "今日决策", Crosshair],
@@ -118,28 +119,39 @@ function OpportunityCard({ item, isMember, onOpen }) {
 }
 
 function OpportunitiesPage({ isMember, items, dataMode, onOpen, onScan }) {
-  const [product, setProduct] = useState("贵州抹茶 / 蓝莓 / 刺梨 / 辣椒 / 茶");
+  const [product, setProduct] = useState("ALL");
+  const [market, setMarket] = useState("ALL");
   const [scanning, setScanning] = useState(false);
   const counts = {
     pursue: items.filter((item) => item.decision === "PURSUE_NOW").length,
     verify: items.filter((item) => item.decision === "VERIFY_FIRST").length,
     watch: items.filter((item) => item.decision === "WATCH").length,
   };
-  const runScan = () => {
+  const runScan = (nextProduct = product, nextMarket = market) => {
     setScanning(true);
-    onScan?.();
-    window.setTimeout(() => setScanning(false), 900);
+    Promise.resolve(onScan?.({ categoryCode: nextProduct, marketCode: nextMarket }))
+      .finally(() => window.setTimeout(() => setScanning(false), 350));
+  };
+  const changeProduct = (event) => {
+    const value = event.target.value;
+    setProduct(value);
+    runScan(value, market);
+  };
+  const changeMarket = (event) => {
+    const value = event.target.value;
+    setMarket(value);
+    runScan(product, value);
   };
   return (
     <div className="page-content">
       <section className="page-title-row">
-        <div><span className="eyebrow">TODAY'S OPPORTUNITY DECISIONS</span><h1>今天销售先追谁</h1><p>系统已从公开信号中筛出 5 个值得分配销售时间的采购机会。</p></div>
+        <div><span className="eyebrow">TODAY'S OPPORTUNITY DECISIONS</span><h1>今天销售先追谁</h1><p>系统已筛出 {items.length} 个符合当前选品与市场的采购机会。</p></div>
         <div className="data-mode"><span className="status-dot" /> {dataMode === "LIVE_PIPELINE" ? "LIVE PIPELINE · 今日快照" : "FALLBACK · 演示样例"}</div>
       </section>
       <section className="query-bar">
-        <div className="query-input"><MagnifyingGlass size={19} /><input value={product} onChange={(e) => setProduct(e.target.value)} aria-label="目标产品" /></div>
-        <select aria-label="目标市场"><option>全球市场</option><option>美国</option><option>欧盟</option><option>日本</option></select>
-        <button className="primary" onClick={runScan} disabled={scanning}>{scanning ? "正在重算证据与匹配…" : "刷新机会判断"}</button>
+        <div className="query-input"><MagnifyingGlass size={19} /><select className="product-select" value={product} onChange={changeProduct} aria-label="目标产品"><option value="ALL">全部品类</option><option value="MATCHA">贵州抹茶</option><option value="BLUEBERRY">贵州蓝莓</option><option value="ROSA_ROXBURGHII">贵州刺梨</option><option value="CHILI">贵州辣椒</option><option value="TEA">贵州茶</option></select></div>
+        <select value={market} onChange={changeMarket} aria-label="目标市场"><option value="ALL">全球市场</option><option value="US">美国</option><option value="EU">欧盟</option><option value="JP">日本</option><option value="GB">英国</option><option value="AU">澳大利亚</option></select>
+        <button className="primary" onClick={() => runScan()} disabled={scanning}>{scanning ? "正在重算证据与匹配…" : "刷新机会判断"}</button>
       </section>
       <section className="kpi-grid">
         <div className="kpi featured"><span>立即追</span><strong>{counts.pursue}</strong><small>无硬阻断</small></div>
@@ -148,15 +160,14 @@ function OpportunitiesPage({ isMember, items, dataMode, onOpen, onScan }) {
         <div className="kpi"><span>今日行动</span><strong>0/{items.length}</strong><small>等待销售确认</small></div>
       </section>
       <section className="list-section">
-        <div className="section-heading"><div><h2>今日 Top 5 决策</h2><p>按采购窗口、卖方匹配、市场准入、风险和可执行性排序</p></div><button className="filter-button"><Funnel size={16} />筛选</button></div>
+        <div className="section-heading"><div><h2>当前选品机会</h2><p>按采购窗口、卖方匹配、市场准入、风险和可执行性动态排序</p></div><button className="filter-button"><Funnel size={16} />筛选</button></div>
         <div className="opportunity-list">
-          {items.map((item) => <OpportunityCard key={item.id} item={item} isMember={isMember} onOpen={onOpen} />)}
+          {items.length ? items.map((item) => <OpportunityCard key={item.id} item={item} isMember={isMember} onOpen={onOpen} />) : <div className="empty-state compact-empty"><MagnifyingGlass size={30} /><h3>当前组合暂无合格机会</h3><p>更换品类或市场，系统会立即重新筛选。</p></div>}
         </div>
       </section>
     </div>
   );
 }
-
 function DecisionDetails({ item }) {
   return (
     <>
@@ -274,13 +285,21 @@ export function App() {
   const [followStages, setFollowStages] = useState({});
   const [liveItems, setLiveItems] = useState(opportunities);
   const [dataMode, setDataMode] = useState("FALLBACK");
+  const [activeFilters, setActiveFilters] = useState({ categoryCode: "ALL", marketCode: "ALL" });
   const quota = 20 - accessIds.size;
 
-  const refreshFeed = () => loadTodayOpportunities(isMember)
-    .then(({ items, dataMode: mode }) => { setLiveItems(items); setDataMode(mode); })
-    .catch(() => { setLiveItems(opportunities); setDataMode("FALLBACK"); });
+  const refreshFeed = (filters = activeFilters) => {
+    setActiveFilters(filters);
+    return loadTodayOpportunities(isMember, filters)
+      .then(({ items, dataMode: mode }) => { setLiveItems(items); setDataMode(mode); })
+      .catch(() => {
+        const fallback = filters.categoryCode === "ALL" || filters.categoryCode === "MATCHA" ? opportunities : [];
+        setLiveItems(fallback);
+        setDataMode("FALLBACK");
+      });
+  };
 
-  useEffect(() => { refreshFeed(); }, [isMember]);
+  useEffect(() => { refreshFeed(activeFilters); }, [isMember]);
 
   const openOpportunity = (item) => {
     setSelected(item);
@@ -293,7 +312,7 @@ export function App() {
     if (page === "unlocked") return <AccessPage accessIds={accessIds} opportunities={liveItems} onOpen={openOpportunity} />;
     if (page === "membership") return <MembershipPage isMember={isMember} quota={quota} onActivate={() => isMember ? null : setShowMembership(true)} />;
     return <OpportunitiesPage isMember={isMember} items={liveItems} dataMode={dataMode} onOpen={openOpportunity} onScan={refreshFeed} />;
-  }, [page, isMember, quota, accessIds, liveItems, dataMode]);
+  }, [page, isMember, quota, accessIds, liveItems, dataMode, activeFilters]);
 
   const unlockAccess = () => {
     if (!selected || !isMember) return;

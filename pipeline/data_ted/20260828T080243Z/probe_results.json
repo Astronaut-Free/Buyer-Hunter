@@ -1,0 +1,132 @@
+[
+  {
+    "category_code": "MATCHA",
+    "query_term": "matcha",
+    "http_status": null,
+    "elapsed_ms": 2672,
+    "api_total": null,
+    "returned_count": 0,
+    "accepted_count": 0,
+    "error": "SSLError: HTTPSConnectionPool(host='api.ted.europa.eu', port=443): Max retries exceeded with url: /v3/notices/search (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1035)')))"
+  },
+  {
+    "category_code": "BLUEBERRY",
+    "query_term": "blueberry",
+    "http_status": 200,
+    "elapsed_ms": 5060,
+    "api_total": 1,
+    "returned_count": 1,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "BLUEBERRY",
+    "query_term": "blueberries",
+    "http_status": 200,
+    "elapsed_ms": 2243,
+    "api_total": 1,
+    "returned_count": 1,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "ROSA_ROXBURGHII",
+    "query_term": "Rosa roxburghii",
+    "http_status": 200,
+    "elapsed_ms": 1100,
+    "api_total": 0,
+    "returned_count": 0,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "ROSA_ROXBURGHII",
+    "query_term": "cili fruit",
+    "http_status": 200,
+    "elapsed_ms": 6470,
+    "api_total": 0,
+    "returned_count": 0,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "CHILI",
+    "query_term": "chili",
+    "http_status": 200,
+    "elapsed_ms": 46628,
+    "api_total": 33,
+    "returned_count": 33,
+    "accepted_count": 14,
+    "error": null
+  },
+  {
+    "category_code": "CHILI",
+    "query_term": "chilli",
+    "http_status": 200,
+    "elapsed_ms": 45239,
+    "api_total": 37,
+    "returned_count": 37,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "CHILI",
+    "query_term": "capsicum",
+    "http_status": 200,
+    "elapsed_ms": 3659,
+    "api_total": 3,
+    "returned_count": 3,
+    "accepted_count": 2,
+    "error": null
+  },
+  {
+    "category_code": "CHILI",
+    "query_term": "paprika",
+    "http_status": 200,
+    "elapsed_ms": 1712,
+    "api_total": 138,
+    "returned_count": 50,
+    "accepted_count": 10,
+    "error": null
+  },
+  {
+    "category_code": "TEA",
+    "query_term": "green tea",
+    "http_status": 200,
+    "elapsed_ms": 915,
+    "api_total": 2,
+    "returned_count": 2,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "TEA",
+    "query_term": "black tea",
+    "http_status": 200,
+    "elapsed_ms": 726,
+    "api_total": 10,
+    "returned_count": 10,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "TEA",
+    "query_term": "oolong tea",
+    "http_status": 200,
+    "elapsed_ms": 753,
+    "api_total": 0,
+    "returned_count": 0,
+    "accepted_count": 0,
+    "error": null
+  },
+  {
+    "category_code": "TEA",
+    "query_term": "tea leaves",
+    "http_status": 200,
+    "elapsed_ms": 586,
+    "api_total": 0,
+    "returned_count": 0,
+    "accepted_count": 0,
+    "error": null
+  }
+]

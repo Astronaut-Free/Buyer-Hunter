@@ -39,9 +39,8 @@ class CollectorStabilityTests(unittest.TestCase):
     def test_saved_snapshots_remain_parseable(self):
         runs = sorted((PIPELINE / "data_b2b_public_v3").glob("*/raw"), reverse=True)
         self.assertTrue(runs, "collection snapshots are missing")
-        raw = runs[0]
-        trade = next(raw.glob("tradekey_MATCHA_*.html"))
-        go4 = next(raw.glob("go4worldbusiness_MATCHA_*.html"))
+        trade = next(path for raw in runs for path in raw.glob("tradekey_MATCHA_*.html"))
+        go4 = next(path for raw in runs for path in raw.glob("go4worldbusiness_MATCHA_*.html"))
         self.assertGreater(len(collector.parse_tradekey(trade.read_bytes(), "https://example.test")), 0)
         self.assertGreater(len(collector.parse_go4worldbusiness(go4.read_bytes(), "https://example.test")), 0)
 

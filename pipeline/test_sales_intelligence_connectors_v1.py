@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import os
 import sys
 import unittest
@@ -61,6 +62,40 @@ class ApolloTests(unittest.TestCase):
             connectors.ApolloConnector.buying_intent_api_status()["status"],
             "NOT_EXPOSED_IN_PUBLIC_OPENAPI",
         )
+
+
+class AlibabaRfqTests(unittest.TestCase):
+    def test_waits_until_all_credentials_exist(self):
+        with patch.dict(os.environ, {}, clear=True):
+            item = connectors.AlibabaRfqConnector().health()
+        self.assertEqual(item.status, "WAITING_CREDENTIALS")
+
+    def test_sign_is_stable_and_excludes_sign_field(self):
+        params = {"method": "demo", "app_key": "key", "timestamp": "2026-08-28 12:00:00"}
+        first = connectors.AlibabaRfqConnector.sign(params, "secret")
+        second = connectors.AlibabaRfqConnector.sign({**params, "sign": "ignored"}, "secret")
+        self.assertEqual(first, second)
+        self.assertRegex(first, r"^[0-9A-F]{32}$")
+
+    def test_search_uses_authorized_api_and_compact_cond(self):
+        session = Mock()
+        session.request.return_value = response(200, {"ok": True})
+        connector = connectors.AlibabaRfqConnector(
+            "app-key", "app-secret", "session-key", connectors.JsonHttpClient(session),
+        )
+        code, _ = connector.search("matcha", page=2, page_size=500, country="US")
+        self.assertEqual(code, 200)
+        form = session.request.call_args.kwargs["data"]
+        self.assertEqual(form["method"], "alibaba.icbu.rfq.search")
+        self.assertEqual(form["session"], "session-key")
+        self.assertEqual(json.loads(form["cond"]), {
+            "search_text": "matcha", "current_page": 2, "page_size": 100, "country": "US",
+        })
+        self.assertNotIn("app-secret", str(form))
+
+    def test_detail_requires_rfq_id(self):
+        with self.assertRaises(ValueError):
+            connectors.AlibabaRfqConnector("a", "b", "c").get_detail("")
 
 
 class CommercialConnectorTests(unittest.TestCase):
