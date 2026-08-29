@@ -1,5 +1,5 @@
 capability_id: qianpulse.a2.proactive_buyer_development
-version: 1.0.0
+version: 1.1.0
 description: Evidence-grounded proactive overseas buyer development for seller-defined markets.
 required_inputs:
   - seller
@@ -9,13 +9,10 @@ required_inputs:
   - execution
 produced_outputs:
   - target_definition
-  - buyer_company
-  - buyer_fit
-  - contact
-  - outreach_readiness
-  - outreach
-  - followup
-  - handoff
+  - candidates
+  - summary
+  - provider_trace
+  - next_state
 status_contract:
   - DONE
   - MORE_EVIDENCE
