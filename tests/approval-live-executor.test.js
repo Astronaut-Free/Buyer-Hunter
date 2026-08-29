@@ -99,3 +99,32 @@ test('non-internal user cannot execute approval', async () => {
   assert.equal(result.status, 403);
   assert.equal(sends.length, 0);
 });
+
+test('shared approval executor dispatches A2 outreach approval to its executor', async () => {
+  const state = {
+    approvals: {
+      a2approval: {
+        approval_id: 'a2approval',
+        action_type: 'A2_OUTREACH_DRAFT',
+        status: 'PENDING'
+      }
+    }
+  };
+  const calls = [];
+  const execute = createApprovalLiveExecutor({
+    getState: () => state,
+    smartlead: {},
+    a2OutreachExecutor: async input => {
+      calls.push(input);
+      return { status: 200, body: { execution: { status: 'QUEUED_IN_SMARTLEAD' } } };
+    }
+  });
+  const user = { id: 'internal-1', role: 'INTERNAL' };
+  const result = await execute({ approvalId: 'a2approval', user, status: 'APPROVED' });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.execution.status, 'QUEUED_IN_SMARTLEAD');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].approvalId, 'a2approval');
+  assert.equal(calls[0].status, 'APPROVED');
+});
