@@ -209,7 +209,7 @@ We need 20 tons delivered to Germany by October 2026.
 
 ## 8. A3 / A4 / A5 自动依赖刷新
 
-A6 首次判断得到 `invalidated_capabilities` 后，Runtime 在同一 progression cycle 自动执行受影响 SKILL。
+A6 ANALYSIS 得到 `affected_skills` 后，Agent Runtime 在同一 Agent Run 内按 `input_hash` 自动执行失效 SKILL。
 
 当前职责：
 
@@ -228,16 +228,15 @@ A5 qianpulse.a5.trade_risk
 
 ```text
 Buyer Message
-→ Structured Field Extraction
-→ A6 First Pass
-→ invalidated_capabilities
-→ runInvalidatedDependencies
-→ A3 / A4 / A5 only when invalidated
-→ Merge dependency_results
-→ A6 Second Pass
-→ Dependency Gate
-→ Persist verified Opportunity fields
-→ Draft / Wait / Block / Human Takeover
+→ A6 ANALYSIS
+→ field_observations + affected_skills
+→ Agent runAffectedSkills
+→ A3 / A4 / A5 only when stale by input_hash
+→ Merge skill_results
+→ A6 FINAL
+→ Contract / Freshness Gate
+→ Persist verified Opportunity fields once
+→ Communication Brief / Reply Composer / Wait / Block / Human Takeover
 ```
 
 刷新结果规则：

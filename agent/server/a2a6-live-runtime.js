@@ -1,5 +1,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { createQianPulseSkillOrchestrator } from '../qianpulse-skill-orchestrator.js';
+import { composeReply } from '../services/reply-composer.js';
+import { A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 import { createAgentStateOpportunityStore } from './agent-state-opportunity-store.js';
 import { createA2OutreachApprovals } from './a2-outreach-approval.js';
 
@@ -258,7 +260,7 @@ export function createLiveA2A6Runtime({
       completed_at: null,
       state_before: { status: opportunity.status, stage: opportunity.stage || 'CONTACTED' },
       state_after: null,
-      capabilities_called: ['qianpulse.a6.opportunity_progression'],
+      capabilities_called: [A6_CAPABILITY_ID],
       decision_before: opportunity.a6?.next_action || null,
       decision_after: null,
       agent_version: agentVersion
@@ -270,17 +272,12 @@ export function createLiveA2A6Runtime({
         opportunityId: opportunity.id,
         event,
         sellerContext: payload.seller_context || {},
-        dependencyResults: payload.dependency_results || {},
-        refreshedCapabilities: payload.refreshed_capabilities || []
+        sellerExecutionPolicy: payload.seller_execution_policy || opportunity.seller_execution_policy || {},
+        dependencyResults: payload.dependency_results || {}
       });
       const envelope = progression.envelope;
-      const dependencyExecutions = progression.dependency_refresh?.executions || [];
-      run.capabilities_called = [
-        ...new Set([
-          ...dependencyExecutions.map(item => item.capability_id).filter(Boolean),
-          'qianpulse.a6.opportunity_progression'
-        ])
-      ];
+      const capabilityTrace = progression.trace || [];
+      run.capabilities_called = capabilityTrace.map(item => item.capability_id).filter(Boolean);
       run.status = agentStatus(progression.run_status);
       run.state_after = { status: progression.opportunity.status, stage: progression.opportunity.stage || 'CONTACTED' };
       run.decision_after = envelope?.domain_result?.next_action || null;
@@ -294,51 +291,45 @@ export function createLiveA2A6Runtime({
         content: typeof messageContent === 'string' ? messageContent : messageContent.content || ''
       };
 
-      dependencyExecutions.forEach((result, index) => {
-        const dependencyStep = {
+      const runSteps = capabilityTrace.map((entry, index) => {
+        const result = entry.result;
+        const capabilityStep = {
           step_id: id('step'),
           run_id: run.run_id,
           sequence: index + 1,
           step_type: 'CAPABILITY',
-          capability_id: result.capability_id,
-          capability_version: result.capability_version || '1.0.0',
-          input_hash: hash({ opportunity_id: opportunity.id, event_id: event.event_id, capability_id: result.capability_id }),
+          phase: entry.phase,
+          capability_id: entry.capability_id,
+          capability_version: entry.capability_version || result?.capability_version || '1.0.0',
+          input_hash: entry.input_hash || result?.input_hash || hash({ opportunity_id: opportunity.id, event_id: event.event_id, capability_id: entry.capability_id, phase: entry.phase }),
           output_hash: hash(result),
-          status: result.run_status,
+          status: result?.run_status || 'ERROR',
           started_at: run.started_at,
           completed_at: run.completed_at,
-          evidence_refs: result.evidence_refs || [],
+          evidence_refs: result?.evidence_refs || [],
           result
         };
-        state.steps[dependencyStep.step_id] = dependencyStep;
+        state.steps[capabilityStep.step_id] = capabilityStep;
+        state.traces.push({
+          trace_id: id('trace'), run_id: run.run_id, step_id: capabilityStep.step_id,
+          sequence: capabilityStep.sequence, capability_id: capabilityStep.capability_id,
+          phase: capabilityStep.phase, status: capabilityStep.status, created_at: now()
+        });
+        return capabilityStep;
       });
-
-      const step = {
-        step_id: id('step'),
-        run_id: run.run_id,
-        sequence: dependencyExecutions.length + 1,
-        step_type: 'CAPABILITY',
-        capability_id: 'qianpulse.a6.opportunity_progression',
-        capability_version: '1.0.0',
-        input_hash: hash({ opportunity_id: opportunity.id, event_id: event.event_id }),
-        output_hash: hash(envelope),
-        status: progression.run_status,
-        started_at: run.started_at,
-        completed_at: run.completed_at,
-        evidence_refs: envelope?.evidence_refs || [],
-        result: envelope
-      };
-      state.steps[step.step_id] = step;
+      const step = runSteps.at(-1);
 
       let approval = null;
-      const draft = envelope?.domain_result?.reply_draft;
+      const communicationBrief = envelope?.domain_result?.communication_brief;
+      const draft = composeReply({ communicationBrief });
       if (draft && envelope?.human_review_required && progression.run_status === 'DONE') {
         approval = {
           approval_id: id('approval'),
           opportunity_id: opportunity.id,
           run_id: run.run_id,
           action_type: 'BUYER_MESSAGE_DRAFT',
-          payload: { draft },
+          payload: { draft, communication_brief: communicationBrief, transport: payload.transport || null },
+          execution_mode: envelope.domain_result?.next_action?.execution_mode || 'APPROVAL',
           risk_summary: envelope.domain_result?.next_action?.reason || '对外发送前需要人工确认',
           status: 'PENDING',
           requested_by: user?.id || 'SYSTEM',

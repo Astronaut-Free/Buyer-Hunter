@@ -562,17 +562,19 @@ Current stage
 Next Best Action
 ```
 
-输出：
+A6 输出（V1.1）：
 
 ```yaml
-reply_draft:
+communication_brief:
   objective:
-  content:
+  allowed_claims: []
+  approved_assets: []
+  questions_to_ask: []
+  prohibited_claims: []
   language:
-  claims_used: []
-  evidence_refs: []
-  prohibited_claims_checked: true
 ```
+
+最终 `reply_draft` 由独立 Reply Composer 仅根据 Communication Brief 生成，再进入 Human Gate。
 
 硬规则：
 

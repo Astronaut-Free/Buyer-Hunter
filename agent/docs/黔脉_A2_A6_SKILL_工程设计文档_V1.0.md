@@ -230,18 +230,20 @@ A6：
 
 ```yaml
 capability_id: qianpulse.a6.opportunity_progression
-version: 1.0.0
-description: Understand buyer feedback, determine opportunity stage, detect changed fields, resolve the current key blocker, and recommend the next commercial action.
+version: 1.1.0
+description: Analyze buyer events and produce evidence-controlled Opportunity progression without executing dependencies or composing replies.
 required_inputs:
   - opportunity_context
   - buyer_message_or_system_event
 produced_outputs:
-  - reply_understanding
+  - buyer_reply
+  - field_observations
+  - affected_skills
   - stage_transition
-  - changed_business_fields
-  - key_question
+  - decision_state
   - next_action
-  - reply_draft
+  - communication_brief
+  - outcome
 status_contract:
   - DONE
   - MORE_EVIDENCE

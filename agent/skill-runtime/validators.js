@@ -27,8 +27,17 @@ export function validateA6Envelope(envelope = {}) {
   const base = validateCapabilityEnvelope(envelope);
   const errors = [...base.errors];
   const result = envelope.domain_result || {};
-  if (envelope.run_status !== 'BLOCKED' && !result.opportunity_id) errors.push('domain_result.opportunity_id required');
-  if (envelope.run_status !== 'BLOCKED' && !result.stage) errors.push('domain_result.stage required');
-  if (envelope.run_status !== 'BLOCKED' && !result.next_action) errors.push('domain_result.next_action required');
+  if (envelope.run_status !== 'BLOCKED') {
+    for (const field of [
+      'opportunity_id', 'buyer_reply', 'field_observations', 'affected_skills',
+      'stage_transition', 'decision_state', 'next_action', 'evaluated_at', 'ruleset_version'
+    ]) {
+      if (result[field] === undefined || result[field] === null) errors.push(`domain_result.${field} required`);
+    }
+    if (!Array.isArray(result.field_observations?.updates)) errors.push('domain_result.field_observations.updates must be array');
+    if (!Array.isArray(result.field_observations?.mentions)) errors.push('domain_result.field_observations.mentions must be array');
+    if (!Array.isArray(result.affected_skills)) errors.push('domain_result.affected_skills must be array');
+    if (!result.next_action?.action || !result.next_action?.execution_mode) errors.push('domain_result.next_action contract invalid');
+  }
   return { valid: errors.length === 0, errors };
 }

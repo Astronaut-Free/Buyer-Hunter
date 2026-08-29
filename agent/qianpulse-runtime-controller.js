@@ -32,7 +32,7 @@ export function createQianPulseRuntimeController({
     });
   }
 
-  function ingestSmartleadWebhook({ rawBody, body, headers = {}, sellerContext = {}, dependencyResults = {}, refreshedCapabilities = [] } = {}) {
+  function ingestSmartleadWebhook({ rawBody, body, headers = {}, sellerContext = {}, sellerExecutionPolicy = {}, dependencyResults = {} } = {}) {
     if (!webhookSecret) return { status: 'BLOCKED', code: 'SMARTLEAD_WEBHOOK_SECRET_REQUIRED' };
     const verification = verifySmartleadWebhook({ rawBody, headers, signingSecret: webhookSecret });
     if (!verification.valid) return { status: 'BLOCKED', code: verification.reason };
@@ -54,8 +54,8 @@ export function createQianPulseRuntimeController({
       opportunityId: routed.opportunity.id,
       event: routed.event,
       sellerContext,
-      dependencyResults,
-      refreshedCapabilities
+      sellerExecutionPolicy,
+      dependencyResults
     });
     webhookIdempotencyStore.set(routed.idempotency_key, result);
     return { status: 'PROCESSED', idempotency_key: routed.idempotency_key, routed, progression: result };

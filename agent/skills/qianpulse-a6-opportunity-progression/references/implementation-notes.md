@@ -7,10 +7,12 @@ BUYER_MESSAGE
 → ConversationEvent persist
 → QianPulse Agent detect change
 → invoke qianpulse.a6.opportunity_progression
-→ A6 output changed_fields
-→ Routing Policy invalidate related capability results
-→ run required A3/A4/A5
-→ rerun / finalize A6 action if dependencies refreshed
+→ A6 ANALYSIS outputs field_observations + affected_skills
+→ Agent compares each skill_result.input_hash
+→ Agent runs stale A3/A4/A5
+→ A6 FINAL consumes fresh skill_results
+→ validate A6 v1.1 contract and apply Opportunity once
+→ Reply Composer consumes communication_brief
 → Human Gate
 → external reply
 → WAITING_EXTERNAL
@@ -18,7 +20,7 @@ BUYER_MESSAGE
 
 ## 两阶段决策
 
-当 changed_fields 会使关键依赖失效时，A6 可以先返回中间状态：
+当 field_observations 会使关键依赖失效时，Agent 在同一 Run 中记录分析步骤和刷新步骤：
 
 ```text
 MORE_EVIDENCE / WAITING_DEPENDENCY
@@ -36,8 +38,11 @@ Agent 完成 A3/A4/A5 刷新后，再恢复同一 Opportunity 的后续决策。
 source_event_id
 intent
 confidence
-changed_fields
-invalidated_capabilities
+field_observations.updates
+field_observations.mentions
+affected_skills
+skill_result.input_hash
+skill_result.generated_at
 stage_before
 stage_after
 key_question

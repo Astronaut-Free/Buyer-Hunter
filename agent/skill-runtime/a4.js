@@ -1,6 +1,7 @@
 import { CAPABILITY_STATUS, makeCapabilityEnvelope, normalizeEvidenceRefs } from './guards.js';
+import { A4_CAPABILITY_ID } from './capability-ids.js';
 
-export const A4_CAPABILITY_ID = 'qianpulse.a4.supply_match';
+export { A4_CAPABILITY_ID };
 export const A4_VERSION = '1.0.0';
 
 function has(value) {
