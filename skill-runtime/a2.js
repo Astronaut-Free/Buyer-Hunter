@@ -31,16 +31,22 @@ export function validateA2Target(targetDefinition = {}) {
 
 export function evaluateBuyerFit(candidate = {}) {
   const companyEvidence = normalizeEvidenceRefs(candidate.evidence_refs, candidate.source_refs);
-  const productEvidence = normalizeEvidenceRefs(candidate.product_evidence, candidate.product_relevance?.evidence_refs);
+  const productEvidence = normalizeEvidenceRefs(
+    candidate.product_evidence,
+    typeof candidate.product_relevance === 'object' ? candidate.product_relevance?.evidence_refs : null
+  );
   const tradeEvidence = normalizeEvidenceRefs(candidate.import_evidence, candidate.trade_evidence);
   const marketEvidence = normalizeEvidenceRefs(candidate.market_evidence);
-  const relevant = candidate.sells_or_uses_product === true || candidate.product_relevance?.status === 'yes' || productEvidence.length > 0;
+  const productStatus = typeof candidate.product_relevance === 'string'
+    ? candidate.product_relevance
+    : candidate.product_relevance?.status;
+  const relevant = candidate.sells_or_uses_product === true || productStatus === 'yes' || productEvidence.length > 0;
   const identified = Boolean(candidate.buyer_company_id || candidate.id || candidate.domain || candidate.legal_or_display_name || candidate.name);
   const evidenceRefs = normalizeEvidenceRefs(companyEvidence, productEvidence, tradeEvidence, marketEvidence);
   const confidence = identified && relevant && evidenceRefs.length >= 2 ? 'high' : identified && relevant && evidenceRefs.length ? 'medium' : 'low';
   return {
     buyer_company_id: candidate.buyer_company_id || candidate.id || null,
-    product_relevance: relevant ? 'yes' : candidate.sells_or_uses_product === false ? 'no' : 'unknown',
+    product_relevance: relevant ? 'yes' : candidate.sells_or_uses_product === false || productStatus === 'no' ? 'no' : 'unknown',
     buyer_type: candidate.buyer_type || 'unknown',
     why_fit: candidate.why_fit || '',
     why_now: candidate.why_now || '',
