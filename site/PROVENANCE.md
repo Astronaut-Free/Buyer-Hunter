@@ -22,16 +22,17 @@ platform-logic diagram). All page copy and sample rows are authored in the HTML;
 the map data under `assets/` is bundled so the globe renders offline.
 
 This is the **front door**, deliberately decoupled from the functional product
-surface (the React app in `demo/`). It is not the same thing as `demo/` and does
-not replace it.
+surface (the Node agent runtime frontend in `agent/`, served at 3317). The old
+React demo under `demo/` is deprecated — code kept for reference, no longer
+started by `run.ps1 -Up` / `make up`.
 
 ## What was changed after vendoring
 
 Navigation wiring plus live-data wiring — **no upstream content or layout changes**.
 
 - `site/nav-bridge.js` (new, ours) — points the "登录" control and the primary
-  call-to-action at the running app (`window.QIANPULSE_APP_URL`, default
-  `http://localhost:4173`). Loaded by one added `<script>` line in each page.
+  call-to-action at the agent workspace (`window.QIANPULSE_APP_URL`, default
+  `http://localhost:3317/#workspace`). Loaded by one added `<script>` line in each page.
 - `site/opportunities-live.js` (new, ours) — renders the decision API's real
   data into the sample cards/rows/KPIs on `opportunities.html` (API 优先，失败
   回退 to the static sample content, FALLBACK badge; see
@@ -48,7 +49,8 @@ app/API is not running.
 python -m http.server 4180 --directory site
 ```
 
-`run.ps1 -Up` / `make up` start this alongside the api, agent, and demo. See
+`run.ps1 -Up` / `make up` start this alongside the api and the agent runtime
+(`demo/` is deprecated and not started). See
 [`docs/18_整合架构与运行.md`](../docs/18_整合架构与运行.md).
 
 ## Upstream

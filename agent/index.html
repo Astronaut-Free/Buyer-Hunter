@@ -163,7 +163,7 @@ enhanceV15Layout();
 let authMode='login';
 function setAuthMode(mode){authMode=mode;document.querySelector('#auth-login-mode').classList.toggle('active',mode==='login');document.querySelector('#auth-register-mode').classList.toggle('active',mode==='register');document.querySelector('#auth-title').textContent=mode==='login'?'登录你的商机工作台':'创建黔脉账号';document.querySelector('#auth-submit').textContent=mode==='login'?'登录':'注册';document.querySelector('#auth-role-wrap').style.display=mode==='register'?'':'none';document.querySelector('#auth-company-wrap').style.display=mode==='register'?'':'none';document.querySelector('#auth-hint').innerHTML=mode==='login'?'还没有账号？ <button class="auth-switch" onclick="setAuthMode(\'register\')">立即注册</button>':'已有账号？ <button class="auth-switch" onclick="setAuthMode(\'login\')">返回登录</button>';document.querySelector('#auth-message').textContent='';}
 function showAuth(mode='login'){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#auth').classList.add('active');setAuthMode(mode);location.hash='auth';}
-async function submitAuth(event){event.preventDefault();const message=document.querySelector('#auth-message');message.style.color='var(--muted)';message.textContent=authMode==='login'?'正在登录…':'正在创建账号…';const body={email:document.querySelector('#auth-email').value.trim(),password:document.querySelector('#auth-password').value};if(authMode==='register'){body.role=document.querySelector('#auth-role').value;body.company_name=document.querySelector('#auth-company').value.trim();}try{const response=await fetch('/api/v1/auth/'+authMode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'操作失败');localStorage.setItem('qianpulse-auth-token',data.token);localStorage.setItem('qianpulse-auth-user',JSON.stringify(data.user));message.style.color='var(--g)';message.textContent=authMode==='login'?'登录成功，正在进入工作台':'注册成功，正在进入资料完善';setTimeout(()=>data.user.role==='SELLER'?showBusiness('seller'):showBusiness('demand'),300);}catch(error){message.style.color='#a34235';message.textContent=error.message;}}
+async function submitAuth(event){event.preventDefault();const message=document.querySelector('#auth-message');message.style.color='var(--muted)';message.textContent=authMode==='login'?'正在登录…':'正在创建账号…';const body={email:document.querySelector('#auth-email').value.trim(),password:document.querySelector('#auth-password').value};if(authMode==='register'){body.role=document.querySelector('#auth-role').value;body.company_name=document.querySelector('#auth-company').value.trim();}try{const response=await fetch('/api/v1/auth/'+authMode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'操作失败');localStorage.setItem('qianpulse-auth-token',data.token);localStorage.setItem('qianpulse-auth-user',JSON.stringify(data.user));message.style.color='var(--g)';message.textContent=authMode==='login'?'登录成功，正在进入工作台':'注册成功，正在进入资料完善';setTimeout(()=>{if(authMode==='login'){showWorkspace();refreshResults();}else{data.user.role==='SELLER'?showBusiness('seller'):showBusiness('demand');}},300);}catch(error){message.style.color='#a34235';message.textContent=error.message;}}
 const originalApplyQianPulseLayout=applyQianPulseLayout;
 const originalEnhanceV15Layout=enhanceV15Layout;
 setTimeout(()=>{const login=document.querySelector('#home .login-link');if(login)login.onclick=()=>showAuth('login');},0);
@@ -171,8 +171,164 @@ let latestRun=null;
 function authToken(){return localStorage.getItem('qianpulse-auth-token')||'';}
 function renderRunTimeline(run, extra={}){let box=document.querySelector('#run-timeline');if(!box){box=document.createElement('section');box.id='run-timeline';box.className='run-timeline';document.querySelector('#workspace .results').prepend(box);}const steps=[['Event received',true],['Opportunity resolved',true],['Context loaded',true],['Capabilities executed',Boolean(run.capabilities_called?.length)],['Decision refreshed',Boolean(run.decision_after)],['Checkpoint saved',Boolean(extra.checkpoint_id)],['Waiting approval',run.status==='WAITING_APPROVAL']];box.innerHTML='<header><span>Agent Run · '+run.run_id+'</span>'+(run.status==='WAITING_EVIDENCE'||run.status==='FAILED'?'<button onclick="resumeLatestRun()">从 Checkpoint 恢复</button>':'')+'</header><ol>'+steps.map(([label,done])=>'<li class="'+(done?'done':'wait')+'">'+label+(label==='Capabilities executed'&&run.capabilities_called?.length?'：'+run.capabilities_called.join('、'):'')+'</li>').join('')+'</ol><div style="font-size:10px;color:var(--muted);margin-top:7px">状态：'+run.status+' · 版本：'+(run.agent_version||'qianpulse-agent')+'</div>'}
 async function runAgent(payload){const token=authToken();if(!token){showAuth('login');throw new Error('请先登录');}const response=await fetch('/api/v1/agent/runs',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Agent 运行失败');latestRun=data.run;renderRunTimeline(data.run,data);return data;}
-startScan=async function(){if(running)return;running=true;const confirm=document.querySelector('#parse-card .confirm');if(confirm)confirm.innerHTML='<span style="color:var(--g);font-weight:800">Agent 正在创建 Run…</span>';document.querySelector('#status').textContent='Agent 正在执行';try{const data=await runAgent({event_type:'SYSTEM_NEW_SIGNAL',opportunity_id:'opp_demo_001',idempotency_key:'scan-'+Date.now()});line('AgentRun 已完成：'+data.decision.label+'。已调用：'+(data.capabilities_called||[]).join('、'));shown=0;while(shown<DATA.length)appendRow();document.querySelector('#status').textContent='Agent Run '+data.run.status;}catch(error){line(error.message);document.querySelector('#status').textContent='需要登录或修复服务';}finally{running=false;}};
+startScan=async function(){if(running)return;running=true;const confirm=document.querySelector('#parse-card .confirm');if(confirm)confirm.innerHTML='<span style="color:var(--g);font-weight:800">Agent 正在创建 Run…</span>';document.querySelector('#status').textContent='Agent 正在执行';try{const data=await runAgent({event_type:'SYSTEM_NEW_SIGNAL',opportunity_id:'opp_demo_001',idempotency_key:'scan-'+Date.now()});line('AgentRun 已完成：'+data.decision.label+'。已调用：'+(data.capabilities_called||[]).join('、'));refreshResults();document.querySelector('#status').textContent='Agent Run '+data.run.status;}catch(error){line(error.message);document.querySelector('#status').textContent='需要登录或修复服务';}finally{running=false;}};
 send=async function(){const input=document.querySelector('#input'),content=input.value.trim();if(!content)return;line(content,'user');input.value='';try{const data=await runAgent({event_type:'SELLER_QUERY',opportunity_id:'opp_demo_001',message:content,idempotency_key:'seller-'+Date.now()});line('Seller Event 已处理。Agent 状态：'+data.run.status+'；当前决策：'+data.decision.label);}catch(error){line(error.message);}};
 async function resumeLatestRun(){if(!latestRun)return;try{const token=authToken();const response=await fetch('/api/v1/agent/runs/'+latestRun.run_id+'/resume',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({idempotency_key:'resume-'+Date.now()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'恢复失败');latestRun=data.run;renderRunTimeline(data.run,data);line('已从最近 Checkpoint 恢复 AgentRun：'+data.run.status);}catch(error){line(error.message);}}
 simulateBuyerMessage=async function(){const content='我们预计第四季度开始采购，首批需要 800kg，并希望确认 FDA 及有机认证。';line('买家模拟回复：'+content,'user');try{const token=authToken();if(!token){showAuth('login');return;}const response=await fetch('/api/v1/opportunities/opp_demo_001/messages',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({content,source:'simulated',idempotency_key:'demo-buyer-'+Date.now()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'买家事件处理失败');latestRun=data.run;renderRunTimeline(data.run,data);line('Buyer Message Event 已持久化。变化字段：'+(data.changed_fields||[]).join('、')+'；增量能力：'+(data.capabilities_called||[]).join('、'));}catch(error){line(error.message);}};
- </script></body></html>
+ </script><style>
+/* 实时采集面板（collection panel）：平台勾选 + 一键触发 + 步骤进度 */
+.collection-panel{margin:14px 16px;background:#f4f8f5;border:1px solid #dbe8de;border-radius:6px;padding:12px}
+.collection-panel header{display:flex;justify-content:space-between;align-items:center;color:var(--g);font-weight:800;font-size:12px}
+.collection-panel header small{color:var(--muted);font-weight:400}
+.collection-sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px 10px;margin:10px 0 4px}
+.collection-sources label{display:flex;gap:6px;align-items:baseline;font-size:11px;color:#587466;cursor:pointer}
+.collection-sources label small{font-size:9px;color:var(--muted)}
+.collection-sources label.disabled{opacity:.45;cursor:not-allowed}
+.collection-hint{font-size:10px;color:#a27624;min-height:14px;margin-top:6px}
+.collection-actions{display:flex;align-items:center;gap:10px;margin-top:8px}
+.collection-trigger{border:1px solid #b8d6c2;background:#fff;color:var(--g);border-radius:4px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer}
+.collection-trigger:disabled{opacity:.5;cursor:not-allowed}
+.collection-status{font-size:11px;color:var(--muted)}
+.collection-steps{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:4px}
+.collection-steps li{font-size:11px;color:#587466;display:flex;gap:7px;align-items:baseline}
+.collection-steps li.done:before{content:'✓';color:var(--g);font-weight:900}
+.collection-steps li.live:before{content:'●';color:#a27624}
+.collection-steps li.failed{color:#a34235}
+.collection-steps li.failed:before{content:'✕';color:#a34235;font-weight:900}
+.collection-steps li.wait:before{content:'○';color:#b8d6c2}
+</style><script>
+/* 实时采集：结构化面板触发 Python pipeline（/api/v1/collection-runs），轮询进度，
+   完成后刷新工作台结果表。真实商机行替换演示 DATA。 */
+const COLLECTION_SOURCES=[{key:'b2b',label:'公开 B2B 平台'},{key:'alibaba',label:'阿里巴巴 RFQ'},{key:'ted',label:'TED 欧盟招标'},{key:'ec21',label:'EC21 多国'},{key:'ungm',label:'UNGM 联合国'},{key:'samples',label:'样例源'},{key:'sam',label:'SAM 美国政府采购'}];
+let collectionTimer=null,collectionConfig=null;
+function ensureCollectionPanel(){
+  if(document.querySelector('#collection-panel'))return;
+  const results=document.querySelector('#workspace .results');
+  if(!results)return;
+  const panel=document.createElement('section');
+  panel.id='collection-panel';
+  panel.className='collection-panel';
+  panel.innerHTML='<header><span>实时采集</span><small id="collection-summary">采集公开平台最新采购信号</small></header>'+
+    '<div class="collection-sources" id="collection-sources"></div>'+
+    '<div class="collection-hint" id="collection-hint"></div>'+
+    '<div class="collection-actions"><button class="collection-trigger" id="collection-trigger" onclick="startCollection()">开始采集</button><span class="collection-status" id="collection-status"></span></div>'+
+    '<ol class="collection-steps" id="collection-steps"></ol>';
+  results.prepend(panel);
+}
+async function collectionFetch(path,options={}){
+  const token=authToken();
+  const headers={'Content-Type':'application/json'};
+  if(token)headers.Authorization='Bearer '+token;
+  const response=await fetch(path,{headers,...options});
+  const data=await response.json().catch(()=>({}));
+  return {response,data};
+}
+function renderCollectionConfig(){
+  if(!collectionConfig)return;
+  const box=document.querySelector('#collection-sources');
+  const hint=document.querySelector('#collection-hint');
+  box.innerHTML=COLLECTION_SOURCES.map(src=>{
+    const cfg=collectionConfig.sources.find(s=>s.key===src.key)||{};
+    const disabled=src.key==='sam'&&!collectionConfig.sam_available;
+    const noRun=cfg.has_prior_run?'':'（无历史结果）';
+    return '<label'+(disabled?' class="disabled"':'')+'><input type="checkbox" id="collection-'+src.key+'"'+(disabled?' disabled':'')+(disabled?'':' checked')+'>'+src.label+'<small>'+noRun+'</small></label>';
+  }).join('');
+  hint.textContent=collectionConfig.full_run_required?'首次采集需包含：b2b, alibaba, ted, samples（本机没有历史采集结果，部分采集无法聚合）':'';
+  if(!collectionConfig.sam_available)hint.textContent+=(hint.textContent?' ':'')+'SAM 需要 SAM_API_KEY 才可用。';
+  document.querySelector('#collection-summary').textContent=collectionConfig.full_run_required?'首次采集建议全量':'选择平台并开始采集';
+}
+function renderCollectionJob(job){
+  const list=document.querySelector('#collection-steps');
+  const items=[...(job.steps||[]).map(s=>({label:s.name+(s.duration_s!=null?' ('+s.duration_s+'s)':'')+(s.detail?'：'+s.detail:''),state:s.status})),
+    ...(job.post_steps||[]).map(s=>({label:s.label+(s.detail?'：'+s.detail:''),state:s.status}))];
+  list.innerHTML=items.map(it=>{
+    const cls=it.state==='OK'?'done':(it.state==='RUNNING'?'live':(it.state==='FAILED'?'failed':'wait'));
+    return '<li class="'+cls+'">'+it.label+'</li>';
+  }).join('');
+  const trigger=document.querySelector('#collection-trigger');
+  const status=document.querySelector('#collection-status');
+  const running=job.status==='RUNNING';
+  trigger.disabled=running;
+  status.textContent=running?'采集中 · 请勿重复触发':(job.status==='SUCCEEDED'?'采集完成':'任务'+job.status+(job.error?'：'+job.error:''));
+}
+async function loadCollectionState(){
+  ensureCollectionPanel();
+  const {response,data}=await collectionFetch('/api/v1/collection-runs');
+  if(response.status===401){document.querySelector('#collection-status').textContent='登录后可用';return;}
+  if(!response.ok){document.querySelector('#collection-status').textContent='无法连接采集服务';return;}
+  collectionConfig=data.config;
+  renderCollectionConfig();
+  const latest=data.runs[0];
+  if(latest){renderCollectionJob(latest);if(latest.status==='RUNNING')startCollectionPoll(latest.collection_id);}
+}
+async function startCollection(){
+  const token=authToken();
+  if(!token){showAuth('login');return;}
+  const sources=COLLECTION_SOURCES.filter(src=>{const box=document.querySelector('#collection-'+src.key);return box&&box.checked;}).map(src=>src.key);
+  const hint=document.querySelector('#collection-hint');
+  if(!sources.length){hint.textContent='请选择至少一个采集平台';return;}
+  const {response,data}=await collectionFetch('/api/v1/collection-runs',{method:'POST',body:JSON.stringify({sources})});
+  if(response.status===201){hint.textContent='';renderCollectionJob(data);startCollectionPoll(data.collection_id);}
+  else if(response.status===409){hint.textContent=data.error||'已有采集任务进行中';startCollectionPoll(data.collection_id);}
+  else{hint.textContent=data.error||'触发失败';}
+}
+function startCollectionPoll(id){
+  if(collectionTimer)clearInterval(collectionTimer);
+  pollCollection(id);
+  collectionTimer=setInterval(()=>pollCollection(id),2500);
+}
+async function pollCollection(id){
+  const {response,data}=await collectionFetch('/api/v1/collection-runs/'+id);
+  if(!response.ok)return;
+  renderCollectionJob(data);
+  if(data.status!=='RUNNING'){
+    clearInterval(collectionTimer);collectionTimer=null;
+    if(data.status==='SUCCEEDED'){
+      const failed=(data.steps||[]).filter(s=>s.status==='FAILED').map(s=>s.name);
+      if(failed.length)line('实时采集部分完成（'+data.pipeline_status+'）· 失败步骤：'+failed.join('、')+'。可聚合部分已入库，工作台已刷新；门户「全球商机」页（4180）刷新可见。');
+      else line('实时采集完成（'+(data.pipeline_status||'SUCCEEDED')+'）· 决策库已重建，工作台结果已刷新；门户「全球商机」页（4180）刷新页面可见最新数据。');
+      refreshResults();
+    }else if(data.status==='FAILED'){
+      line('实时采集失败：'+(data.error||'未知错误')+'。可修正后重新触发。');
+    }else if(data.status==='INTERRUPTED'){
+      line('上次采集因服务重启中断，可重新触发。');
+    }
+    loadCollectionState();
+  }
+}
+function escapeHtml(text){return String(text==null?'':text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function decisionTag(o){
+  const map={PURSUE_NOW:['待人工接管','handoff'],VERIFY_FIRST:['待补证','tag wait'],WATCH:['AI 初筛中','nurture'],AI_NURTURING:['AI 初筛中','nurture'],BLOCKED:['已阻断','block']};
+  return map[o.decision||o.status]||['AI 初筛中','nurture'];
+}
+function renderOpportunityRows(list){
+  const rows=document.querySelector('#rows');
+  const count=document.querySelector('#count');
+  if(!rows)return;
+  const sorted=[...list].sort((a,b)=>(b.opportunity_score||0)-(a.opportunity_score||0));
+  if(!sorted.length){rows.innerHTML='<div style="padding:18px;color:var(--muted);font-size:11px">暂无机会数据（登录后显示真实商机）</div>';count.textContent='0 条';return;}
+  rows.innerHTML=sorted.map(o=>{
+    const tag=decisionTag(o);
+    const buyer=o.buyer?.name||'未披露买家';
+    const market=o.buyer?.market||o.fields?.destination||'—';
+    const title=o.fields?.demand_title||o.fields?.product||'—';
+    const why=o.why_now||'';
+    const source=o.source==='A2_PROACTIVE_BUYER_DEVELOPMENT'?'Agent 拓客':'公开信号';
+    const fit=Math.round(o.fit_score??0);
+    const intent=Math.round(o.intent_score??0);
+    const status=o.stage||o.status||'—';
+    return '<div class="tr"><input type="checkbox"><div class="buyer"><b>'+escapeHtml(market+' · '+buyer)+'</b><small>采购买家</small></div><div class="demand"><b>'+escapeHtml(title)+'</b><small>'+escapeHtml(why)+'</small></div><div class="platform"><i class="dot"></i>'+source+'</div><div class="score2">'+fit+'%</div><div class="intent">'+intent+'%</div><div class="conversation">'+escapeHtml(status)+'<small>'+escapeHtml(o.decision||'')+'</small></div><div><span class="tag '+tag[1]+'">'+tag[0]+'</span></div><button class="action compact" onclick="openAction(\''+String(o.id).replace(/'/g,"\\'")+'\')">处理　→</button></div>';
+  }).join('');
+  count.textContent=sorted.length+' 条';
+}
+async function refreshResults(){
+  if(!authToken())return;
+  const {response,data}=await collectionFetch('/api/v1/opportunities');
+  if(response.ok&&Array.isArray(data))renderOpportunityRows(data);
+}
+(function(){
+  const origShowWorkspace=showWorkspace;
+  showWorkspace=function(){origShowWorkspace();ensureCollectionPanel();loadCollectionState();if(authToken())refreshResults();};
+  if(location.hash==='#workspace')showWorkspace();
+})();
+</script></body></html>

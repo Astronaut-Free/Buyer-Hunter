@@ -95,4 +95,18 @@ AI 工作台已接入 AgentRun：确认扫描会创建 `SYSTEM_NEW_SIGNAL` Run�
 
 ## Free 分支数据导入
 
-已导入 Free 分支的核心 SQLite 迁移结构到 `db/schema.sql`，并将 `demo/src/data.js` 中的 5 条机会整理为 `db/free-opportunities.json`。`server/repository.js` 在服务启动时加载这些机会，标记数据源为 `origin/Free`；`GET /api/v1/opportunities` 会按登录角色返回投影后的机会列表。后续接 PostgreSQL 时只需替换 Repository，不改 Agent 控制面。
+已导入 Free 分支的核心 SQLite 迁移结构到 `db/schema.sql`，并将早期 `demo/src/data.js`（该 React demo 已退役，代码保留仅作参考）中的 5 条机会整理为 `db/free-opportunities.json`。`server/repository.js` 在服务启动时加载这些机会，标记数据源为 `origin/Free`；`GET /api/v1/opportunities` 会按登录角色返回投影后的机会列表。后续接 PostgreSQL 时只需替换 Repository，不改 Agent 控制面。
+
+## 实时采集（Collection Runs）
+
+AI 工作台内置「实时采集」面板：勾选平台（公开 B2B / 阿里巴巴 / TED / EC21 / UNGM / 样例源 / SAM）后一键触发 Python 采集管线，完成步骤在工作台时间线实时推进，采集结果自动重建决策库并热刷新工作台机会列表（门户商机页 4180 刷新页面可见）。
+
+- 接口（均需登录 Bearer Token，`BUYER` 角色不可触发）：
+  - `GET  /api/v1/collection-runs`：返回采集配置（各平台是否有历史结果、SAM 是否可用、是否需要首次全量）与最近任务（上限 20 条）。
+  - `POST /api/v1/collection-runs`：`{ "sources": ["b2b","alibaba","ted","ec21","ungm","samples","sam"] }` 触发采集。已有任务进行中返回 409。
+  - `GET  /api/v1/collection-runs/:collection_id`：任务状态（RUNNING / SUCCEEDED / FAILED / INTERRUPTED）与逐步进度。
+- 全量优先规则：聚合器要求 b2b / alibaba / ted / samples 四个平台至少各有一轮历史采集结果，本机首次采集必须是包含这四者的全量（否则返回 422 `COLLECTION_REQUIRES_FULL_RUN`），之后即可按单平台增量采集。SAM 需要 `SAM_API_KEY` 环境变量。
+- 执行序列：`pipeline/run_pipeline.py --only <steps>` → 采集 → 聚合 → 决策库原子重建 → `scripts/export_opportunities_for_agent.py`（导出机会到 Agent）→ `scripts/import_agent_outcomes.py`（回流结果到决策库）→ 工作台内存机会热刷新（运行时值优先，决策字段刷新）。
+- 单一并发：同一时间只允许一个采集任务；服务重启时进行中的任务标记为 INTERRUPTED，可重新触发。
+- 超时：整体任务默认 2 小时（`COLLECTION_RUN_TIMEOUT_MS` 可覆盖），管线内部每步 1800 秒。
+- 数据可见性：`GET /api/v1/opportunities` 按登录账号过滤（卖家只能看到自己 seller 名下的机会），演示账号与桥接机会的对应关系见 `server/repository.js`。

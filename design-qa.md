@@ -1,5 +1,7 @@
 # Design QA — 买家猎手 Demo
 
+> **已归档** — demo React 前端已退役（代码保留于 `demo/`，仅作视觉参考）；当前产品前端为 `site/`（门户，4180）+ `agent/`（Agent 运行时前端，3317）。本报告为退役前 QA 记录。
+
 ## 验收对象
 
 - 视觉参考：`output/audit/01-website-wireframe.png`

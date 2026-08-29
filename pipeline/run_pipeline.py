@@ -120,6 +120,7 @@ def run(steps=STEPS, *, python: str | None = None, timeout: int = 1800,
             report.steps.append(StepResult(step.name, "SKIPPED", detail=f"missing env {step.needs_env}"))
             print(f"[SKIPPED] {step.name} (missing env {step.needs_env})", flush=True)
             continue
+        print(f"[START] {step.name}", flush=True)
         result = step_runner(step)
         report.steps.append(result)
         print(f"[{result.status:>7}] {step.name} ({result.duration_s}s) {result.detail}", flush=True)

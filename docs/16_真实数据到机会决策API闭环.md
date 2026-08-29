@@ -83,7 +83,8 @@ Demo 权限头：
 
 ## 前端
 
-Demo 默认请求 `http://127.0.0.1:8000/api/v1`，可通过 `VITE_BUYER_HUNTER_API` 覆盖。
+门户前门（`site/opportunities-live.js`）与 Agent 工作台（`agent/`，3317）读取
+`http://127.0.0.1:8000/api/v1`（React demo 前端已退役，代码保留于 `demo/` 仅作参考）。
 
 - API 正常：显示 `LIVE PIPELINE · 今日快照`；
 - API 不可用：明确显示 `FALLBACK · 演示样例`；
@@ -102,9 +103,8 @@ Demo 默认请求 `http://127.0.0.1:8000/api/v1`，可通过 `VITE_BUYER_HUNTER_
 
 ```powershell
 python -m unittest api.test_app pipeline.test_opportunity_decision_engine_v1 pipeline.test_pipeline_stability_v1 pipeline.test_sales_intelligence_connectors_v1 pipeline.test_parser_quality_v1_1 pipeline.test_full_collection_aggregation_v1 -v
-cd demo
-npm run build
-npm run test:sites
+# 可选（仅验证退役的 demo 前端代码仍可构建）：
+# cd demo && npm run build && npm run test:sites
 ```
 
 详细字段、请求响应和错误码见 `docs/12_数据库API_v1.0_正式接口说明.md`。

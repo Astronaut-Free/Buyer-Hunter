@@ -2,14 +2,16 @@
  * nav-bridge.js — connects the static landing site to the running app.
  *
  * Vendored `site/` (origin/ui) is a standalone marketing site. In the integrated
- * repo it is the front door; the functional product is the React app in `demo/`.
- * This shim points the "登录" control and the primary CTA at that app so the
- * whole product is walkable locally:  site (4180) -> demo (4173).
+ * repo it is the front door; the functional product is the Node agent frontend
+ * in `agent/` (served at 3317). This shim points the "登录" control and the
+ * primary CTA at the agent workspace so the whole product is walkable locally:
+ *   site (4180) -> agent workspace (3317/#workspace).
+ * (The old React demo at demo/4173 is retired — code kept for reference.)
  *
  * App URL resolution order:
  *   1. window.QIANPULSE_APP_URL          (set before this script runs)
  *   2. <meta name="qianpulse-app" content="...">
- *   3. same host, port 4173              (run.ps1 -Up / make up default)
+ *   3. same host, port 3317 (agent 工作台, run.ps1 -Up / make up default)
  *
  * This file is ours, not upstream's. If it is absent or the app is down, the
  * pages still render and every in-site link keeps working.
@@ -24,7 +26,7 @@
     const meta = document.querySelector('meta[name="qianpulse-app"]');
     if (meta && meta.content) return meta.content;
     const host = location.hostname || "localhost";
-    return `${location.protocol}//${host}:4173`;
+    return `${location.protocol}//${host}:3317/#workspace`;
   }
 
   function goToApp(event) {

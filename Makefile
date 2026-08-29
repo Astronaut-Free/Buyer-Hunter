@@ -5,7 +5,7 @@
 #   make db      build the decision store from the committed fixture
 #   make export  bridge the store into the agent runtime feed
 #   make import  import agent outcomes back into the store (reverse bridge)
-#   make up      db + export + import, then run site + api + agent + demo together
+#   make up      db + export + import, then run site + api + agent together
 #   make test    pytest + agent npm test
 #   make audit   cross-runtime audit -> docs/AUDIT_<date>.md
 
@@ -13,15 +13,13 @@ PY ?= python
 PIP ?= pip
 API_PORT ?= 8000
 AGENT_PORT ?= 3317
-DEMO_PORT ?= 4173
 SITE_PORT ?= 4180
 
-.PHONY: setup db export import site api agent demo up test audit clean
+.PHONY: setup db export import site api agent up test audit clean
 
 setup:
 	$(PIP) install -r requirements.txt
 	cd agent && npm ci
-	cd demo && npm ci
 
 db:
 	$(PY) pipeline/build_opportunity_store_v1.py
@@ -41,18 +39,13 @@ api:
 agent:
 	cd agent && PORT=$(AGENT_PORT) node server/bootstrap.js
 
-demo:
-	cd demo && npm run dev -- --host 127.0.0.1 --port $(DEMO_PORT)
-
 up: export import
 	@echo "site -> http://127.0.0.1:$(SITE_PORT)   (front door)"
-	@echo "demo -> http://127.0.0.1:$(DEMO_PORT)   (app / workbench)"
 	@echo "api  -> http://127.0.0.1:$(API_PORT)"
-	@echo "agent-> http://127.0.0.1:$(AGENT_PORT)"
+	@echo "agent-> http://127.0.0.1:$(AGENT_PORT)   (workbench)"
 	$(PY) -m http.server $(SITE_PORT) --bind 127.0.0.1 --directory site & \
 	  $(PY) -m uvicorn api.app:app --host 127.0.0.1 --port $(API_PORT) & \
 	  (cd agent && PORT=$(AGENT_PORT) node server/bootstrap.js) & \
-	  (cd demo && npm run dev -- --host 127.0.0.1 --port $(DEMO_PORT)) & \
 	  wait
 
 test:
