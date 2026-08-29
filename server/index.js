@@ -16,6 +16,7 @@ import { createSmartleadLiveWebhookHandler } from './smartlead-live-webhook.js';
 import { createApprovalLiveExecutor } from './approval-live-executor.js';
 import { createA2FirstOutreachExecutor } from './a2-first-outreach-executor.js';
 import { createOpportunityWorkspaceHandler } from './opportunity-workspace-handler.js';
+import { createRuntimeObservabilityHandler } from './runtime-observability-handler.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -536,12 +537,14 @@ let liveA2A6;
 let approvalLiveExecutor;
 let smartleadWebhookHandler;
 let opportunityWorkspaceHandler;
+let runtimeObservabilityHandler;
 
 async function handleV1(req, res, path) {
   const payload = await readBody(req);
   const user = userFromRequest(req);
 
   if (req.method === 'GET' && path === '/api/v1/agent/capabilities') return sendJson(res, 200, CAPABILITIES);
+  if (req.method === 'GET' && path === '/api/v1/internal/observability') return respond(res, runtimeObservabilityHandler({ user }));
 
   if (req.method === 'GET' && path === '/api/v1/opportunities') {
     if (!user) return sendJson(res, 401, { error: '请先登录' });
@@ -711,6 +714,10 @@ liveA2A6 = createLiveA2A6Runtime({
 opportunityWorkspaceHandler = createOpportunityWorkspaceHandler({
   getState: () => state,
   canAccess
+});
+runtimeObservabilityHandler = createRuntimeObservabilityHandler({
+  getState: () => state,
+  now
 });
 
 const smartlead = createSmartleadProvider();
