@@ -15,7 +15,7 @@
 | demo | React / Vite | 卖家决策台（5 屏） | `demo/` | `npm run build` |
 | site | 静态 HTML（无构建） | 门户前门：首页 + 全球商机展示页（vendored 自 `ui` 分支） | `site/` | 审计静态校验 |
 
-两个运行时通过 **双向数据桥** 连接：Python 流水线产出 `runtime/buyer_hunter.db`，`scripts/export_opportunities_for_agent.py` 导出为 `agent/db/opportunities.json`，agent 启动时读入（merge-on-reload 保留 A6 变更）；反向 agent 的 A6 结果与 A2 发现目标经 `agent/db/agent-outcomes.json` 由 `scripts/import_agent_outcomes.py` 幂等回写 Free store（`deal_outcome` + `agent_discovered_target`，含 domain 实体解析）。契约见 [`contracts/opportunity-bridge-v1.md`](contracts/opportunity-bridge-v1.md)。A6 会话内刷新 A3/A4/A5 时经 capability CLI 调 Python 权威实现（`contracts/capability-result-envelope.schema.json`），失败自动回退 Node。前门 `site/` 通过 `site/nav-bridge.js` 把登录/CTA 指向 demo，商机页经 `site/opportunities-live.js` 拉 `/api/v1` 实时数据（API 不可用时回退静态样例）。
+两个运行时通过 **双向数据桥** 连接：Python 流水线产出 `runtime/buyer_hunter.db`，`scripts/export_opportunities_for_agent.py` 导出为 `agent/db/opportunities.json`，agent 启动时读入（merge-on-reload 保留 A6 变更）；反向 agent 的 A6 结果与 A2 发现目标经 `agent/db/agent-outcomes.json` 由 `scripts/import_agent_outcomes.py` 幂等回写 Free store（`deal_outcome` + `agent_discovered_target`，含 domain 实体解析）。契约见 [`contracts/opportunity-bridge-v1.md`](contracts/opportunity-bridge-v1.md)。A6 会话内刷新 A3/A4/A5 时经 capability CLI 调 Python 权威实现（`contracts/capability-result-envelope.schema.json`），运行时故障返回结构化 `ERROR`，不切换到另一套业务算法。前门 `site/` 通过 `site/nav-bridge.js` 把登录/CTA 指向 demo，商机页经 `site/opportunities-live.js` 拉 `/api/v1` 实时数据（API 不可用时回退静态样例）。
 
 ```
 site:4180 前门 ──「立即寻找商机 / 登录」──→ demo:4173 工作台 ──VITE_BUYER_HUNTER_API──→ api:8000

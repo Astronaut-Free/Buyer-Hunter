@@ -3,10 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { runA2Skill } from '../skill-runtime/a2.js';
-import { runA3PurchaseTiming } from '../skill-runtime/a3.js';
-import { runA4SupplyMatch } from '../skill-runtime/a4.js';
-import { runA5TradeRisk } from '../skill-runtime/a5.js';
 import { runA6Skill } from '../skill-runtime/a6.js';
+import { createPythonDependencyRunners } from '../skill-runtime/python-capability-runners.mjs';
+import { A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
 const SCHEMA = JSON.parse(readFileSync(
   fileURLToPath(new URL('../../contracts/capability-result-envelope.schema.json', import.meta.url)), 'utf8',
@@ -35,6 +34,7 @@ const A2_INPUT = {
 };
 const DEP_INPUT = {
   opportunity_id: 'opp-c',
+  evaluated_at: '2026-08-29T00:00:00Z',
   latest_buyer_message: { content: 'We need 20 tons to Germany by Q1 2026, organic.' },
   field_updates: { quantity: '20 tons', destination: 'Germany' },
   changed_fields: ['quantity', 'destination', 'certification', 'delivery_date'],
@@ -42,17 +42,19 @@ const DEP_INPUT = {
   seller_context: { capacity: '8000 kg/mo', certifications: ['USDA Organic'], allowed_markets: ['Germany'] },
 };
 
+const pythonRunners = createPythonDependencyRunners();
+
 const cases = [
   ['A2', () => runA2Skill(A2_INPUT)],
-  ['A3', () => runA3PurchaseTiming(DEP_INPUT)],
-  ['A4', () => runA4SupplyMatch(DEP_INPUT)],
-  ['A5', () => runA5TradeRisk(DEP_INPUT)],
+  ['A3', () => pythonRunners[A3_CAPABILITY_ID](DEP_INPUT)],
+  ['A4', () => pythonRunners[A4_CAPABILITY_ID](DEP_INPUT)],
+  ['A5', () => pythonRunners[A5_CAPABILITY_ID](DEP_INPUT)],
   ['A6', () => runA6Skill(DEP_INPUT)],
 ];
 
 for (const [name, run] of cases) {
-  test(`${name} output conforms to capability-result-envelope schema`, () => {
-    const env = run();
+  test(`${name} output conforms to capability-result-envelope schema`, async () => {
+    const env = await run();
     assert.deepEqual(validate(env), [], `${name}: ${JSON.stringify(env).slice(0, 200)}`);
   });
 }

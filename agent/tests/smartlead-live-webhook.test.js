@@ -27,9 +27,9 @@ function fixture() {
   const calls = [];
   const liveRuntime = {
     opportunityStore: store,
-    runBuyerMessage(payload, user) {
+    async runBuyerMessage(payload, user) {
       calls.push({ payload, user });
-      const progression = orchestrator.runBuyerProgression({
+      const progression = await orchestrator.runBuyerProgression({
         opportunityId: payload.opportunity_id,
         event: {
           event_id: 'evt-webhook',
@@ -53,7 +53,7 @@ function fixture() {
   return { store, opportunity, calls, handler: createSmartleadLiveWebhookHandler({ liveRuntime, signingSecret: 'secret' }) };
 }
 
-test('signed documented Smartlead EMAIL_REPLIED payload routes to mapped Opportunity', () => {
+test('signed documented Smartlead EMAIL_REPLIED payload routes to mapped Opportunity', async () => {
   const { opportunity, calls, handler } = fixture();
   const body = {
     event: 'EMAIL_REPLIED',
@@ -64,7 +64,7 @@ test('signed documented Smartlead EMAIL_REPLIED payload routes to mapped Opportu
     lead: { email: 'buyer@example.com' }
   };
   const rawBody = JSON.stringify(body);
-  const result = handler({ rawBody, headers: headers(rawBody, 'req-live-1') });
+  const result = await handler({ rawBody, headers: headers(rawBody, 'req-live-1') });
 
   assert.equal(result.status, 202);
   assert.equal(result.body.status, 'PROCESSED');
@@ -76,20 +76,20 @@ test('signed documented Smartlead EMAIL_REPLIED payload routes to mapped Opportu
   assert.equal(calls[0].payload.source_message_id, 'reply-1');
 });
 
-test('Smartlead live webhook rejects invalid signature before business routing', () => {
+test('Smartlead live webhook rejects invalid signature before business routing', async () => {
   const { calls, handler } = fixture();
   const rawBody = JSON.stringify({ event: 'EMAIL_REPLIED', lead_id: 789, reply: { body: 'Hello' } });
-  const result = handler({ rawBody, headers: { 'x-request-id': 'req-live-bad', 'x-smartlead-signature': 'sha256=bad' } });
+  const result = await handler({ rawBody, headers: { 'x-request-id': 'req-live-bad', 'x-smartlead-signature': 'sha256=bad' } });
   assert.equal(result.status, 401);
   assert.equal(result.body.code, 'SIGNATURE_INVALID');
   assert.equal(calls.length, 0);
 });
 
-test('Smartlead live webhook fails closed when lead id is absent', () => {
+test('Smartlead live webhook fails closed when lead id is absent', async () => {
   const { calls, handler } = fixture();
   const body = { event_type: 'REPLIED', campaign_id: 123, lead_email: 'buyer@example.com', message: 'Interested', timestamp: '2025-11-26T10:30:00Z' };
   const rawBody = JSON.stringify(body);
-  const result = handler({ rawBody, headers: headers(rawBody, 'req-live-legacy') });
+  const result = await handler({ rawBody, headers: headers(rawBody, 'req-live-legacy') });
   assert.equal(result.status, 422);
   assert.equal(result.body.code, 'LEAD_MAPPING_REQUIRED');
   assert.equal(calls.length, 0);

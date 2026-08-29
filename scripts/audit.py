@@ -34,6 +34,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 AGENT = ROOT / "agent"
 DOCS = ROOT / "docs"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 PY = sys.executable
 NPM = shutil.which("npm") or shutil.which("npm.cmd") or "npm"
 NODE = shutil.which("node") or "node"
@@ -114,7 +116,8 @@ def audit_python_tests() -> None:
 
 
 def audit_agent_tests() -> None:
-    proc = run([NPM, "test"], cwd=AGENT)
+    test_files = [str(path.relative_to(AGENT)) for path in sorted((AGENT / "tests").glob("*.test.js"))]
+    proc = run([NODE, "--test", *test_files], cwd=AGENT)
     m = re.search(r"# tests (\d+)", proc.stdout) or re.search(r"tests (\d+)", proc.stdout)
     p = re.search(r"# pass (\d+)", proc.stdout) or re.search(r"pass (\d+)", proc.stdout)
     f = re.search(r"# fail (\d+)", proc.stdout) or re.search(r"fail (\d+)", proc.stdout)
@@ -349,8 +352,8 @@ def audit_skill_dispatch() -> dict[str, Any]:
     py = payload.get("python", {})
     caps = py.get("capabilities", {})
     available = py.get("available")
-    expect = "python" if available else "node-fallback"
-    py_ok = ok and bool(caps) and all(c.get("source") == expect for c in caps.values())
+    expect = "python"
+    py_ok = ok and available is True and bool(caps) and all(c.get("source") == expect for c in caps.values())
     a4_source = payload.get("summary_e2e_a4_source")
     check("Python capability CLI (A3/A4/A5 -> Free)").record(
         py_ok,
@@ -358,6 +361,39 @@ def audit_skill_dispatch() -> dict[str, Any]:
         + (f"; live A6 cycle A4 refresh source={a4_source}" if a4_source else ""),
     )
     return payload
+
+
+def audit_a345_invariants(dispatch: dict[str, Any]) -> None:
+    from pipeline.skills.a3_purchase_timing import run as run_a3
+    from pipeline.skills.a4_supply_match import run as run_a4
+    from pipeline.skills.a5_trade_risk import run as run_a5
+
+    runtime_files = [
+        ROOT / "pipeline/skills/a3_purchase_timing.py",
+        ROOT / "pipeline/skills/a4_supply_match.py",
+        ROOT / "pipeline/skills/a5_trade_risk.py",
+    ]
+    check("A3/A4/A5 Python authoritative runtime").record(all(path.exists() for path in runtime_files), ", ".join(path.name for path in runtime_files))
+
+    adapter = (ROOT / "agent/skill-runtime/python-capability-runners.mjs").read_text(encoding="utf-8")
+    node_domains = "\n".join((ROOT / f"agent/skill-runtime/a{i}.js").read_text(encoding="utf-8") for i in (3, 4, 5))
+    no_fallback = "node-fallback" not in adapter and "execFileSync" not in adapter and "timing_score" not in node_domains
+    check("Node semantic fallback count = 0").record(no_fallback, "no node-fallback, execFileSync, or Node domain scoring")
+
+    a3 = run_a3({"opportunity_id": "audit-a3", "evaluated_at": "2026-08-29T00:00:00Z", "latest_buyer_message": {"content": "", "evidence_refs": []}})
+    check("A3 unknown timing = MORE_EVIDENCE").record(a3["run_status"] == "MORE_EVIDENCE" and a3["domain_result"]["window_status"] == "UNKNOWN")
+
+    a4 = run_a4({"opportunity_id": "audit-a4", "evaluated_at": "2026-08-29T00:00:00Z", "demand": {"category_code": "MATCHA", "grade": "beverage", "quantity": "5 pallets"}})
+    check("A4 unknown != mismatch").record(a4["run_status"] == "MORE_EVIDENCE" and a4["domain_result"]["recommendation"] == "NEED_MORE_DATA")
+
+    a5 = run_a5({"opportunity_id": "audit-a5", "evaluated_at": "2026-08-29T00:00:00Z", "buyer_country": "US", "destination_market": "JP", "regulatory_evidence": [{"market": "JP", "result": "ALLOWED", "evidence_ref": "audit-reg"}]})
+    check("A5 buyer_country != destination_market supported").record(a5["domain_result"]["buyer_country"] == "US" and a5["domain_result"]["destination_market"] == "JP")
+
+    caps = {item.get("capability_id"): item for item in dispatch.get("capabilities", [])}
+    direct_ok = all(caps.get(f"qianpulse.a{i}.{name}", {}).get("dispatched") for i, name in ((3, "purchase_timing"), (4, "supply_match"), (5, "trade_risk")))
+    check("Agent direct dispatch A3/A4/A5").record(direct_ok)
+    trace_ok = dispatch.get("checks", {}).get("same_run_a345a6") is True
+    check("Buyer reply A3+A4+A5+A6 trace").record(trace_ok)
 
 
 def audit_landing_site() -> None:
@@ -462,15 +498,15 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
         },
         {
             "module": "A3 采购时机判断",
-            "runtime": "Python 权威（timing_score + buying_window_fields）· Node fallback",
+            "runtime": "Python 唯一运行时（pipeline/skills/a3_purchase_timing.py）",
             "state": "Python 权威",
             "evidence": "A6 会话内刷新经 capability CLI 调 Free 的 timing_score；recency + urgency + stage + continuity − staleness；"
-            "Python 不可用时自动回退 Node placeholder",
-            "gap": "未做统计校准；子进程启动 ~200ms/次",
+            "Python 不可用时返回结构化 ERROR，不改变业务语义",
+            "gap": "未做统计校准；子进程启动有额外延迟",
         },
         {
             "module": "A4 贵州供需匹配",
-            "runtime": "Python 权威（supply_demand_fit_v1.py 逐 SKU）· Node fallback",
+            "runtime": "Python 唯一运行时（supply_demand_fit_v1.py 逐 SKU）",
             "state": "Python 权威",
             "evidence": f"{store_counts.get('seller_sku_fit', 0)} 条逐 SKU 评估入库；A6 会话内刷新经 capability CLI 拿到真实 "
             "supply_pool_status / best_verdict / summary_zh；硬条件先于软条件，MATCH/CONDITIONAL/BLOCK",
@@ -478,7 +514,7 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
         },
         {
             "module": "A5 智能匹配风控",
-            "runtime": "Python 权威（market_access_score + 目的地/allowed/blocked/支付 审查）· Node fallback",
+            "runtime": "Python 唯一运行时（pipeline/skills/a5_trade_risk.py）",
             "state": "部分（准入已归 Python）",
             "evidence": "A6 会话内刷新经 capability CLI 调 Free；目的地黑名单 → BLOCKED，缺政策 → MORE_EVIDENCE，"
             "否则 REVIEWED + market_access 分",
@@ -531,8 +567,8 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
             "runtime": "scripts/capability_cli.py（stdin/stdout）· agent/skill-runtime/python-capability-runners.mjs",
             "state": "就绪",
             "evidence": "统一 CapabilityResultEnvelope / AgentEvent JSON Schema + 两侧合同测试；"
-            "A6 依赖刷新经 execFileSync 调 Python，任何失败自动回退 Node；QIANPULSE_PYTHON_CAPABILITIES=off 可关",
-            "gap": "子进程启动延迟；后续可升级为常驻 HTTP capability 服务",
+            "A6 依赖刷新异步调用 Python，失败返回 CAPABILITY_RUNTIME_UNAVAILABLE，不存在语义回退",
+            "gap": "子进程启动延迟；后续可升级为常驻 capability 服务",
         },
         {
             "module": "统一 Opportunity（v2）",
@@ -685,6 +721,7 @@ def main() -> int:
     audit_reverse_bridge()
     audit_agent_boot()
     dispatch = audit_skill_dispatch()
+    audit_a345_invariants(dispatch)
     audit_orchestrator_skills()
     audit_landing_site()
     audit_portal_wiring()

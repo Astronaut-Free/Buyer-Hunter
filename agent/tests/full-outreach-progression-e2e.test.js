@@ -6,6 +6,13 @@ import { createSmartleadLiveWebhookHandler } from '../server/smartlead-live-webh
 import { createA2FirstOutreachExecutor } from '../server/a2-first-outreach-executor.js';
 import { createApprovalLiveExecutor } from '../server/approval-live-executor.js';
 
+const dependencyRunners = Object.fromEntries([
+  'qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk'
+].map(capabilityId => [capabilityId, async context => ({
+  capability_id: capabilityId, capability_version: 'test', run_status: 'DONE', changed_fields: context.changed_fields || [],
+  missing_evidence: [], evidence_refs: [], human_review_required: false, domain_result: {}, error: null
+})]));
+
 function sign(rawBody, requestId, secret = 'webhook-secret') {
   return {
     'x-request-id': requestId,
@@ -59,6 +66,7 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
       actor?.role === 'INTERNAL' ||
       (actor?.role === 'SELLER' && opportunity.seller?.id === actor.id) ||
       (actor?.role === 'BUYER' && opportunity.buyer?.id === actor.id),
+    dependencyRunners,
     providers: {
       trade_data: { async searchBuyers() { return { companies: [buyerCompany()] }; } },
       contact_data: { async findDecisionMakers() { return [{ buyer_company_id: 'buyer-company-1', name: 'Alex Buyer', work_email: 'alex@buyer.example', role_reason: 'Procurement Manager', source_refs: ['ev_contact'] }]; } }
@@ -124,7 +132,7 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
     lead: { email: 'alex@buyer.example' }
   };
   const rawBody = JSON.stringify(webhookBody);
-  const inbound = webhook({ rawBody, headers: sign(rawBody, 'req-full-loop-1') });
+  const inbound = await webhook({ rawBody, headers: sign(rawBody, 'req-full-loop-1') });
 
   assert.equal(inbound.status, 202);
   assert.equal(inbound.body.status, 'PROCESSED');

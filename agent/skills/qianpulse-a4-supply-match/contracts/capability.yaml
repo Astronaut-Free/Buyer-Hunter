@@ -1,0 +1,6 @@
+capability_id: qianpulse.a4.supply_match
+version: 1.1.0
+runtime: pipeline/skills/a4_supply_match.py
+events: [SUPPLY_MATCH_REFRESH]
+required_inputs: [opportunity_id, evaluated_at, demand, seller_context]
+outputs: [eligible_sku_count, eligible_skus, hard_gaps, soft_gaps, unknowns, recommendation, seller_profile_version, data_mode, evaluated_at, ruleset_version]

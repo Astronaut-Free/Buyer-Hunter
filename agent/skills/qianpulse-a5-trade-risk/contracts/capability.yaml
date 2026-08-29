@@ -1,0 +1,6 @@
+capability_id: qianpulse.a5.trade_risk
+version: 1.1.0
+runtime: pipeline/skills/a5_trade_risk.py
+events: [TRADE_RISK_REFRESH]
+required_inputs: [opportunity_id, evaluated_at, buyer_country, destination_market, product, seller_sku, seller_policy]
+outputs: [buyer_country, destination_market, access_status, risk_items, required_documents, missing_evidence, review_by, evaluated_at, ruleset_version]

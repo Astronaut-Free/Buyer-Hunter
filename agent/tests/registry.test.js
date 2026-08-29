@@ -20,7 +20,7 @@ test('skill registry exposes enabled A2 through A6 runtime metadata', () => {
     const metadata = getQianPulseSkillMetadata(capabilityId);
     assert.ok(metadata, `missing metadata for ${capabilityId}`);
     assert.equal(metadata.enabled, true);
-    assert.equal(metadata.version, '1.0.0');
+    assert.equal(metadata.version, [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID].includes(capabilityId) ? '1.1.0' : '1.0.0');
     assert.ok(metadata.description);
     assert.ok(Array.isArray(metadata.required_inputs));
     assert.ok(Array.isArray(metadata.produced_outputs));
@@ -29,6 +29,12 @@ test('skill registry exposes enabled A2 through A6 runtime metadata', () => {
 
 test('buyer message routes to A6', () => {
   assert.deepEqual(resolveQianPulseSkillCapabilities('BUYER_MESSAGE'), [A6_CAPABILITY_ID]);
+});
+
+test('explicit refresh events route to A3 A4 and A5', () => {
+  assert.deepEqual(resolveQianPulseSkillCapabilities('PURCHASE_TIMING_REFRESH'), [A3_CAPABILITY_ID]);
+  assert.deepEqual(resolveQianPulseSkillCapabilities('SUPPLY_MATCH_REFRESH'), [A4_CAPABILITY_ID]);
+  assert.deepEqual(resolveQianPulseSkillCapabilities('TRADE_RISK_REFRESH'), [A5_CAPABILITY_ID]);
 });
 
 test('pre-reply followup switches to A6 after reply', () => {

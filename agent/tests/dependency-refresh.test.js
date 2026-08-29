@@ -1,52 +1,49 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  runInvalidatedDependencies,
-  runA3PurchaseTiming,
-  runA4SupplyMatch,
-  runA5TradeRisk
-} from '../skill-runtime/index.js';
+import { runInvalidatedDependencies } from '../skill-runtime/dependency-refresh.js';
+import { createPythonDependencyRunners } from '../skill-runtime/python-capability-runners.mjs';
+import { A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
-test('A3 refresh treats a fresh delivery question as current timing evidence', () => {
-  const result = runA3PurchaseTiming({
-    opportunity_id: 'opp1',
+const runners = createPythonDependencyRunners();
+const evaluated_at = '2026-08-29T00:00:00Z';
+
+test('A3 refresh treats a fresh delivery question as current timing evidence', async () => {
+  const result = await runners[A3_CAPABILITY_ID]({
+    opportunity_id: 'opp1', evaluated_at,
     latest_buyer_message: { content: 'What is your delivery lead time?', evidence_ref: 'ev1' },
     opportunity_state: { fields: {} }
   });
   assert.equal(result.run_status, 'DONE');
-  assert.equal(result.domain_result.timing_signal, 'BUYER_TIMING_QUERY');
+  assert.equal(result.domain_result.window_status, 'OPEN');
   assert.deepEqual(result.evidence_refs, ['ev1']);
 });
 
-test('A4 refresh fails closed when changed quantity lacks capacity or MOQ evidence', () => {
-  const result = runA4SupplyMatch({
-    opportunity_id: 'opp1',
-    changed_fields: ['quantity', 'delivery_date'],
-    seller_context: { delivery: '20 days' }
+test('A4 keeps non-weight quantity unknown instead of inventing kilograms', async () => {
+  const result = await runners[A4_CAPABILITY_ID]({
+    opportunity_id: 'opp1', evaluated_at, changed_fields: ['quantity'],
+    demand: { category_code: 'MATCHA', quantity: '5 pallets' }, seller_context: {}
   });
   assert.equal(result.run_status, 'MORE_EVIDENCE');
-  assert.ok(result.missing_evidence.includes('capacity_or_moq'));
+  assert.equal(result.domain_result.recommendation, 'NEED_MORE_DATA');
+  assert.ok(result.domain_result.unknowns.some(item => item.dimension === 'quantity_capacity'));
 });
 
-test('A5 refresh blocks an explicitly blocked destination and dependency runner preserves it', () => {
-  const direct = runA5TradeRisk({
-    opportunity_id: 'opp1',
-    changed_fields: ['destination'],
-    field_updates: { destination: 'Restricted Market' },
-    seller_context: { blocked_markets: ['Restricted Market'], evidence_refs: ['policy1'] }
-  });
+test('A5 blocks only an evidence-backed regulatory prohibition and dependency runner preserves it', async () => {
+  const context = {
+    opportunity_id: 'opp1', evaluated_at, changed_fields: ['destination'],
+    buyer_country: 'US', destination_market: 'JP',
+    regulatory_evidence: [{ market: 'JP', result: 'PROHIBITED', reason: 'test prohibition', evidence_ref: 'reg1' }]
+  };
+  const direct = await runners[A5_CAPABILITY_ID](context);
   assert.equal(direct.run_status, 'BLOCKED');
+  assert.equal(direct.domain_result.access_status, 'BLOCK');
 
-  const refresh = runInvalidatedDependencies({
-    capabilities: ['qianpulse.a5.trade_risk'],
-    opportunity: { id: 'opp1', stage: 'CONTACTED', fields: {} },
-    event: {
-      evidence_ref: 'ev1',
-      changed_fields: [{ field: 'destination' }],
-      payload: { field_updates: { destination: 'Restricted Market' }, message: 'Ship to Restricted Market' }
-    },
-    sellerContext: { blocked_markets: ['Restricted Market'], evidence_refs: ['policy1'] }
+  const refresh = await runInvalidatedDependencies({
+    capabilities: [A5_CAPABILITY_ID],
+    opportunity: { id: 'opp1', stage: 'CONTACTED', buyer: { market: 'US' }, fields: { destination: 'JP' } },
+    event: { timestamp: evaluated_at, evidence_ref: 'ev1', changed_fields: [{ field: 'destination' }], payload: { field_updates: { destination: 'JP' } } },
+    sellerContext: { regulatory_evidence: context.regulatory_evidence }, runners
   });
-  assert.deepEqual(refresh.refreshed_capabilities, ['qianpulse.a5.trade_risk']);
+  assert.deepEqual(refresh.refreshed_capabilities, [A5_CAPABILITY_ID]);
   assert.equal(refresh.dependency_results.a5.run_status, 'BLOCKED');
 });

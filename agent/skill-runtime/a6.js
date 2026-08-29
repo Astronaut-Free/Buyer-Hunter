@@ -1,6 +1,7 @@
 import { CAPABILITY_STATUS, isA5Blocked, makeCapabilityEnvelope, normalizeEvidenceRefs } from './guards.js';
+import { A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID, A6_CAPABILITY_ID } from './capability-ids.js';
 
-export const A6_CAPABILITY_ID = 'qianpulse.a6.opportunity_progression';
+export { A6_CAPABILITY_ID };
 export const A6_VERSION = '1.0.0';
 
 export const A6_STAGES = Object.freeze([
@@ -67,13 +68,13 @@ export function detectA6ChangedFields({ content = '', fieldUpdates = {}, previou
 
 export function routeA6ChangedFields(changedFields = []) {
   const mapping = {
-    quantity: ['qianpulse.a4.supply_match'],
-    specification: ['qianpulse.a4.supply_match'],
-    destination: ['qianpulse.a5.trade_risk'],
-    certification: ['qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk'],
-    delivery_date: ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match'],
-    payment_terms: ['qianpulse.a5.trade_risk'],
-    buyer_company: ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk'],
+    quantity: [A4_CAPABILITY_ID],
+    specification: [A4_CAPABILITY_ID],
+    destination: [A5_CAPABILITY_ID],
+    certification: [A4_CAPABILITY_ID, A5_CAPABILITY_ID],
+    delivery_date: [A3_CAPABILITY_ID, A4_CAPABILITY_ID],
+    payment_terms: [A5_CAPABILITY_ID],
+    buyer_company: [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID],
     sample_request: []
   };
   return [...new Set(changedFields.flatMap(item => mapping[item.field] || []))];

@@ -8,6 +8,7 @@ import { A4_CAPABILITY_ID } from '../skill-runtime/a4.js';
 
 const CTX = {
   opportunity_id: 'opp-x',
+  evaluated_at: '2026-08-29T00:00:00Z',
   changed_fields: ['quantity'],
   opportunity_state: { stage: 'QUALIFYING', fields: { product: 'MATCHA', demand_title: 'bulk matcha', quantity: '500 kg', destination: 'US' } },
   field_updates: { quantity: '2 tons' },
@@ -28,7 +29,7 @@ function fakeCli(envelopeOrMode) {
   return { pythonBin: process.execPath, cliPath: script };
 }
 
-test('delegates to the capability CLI and tags the result source=python', () => {
+test('delegates to the capability CLI and tags the result source=python', async () => {
   const env = {
     capability_id: A4_CAPABILITY_ID, capability_version: '1.0.0-python', run_status: 'DONE',
     changed_fields: ['quantity'], missing_evidence: [], evidence_refs: [], human_review_required: false,
@@ -36,32 +37,34 @@ test('delegates to the capability CLI and tags the result source=python', () => 
     error: null,
   };
   const runners = createPythonDependencyRunners(fakeCli(env));
-  const result = runners[A4_CAPABILITY_ID](CTX);
+  const result = await runners[A4_CAPABILITY_ID](CTX);
   assert.equal(result.run_status, 'DONE');
   assert.equal(result.domain_result.source, 'python');
   assert.equal(result.domain_result.best_verdict, 'CONDITIONAL');
 });
 
-test('falls back to the bundled Node runner when python is missing', () => {
+test('returns structured ERROR without semantic fallback when python is missing', async () => {
   const messages = [];
-  const runners = createPythonDependencyRunners({ pythonBin: 'python-does-not-exist-xyz', onFallback: m => messages.push(m) });
-  const result = runners[A4_CAPABILITY_ID](CTX);
-  assert.equal(result.domain_result.source, 'node-fallback');
-  assert.ok(result.domain_result.fallback_reason);
-  assert.match(result.run_status, /DONE|MORE_EVIDENCE|BLOCKED/);
+  const runners = createPythonDependencyRunners({ pythonBin: 'python-does-not-exist-xyz', onError: m => messages.push(m) });
+  const result = await runners[A4_CAPABILITY_ID](CTX);
+  assert.equal(result.run_status, 'ERROR');
+  assert.equal(result.error.code, 'CAPABILITY_RUNTIME_UNAVAILABLE');
+  assert.deepEqual(result.domain_result, {});
   assert.equal(messages.length, 1);
 });
 
-test('falls back when the CLI returns a malformed envelope', () => {
+test('returns ERROR when the CLI returns a malformed envelope', async () => {
   const runners = createPythonDependencyRunners(fakeCli('malformed'));
-  const result = runners[A4_CAPABILITY_ID](CTX);
-  assert.equal(result.domain_result.source, 'node-fallback');
+  const result = await runners[A4_CAPABILITY_ID](CTX);
+  assert.equal(result.run_status, 'ERROR');
+  assert.equal(result.error.code, 'CAPABILITY_RUNTIME_UNAVAILABLE');
 });
 
-test('falls back when the CLI exits non-zero', () => {
+test('returns ERROR when the CLI exits non-zero', async () => {
   const runners = createPythonDependencyRunners(fakeCli('crash'));
-  const result = runners[A4_CAPABILITY_ID](CTX);
-  assert.equal(result.domain_result.source, 'node-fallback');
+  const result = await runners[A4_CAPABILITY_ID](CTX);
+  assert.equal(result.run_status, 'ERROR');
+  assert.equal(result.error.code, 'CAPABILITY_RUNTIME_UNAVAILABLE');
 });
 
 test('exposes a runner for each of A3 / A4 / A5', () => {
@@ -71,6 +74,6 @@ test('exposes a runner for each of A3 / A4 / A5', () => {
   }
 });
 
-test('pythonCapabilitiesAvailable is false for a missing interpreter', () => {
-  assert.equal(pythonCapabilitiesAvailable({ pythonBin: 'python-does-not-exist-xyz' }), false);
+test('pythonCapabilitiesAvailable is false for a missing interpreter', async () => {
+  assert.equal(await pythonCapabilitiesAvailable({ pythonBin: 'python-does-not-exist-xyz' }), false);
 });

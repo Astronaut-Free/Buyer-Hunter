@@ -18,6 +18,7 @@ import { createA2FirstOutreachExecutor } from './a2-first-outreach-executor.js';
 import { createOpportunityWorkspaceHandler } from './opportunity-workspace-handler.js';
 import { createRuntimeObservabilityHandler } from './runtime-observability-handler.js';
 import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../skill-runtime/python-capability-runners.mjs';
+import { A2_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -37,8 +38,8 @@ const CAPABILITIES = [
   { capability_id: 'market.access', version: '1.0.0', description: '核验目标市场准入资料' },
   { capability_id: 'conversation.qualify', version: '1.0.0', description: '计算沟通字段完整度' },
   { capability_id: 'reply.draft', version: '1.0.0', description: '生成待人工确认的回复草稿' },
-  { capability_id: 'qianpulse.a2.proactive_buyer_development', version: '1.0.0', description: '主动开发潜在海外采购商' },
-  { capability_id: 'qianpulse.a6.opportunity_progression', version: '1.0.0', description: '根据买家反馈动态推进 Opportunity' }
+  { capability_id: A2_CAPABILITY_ID, version: '1.0.0', description: '主动开发潜在海外采购商' },
+  { capability_id: A6_CAPABILITY_ID, version: '1.0.0', description: '根据买家反馈动态推进 Opportunity' }
 ];
 
 const ROUTING_POLICY = {
@@ -615,14 +616,17 @@ async function handleV1(req, res, path) {
         : payload;
       return respond(res, await liveA2A6.runProactive(a2Payload, user));
     }
-    if (payload.event_type === 'BUYER_MESSAGE') return respond(res, liveA2A6.runBuyerMessage(payload, user));
+    if (liveA2A6.isCapabilityRefreshEvent(payload.event_type)) {
+      return respond(res, await liveA2A6.runCapabilityRefresh(payload, user));
+    }
+    if (payload.event_type === 'BUYER_MESSAGE') return respond(res, await liveA2A6.runBuyerMessage(payload, user));
     return respond(res, await createRun(payload, user));
   }
 
   const msgMatch = path.match(/^\/api\/v1\/opportunities\/([^/]+)\/messages$/);
   if (req.method === 'POST' && msgMatch) {
     if (!user) return sendJson(res, 401, { error: '请先登录后使用 Agent' });
-    return respond(res, liveA2A6.runBuyerMessage({
+    return respond(res, await liveA2A6.runBuyerMessage({
       ...payload,
       opportunity_id: msgMatch[1],
       event_type: 'BUYER_MESSAGE'
@@ -668,11 +672,11 @@ async function handleV1(req, res, path) {
     if (!user || !previous) return sendJson(res, 404, { error: 'Run 不存在或未登录' });
     if (!payload.idempotency_key) return sendJson(res, 400, { code: 'IDEMPOTENCY_KEY_REQUIRED', error: '恢复 Run 必须提供 idempotency_key' });
 
-    if (previous.capabilities_called?.includes('qianpulse.a6.opportunity_progression')) {
+    if (previous.capabilities_called?.includes(A6_CAPABILITY_ID)) {
       const opportunity = state.opportunities[previous.opportunity_id];
       if (!canAccess(user, opportunity)) return sendJson(res, 403, { error: '无权恢复这笔 Run' });
       const previousEvent = state.events[previous.trigger_event_id];
-      return respond(res, liveA2A6.runBuyerMessage({
+      return respond(res, await liveA2A6.runBuyerMessage({
         ...(previousEvent?.payload || {}),
         ...payload,
         opportunity_id: previous.opportunity_id,
@@ -680,7 +684,7 @@ async function handleV1(req, res, path) {
       }, user));
     }
 
-    if (previous.capabilities_called?.includes('qianpulse.a2.proactive_buyer_development')) {
+    if (previous.capabilities_called?.includes(A2_CAPABILITY_ID)) {
       if (!['SELLER', 'INTERNAL'].includes(user.role)) return sendJson(res, 403, { error: '无权恢复主动拓展 Run' });
       const previousEvent = state.events[previous.trigger_event_id];
       const proactivePayload = {
@@ -748,12 +752,11 @@ loadState = async function() {
 
 await loadState();
 
-// A3/A4/A5 refresh delegates to Free's authoritative Python implementation when
-// its capability CLI is reachable; otherwise the bundled Node runners are used.
+// A3/A4/A5 always use the authoritative Python runtime. There is no semantic fallback.
 const pythonCapabilitiesOff = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() === 'off';
-const pythonCapabilitiesOn = !pythonCapabilitiesOff && pythonCapabilitiesAvailable();
+const pythonCapabilitiesOn = !pythonCapabilitiesOff && await pythonCapabilitiesAvailable();
 const dependencyRunners = pythonCapabilitiesOn
-  ? createPythonDependencyRunners({ onFallback: message => console.warn('[capability]', message) })
+  ? createPythonDependencyRunners({ onError: error => console.warn('[capability]', error.code, error.message) })
   : undefined;
 
 liveA2A6 = createLiveA2A6Runtime({
@@ -823,7 +826,7 @@ const server = createServer(async (req, res) => {
       } catch {
         return sendJson(res, 400, { code: 'INVALID_JSON' });
       }
-      return respond(res, smartleadWebhookHandler({ rawBody, body, headers: req.headers }));
+      return respond(res, await smartleadWebhookHandler({ rawBody, body, headers: req.headers }));
     }
     if (url.pathname.startsWith('/api/v1/auth/')) return authHandler(req, res, url.pathname);
     if (url.pathname.startsWith('/api/v1/')) return handleV1(req, res, url.pathname);

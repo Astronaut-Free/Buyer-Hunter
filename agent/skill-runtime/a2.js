@@ -1,6 +1,7 @@
 import { CAPABILITY_STATUS, hasSuppression, isA5Blocked, makeCapabilityEnvelope, normalizeEvidenceRefs } from './guards.js';
+import { A2_CAPABILITY_ID } from './capability-ids.js';
 
-export const A2_CAPABILITY_ID = 'qianpulse.a2.proactive_buyer_development';
+export { A2_CAPABILITY_ID };
 export const A2_VERSION = '1.0.0';
 
 function array(value) {

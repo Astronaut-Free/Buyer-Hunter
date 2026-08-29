@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { capabilitySlot } from '../skill-runtime/capability-ids.js';
 
 function stableOpportunityId(seedKey) {
   const digest = createHash('sha256').update(String(seedKey)).digest('hex').slice(0, 16);
@@ -148,6 +149,27 @@ export function createAgentStateOpportunityStore({
     return opportunity;
   }
 
+  function applyCapabilityEnvelope({ opportunityId, envelope, at = now() } = {}) {
+    const currentState = state();
+    const opportunity = currentState.opportunities[opportunityId];
+    if (!opportunity) throw new Error('Opportunity not found');
+    if (!envelope?.capability_id || !envelope?.domain_result) throw new Error('Capability envelope required');
+    const slot = capabilitySlot(envelope.capability_id);
+    if (!slot) throw new Error('Only A3/A4/A5 refresh envelopes are supported');
+    opportunity[slot] = {
+      run_status: envelope.run_status,
+      capability_version: envelope.capability_version,
+      result: envelope.domain_result,
+      missing_evidence: envelope.missing_evidence || [],
+      evidence_refs: envelope.evidence_refs || [],
+      updated_at: at
+    };
+    opportunity.evidence_ids = unique([...(opportunity.evidence_ids || []), ...(envelope.evidence_refs || [])]);
+    opportunity.updated_at = at;
+    touch();
+    return opportunity;
+  }
+
   return {
     upsertSeed,
     upsertSeeds,
@@ -155,6 +177,7 @@ export function createAgentStateOpportunityStore({
     list,
     bindExternalRef,
     resolveExternalRef,
+    applyCapabilityEnvelope,
     applyA6Envelope
   };
 }

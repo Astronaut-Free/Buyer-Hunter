@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import { createMemoryOpportunityStore } from '../opportunity-store.js';
 import { createQianPulseSkillOrchestrator } from '../qianpulse-skill-orchestrator.js';
 
+function dependencyRunner(capabilityId, runStatus = 'DONE', missing = []) {
+  return async context => ({
+    capability_id: capabilityId, capability_version: 'test', run_status: runStatus,
+    changed_fields: context.changed_fields || [], missing_evidence: missing,
+    evidence_refs: context.latest_buyer_message?.evidence_ref ? [context.latest_buyer_message.evidence_ref] : [],
+    human_review_required: runStatus !== 'DONE', domain_result: capabilityId.endsWith('trade_risk') ? { access_status: 'PASS' } : {}, error: null
+  });
+}
+
 const input = {
   seller: { seller_id: 'seller1', company_id: 'company1', product_id: 'p1', company_name: 'Guizhou Tea', product_name: 'Matcha' },
   target: { countries: ['US'], product_keywords: ['matcha'] },
@@ -46,7 +55,7 @@ test('A2 batch persists READY candidates as idempotent Opportunity records', asy
   assert.equal(first.opportunities[0].status, 'READY_FOR_OUTREACH_APPROVAL');
 });
 
-test('A6 buyer progression keeps waiting when automatic dependency refresh lacks seller evidence', () => {
+test('A6 buyer progression keeps waiting when automatic dependency refresh lacks seller evidence', async () => {
   const store = createMemoryOpportunityStore();
   const opportunity = store.upsertSeed({
     seed_key: 'a2:seller:buyer',
@@ -57,8 +66,11 @@ test('A6 buyer progression keeps waiting when automatic dependency refresh lacks
     fields: { quantity: '500 kg' },
     evidence_ids: ['ev_seed']
   });
-  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:10:00Z' });
-  const result = orchestrator.runBuyerProgression({
+  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:10:00Z', dependencyRunners: {
+    'qianpulse.a3.purchase_timing': dependencyRunner('qianpulse.a3.purchase_timing'),
+    'qianpulse.a4.supply_match': dependencyRunner('qianpulse.a4.supply_match', 'MORE_EVIDENCE', ['capacity_or_moq'])
+  } });
+  const result = await orchestrator.runBuyerProgression({
     opportunityId: opportunity.id,
     event: { event_id: 'evt1', event_type: 'BUYER_MESSAGE', content: 'We need 20 tons. What is your delivery lead time?', evidence_ref: 'ev_reply' },
     sellerContext: { delivery: '20 days' }
@@ -72,7 +84,7 @@ test('A6 buyer progression keeps waiting when automatic dependency refresh lacks
   assert.equal(result.opportunity.fields.quantity, '20 tons');
 });
 
-test('A6 automatically refreshes A3 and A4 then resumes the same buyer message', () => {
+test('A6 automatically refreshes A3 and A4 then resumes the same buyer message', async () => {
   const store = createMemoryOpportunityStore();
   const opportunity = store.upsertSeed({
     seed_key: 'a2:seller:buyer:delivery',
@@ -83,8 +95,11 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
     fields: {},
     evidence_ids: ['ev_seed']
   });
-  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:20:00Z' });
-  const result = orchestrator.runBuyerProgression({
+  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:20:00Z', dependencyRunners: {
+    'qianpulse.a3.purchase_timing': dependencyRunner('qianpulse.a3.purchase_timing'),
+    'qianpulse.a4.supply_match': dependencyRunner('qianpulse.a4.supply_match')
+  } });
+  const result = await orchestrator.runBuyerProgression({
     opportunityId: opportunity.id,
     event: { event_id: 'evt2', event_type: 'BUYER_MESSAGE', content: 'What is your delivery lead time?', evidence_ref: 'ev_delivery' },
     sellerContext: { delivery: '20 days', evidence_refs: ['seller_delivery_policy'] }
@@ -99,7 +114,7 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
   assert.equal(result.opportunity.stage, 'REPLIED');
 });
 
-test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportunity facts', () => {
+test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportunity facts', async () => {
   const store = createMemoryOpportunityStore();
   const opportunity = store.upsertSeed({
     seed_key: 'a2:seller:buyer:multi-change',
@@ -110,8 +125,12 @@ test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportu
     fields: { quantity: '5 tons', destination: 'US' },
     evidence_ids: ['ev_seed']
   });
-  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:30:00Z' });
-  const result = orchestrator.runBuyerProgression({
+  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:30:00Z', dependencyRunners: {
+    'qianpulse.a3.purchase_timing': dependencyRunner('qianpulse.a3.purchase_timing'),
+    'qianpulse.a4.supply_match': dependencyRunner('qianpulse.a4.supply_match'),
+    'qianpulse.a5.trade_risk': dependencyRunner('qianpulse.a5.trade_risk')
+  } });
+  const result = await orchestrator.runBuyerProgression({
     opportunityId: opportunity.id,
     event: {
       event_id: 'evt3',

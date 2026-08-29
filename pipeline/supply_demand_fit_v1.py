@@ -18,6 +18,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from datetime import date, datetime
 from typing import Any
 
 
@@ -97,6 +98,7 @@ class SkuMatch:
     checks: list[dict[str, Any]]
     blockers: list[str]
     gaps: list[str]
+    evidence_refs: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -139,10 +141,8 @@ def _to_kg(value: float, unit: str) -> float | None:
         return value * 1000
     if unit in {"lb", "pound"}:
         return round(value * 0.45359237, 2)
-    if unit in {"container", "fcl", "20ft", "40ft"}:
-        return value * 18000  # rough full-container-load of packed matcha
-    if unit in {"pallet"}:
-        return value * 600
+    if unit in {"container", "fcl", "20ft", "40ft", "pallet"}:
+        return None
     return None
 
 
@@ -167,7 +167,9 @@ def _extract_quantity(quantity_raw: str, full_text: str) -> tuple[float | None, 
             return values[0], precision if source is quantity_raw else "EXACT"
         if values:
             return max(values), "RANGE"
-    if NON_WEIGHT_QTY_RE.search(f"{quantity_raw} {full_text}"):
+    if NON_WEIGHT_QTY_RE.search(f"{quantity_raw} {full_text}") or re.search(
+        r"\d[\d,]*\s*(?:containers?|fcl|20ft|40ft|pallets?)\b", f"{quantity_raw} {full_text}", re.I
+    ):
         return None, "NON_WEIGHT_UNIT"
     return None, "UNKNOWN"
 
@@ -216,14 +218,14 @@ def _extract_price(folded: str) -> float | None:
         return None
 
 
-def parse_demand(row: dict[str, Any]) -> RfqDemand:
+def parse_demand(row: dict[str, Any], *, evaluated_at: str | date | datetime | None = None) -> RfqDemand:
     text = " ".join(
         str(row.get(key) or "")
         for key in ("title", "description_raw", "quantity_raw")
     ).strip()
     folded = text.casefold()
     quantity_kg, precision = _extract_quantity(str(row.get("quantity_raw") or ""), text)
-    deadline_days = _deadline_days(row.get("deadline_at") or row.get("deadline_raw"))
+    deadline_days = _deadline_days(row.get("deadline_at") or row.get("deadline_raw"), evaluated_at=evaluated_at)
     return RfqDemand(
         category_code=str(row.get("category_code") or "").strip().upper(),
         text=text,
@@ -241,15 +243,31 @@ def parse_demand(row: dict[str, Any]) -> RfqDemand:
     )
 
 
-def _deadline_days(value: Any) -> int | None:
+def _evaluation_date(value: str | date | datetime | None) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    text = str(value or "").strip().replace("Z", "+00:00")
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(text[:10])
+        except ValueError:
+            return None
+
+
+def _deadline_days(value: Any, *, evaluated_at: str | date | datetime | None) -> int | None:
     text = str(value or "").strip()
     match = re.match(r"(\d{4}-\d{2}-\d{2})", text)
     if not match:
         return None
-    from datetime import date
-
     try:
-        return (date.fromisoformat(match.group(1)) - date.today()).days
+        base = _evaluation_date(evaluated_at)
+        return (date.fromisoformat(match.group(1)) - base).days if base else None
     except ValueError:
         return None
 
@@ -259,16 +277,21 @@ def _deadline_days(value: Any) -> int | None:
 # ---------------------------------------------------------------------------
 
 def _grade_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
-    sku_grade = str(sku.get("grade") or "").lower()
+    # Seller catalogs in the wild use either ``grade`` or ``specification``
+    # for the comparable product tier.  Treat either as authoritative, but
+    # keep the hard-gate dimension stable as SPECIFICATION for the contract.
+    sku_grade = str(sku.get("grade") or sku.get("specification") or "").lower()
     if not demand.required_grade:
-        return Check("grade", "HARD", "UNKNOWN", "RFQ 未写明等级需求")
+        return Check("specification", "HARD", "UNKNOWN", "RFQ 未写明等级/规格需求")
+    if sku_grade not in GRADE_RANK:
+        return Check("specification", "HARD", "UNKNOWN", "卖方 SKU 未提供可比较的 grade/等级/规格")
     want = GRADE_RANK.get(demand.required_grade, 1)
     have = GRADE_RANK.get(sku_grade, 1)
     if have == want or have == want + 1:
-        return Check("grade", "HARD", "PASS", f"需求 {demand.required_grade}，SKU {sku_grade}")
+        return Check("specification", "HARD", "PASS", f"需求 {demand.required_grade}，SKU {sku_grade}")
     if have < want:
-        return Check("grade", "HARD", "FAIL", f"需求 {demand.required_grade}，SKU 仅 {sku_grade}")
-    return Check("grade", "HARD", "UNKNOWN", f"需求 {demand.required_grade}，SKU {sku_grade}（等级偏高，需确认价位可接受）")
+        return Check("specification", "HARD", "FAIL", f"grade 不匹配：需求 {demand.required_grade}，SKU 仅 {sku_grade}")
+    return Check("specification", "HARD", "UNKNOWN", f"grade 需确认：需求 {demand.required_grade}，SKU {sku_grade}（等级偏高，需确认价位可接受）")
 
 
 def _no_quantity_detail(demand: RfqDemand) -> str:
@@ -279,6 +302,8 @@ def _capacity_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
     cap = sku.get("monthly_capacity_kg")
     if demand.quantity_kg is None:
         return Check("quantity_capacity", "HARD", "UNKNOWN", _no_quantity_detail(demand))
+    if cap is None:
+        return Check("quantity_capacity", "HARD", "UNKNOWN", "卖方 SKU 未披露月产能")
     if cap and demand.quantity_kg > cap:
         return Check("quantity_capacity", "HARD", "FAIL", f"需求约 {demand.quantity_kg:g} kg 超过月产能 {cap} kg")
     return Check("quantity_capacity", "HARD", "PASS", f"需求约 {demand.quantity_kg:g} kg 在月产能内")
@@ -288,6 +313,8 @@ def _moq_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
     moq = sku.get("moq_kg")
     if demand.quantity_kg is None:
         return Check("moq", "HARD", "UNKNOWN", _no_quantity_detail(demand))
+    if moq is None:
+        return Check("moq", "HARD", "UNKNOWN", "卖方 SKU 未披露 MOQ")
     if moq and demand.quantity_kg < moq:
         return Check("moq", "HARD", "FAIL", f"需求约 {demand.quantity_kg:g} kg 低于 MOQ {moq} kg")
     return Check("moq", "HARD", "PASS", f"需求约 {demand.quantity_kg:g} kg 满足 MOQ {moq} kg")
@@ -296,6 +323,8 @@ def _moq_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
 def _cert_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
     if not demand.required_certs:
         return Check("mandatory_certs", "HARD", "PASS", "RFQ 未提出强制认证要求")
+    if "certifications" not in sku or sku.get("certifications") is None:
+        return Check("mandatory_certs", "HARD", "UNKNOWN", "卖方 SKU 未提供认证资料")
     have = {str(c).upper() for c in sku.get("certifications", [])}
     missing: list[str] = []
     for code in demand.required_certs:
@@ -310,9 +339,11 @@ def _cert_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
 
 
 def _lead_time_check(demand: RfqDemand, sku: dict[str, Any]) -> Check:
+    days = sku.get("delivery_days")
+    if days is None:
+        return Check("lead_time", "HARD", "UNKNOWN", "卖方 SKU 未披露交付周期")
     if demand.deadline_days is None:
         return Check("lead_time", "HARD", "NA", "RFQ 未给交付截止日期，无交期约束")
-    days = sku.get("delivery_days")
     if demand.deadline_days < 0:
         return Check("lead_time", "HARD", "FAIL", "RFQ 截止日期已过")
     if days and days > demand.deadline_days:
@@ -351,9 +382,9 @@ def evaluate_sku(demand: RfqDemand, seller: dict[str, Any], sku: dict[str, Any])
     checks: list[Check] = [
         Check("category", "HARD", category_status, f"需求 {demand.category_code} / SKU {sku.get('category_code')}"),
         _grade_check(demand, sku),
+        _cert_check(demand, sku),
         _capacity_check(demand, sku),
         _moq_check(demand, sku),
-        _cert_check(demand, sku),
         _lead_time_check(demand, sku),
         _price_check(demand, sku),
         _bool_soft("oem", demand.wants_oem, bool(sku.get("oem")), "支持 OEM", "不支持 OEM"),
@@ -393,12 +424,13 @@ def evaluate_sku(demand: RfqDemand, seller: dict[str, Any], sku: dict[str, Any])
         company_location=str(seller.get("company_location") or ""),
         sku=str(sku.get("sku")),
         product_name=str(sku.get("product_name")),
-        grade=str(sku.get("grade") or ""),
+        grade=str(sku.get("grade") or sku.get("specification") or ""),
         verdict=verdict,
         fit_points=points,
         checks=[asdict(c) for c in checks],
         blockers=blockers,
         gaps=gaps,
+        evidence_refs=[str(ref) for ref in sku.get("evidence_refs", []) if ref],
     )
 
 
@@ -413,9 +445,14 @@ def load_catalog(path: Path = CATALOG_PATH) -> dict[str, Any]:
 _VERDICT_RANK = {"MATCH": 0, "CONDITIONAL": 1, "BLOCK": 2}
 
 
-def evaluate(row: dict[str, Any], catalog: dict[str, Any] | None = None) -> FitReport:
+def evaluate(
+    row: dict[str, Any],
+    catalog: dict[str, Any] | None = None,
+    *,
+    evaluated_at: str | date | datetime | None = None,
+) -> FitReport:
     catalog = catalog or load_catalog()
-    demand = parse_demand(row)
+    demand = parse_demand(row, evaluated_at=evaluated_at)
 
     evaluations: list[SkuMatch] = []
     for seller in catalog.get("sellers", []):

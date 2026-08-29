@@ -44,7 +44,27 @@ export function createQianPulseSkillOrchestrator({
     };
   }
 
-  function runBuyerProgression({
+  async function runCapabilityRefresh({ opportunityId, capabilities = [], event, sellerContext = {} } = {}) {
+    const opportunity = opportunityStore.get(opportunityId);
+    if (!opportunity) {
+      return { run_status: 'BLOCKED', code: 'NEEDS_CONTEXT', executions: [], missing_evidence: ['opportunity_id'] };
+    }
+    const refresh = await runInvalidatedDependencies({
+      capabilities,
+      opportunity,
+      event,
+      sellerContext,
+      dependencyResults: {},
+      runners: dependencyRunners
+    });
+    const statuses = refresh.executions.map(item => item.run_status);
+    const runStatus = statuses.includes('ERROR') ? 'ERROR'
+      : statuses.includes('BLOCKED') ? 'BLOCKED'
+        : statuses.includes('MORE_EVIDENCE') ? 'MORE_EVIDENCE' : 'DONE';
+    return { run_status: runStatus, opportunity, ...refresh };
+  }
+
+  async function runBuyerProgression({
     opportunityId,
     event,
     sellerContext = {},
@@ -108,7 +128,7 @@ export function createQianPulseSkillOrchestrator({
       : [];
 
     const refresh = toRefresh.length
-      ? runInvalidatedDependencies({
+      ? await runInvalidatedDependencies({
           capabilities: toRefresh,
           opportunity,
           event: {
@@ -170,5 +190,5 @@ export function createQianPulseSkillOrchestrator({
     };
   }
 
-  return { opportunityStore, runProactiveDevelopment, runBuyerProgression };
+  return { opportunityStore, runProactiveDevelopment, runCapabilityRefresh, runBuyerProgression };
 }

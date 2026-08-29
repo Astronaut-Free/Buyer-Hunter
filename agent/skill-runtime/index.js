@@ -1,4 +1,5 @@
 export * from './guards.js';
+export * from './capability-ids.js';
 export * from './a2.js';
 export * from './a2-outreach.js';
 export * from './a2-pipeline.js';
