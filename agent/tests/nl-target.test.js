@@ -72,7 +72,8 @@ test('deepseek client posts JSON-mode chat and parses the reply', async () => {
   const parsed = await client.parseTarget('enter the german matcha market');
   assert.deepEqual(parsed.countries, ['DE']);
   assert.deepEqual(parsed.product_keywords, ['matcha']);
-  assert.equal(calls[0].options.headers.Authorization, 'Bearer test-key');
+  // header names are case-insensitive; assert the value, not the key's casing
+  assert.equal(new Headers(calls[0].options.headers).get('authorization'), 'Bearer test-key');
   assert.equal(JSON.parse(calls[0].options.body).response_format.type, 'json_object');
 });
 
@@ -105,6 +106,10 @@ test('POST /api/v1/agent/nl-targets parses via rules and enforces auth', async (
       PORT: String(port),
       AUTH_SECRET: 'qianpulse-ci-secret',
       DEEPSEEK_MODEL: 'deepseek-chat',
+      // this case asserts the deterministic rule parser, so drop any real key
+      // the developer machine exports -- otherwise the route reaches DeepSeek
+      // and legitimately answers with parsed_source='deepseek'
+      DEEPSEEK_API_KEY: '',
       AGENT_STATE_FILE: stateFile
     },
     stdio: ['ignore', 'pipe', 'pipe']
