@@ -179,8 +179,9 @@ def base_record(**values) -> dict:
     }
     row.update(values)
     if row["entity_resolved"]:
+        # 主体可核验 ≠ 身份已验证：聚合层不得据此把 identity 升级为
+        # DOMAIN_LINKED / LEGAL_VERIFIED，identity 只能由身份证据（域名/注册号等）驱动。
         row["buyer_entity_status"] = "CONFIRMED"
-        row["buyer_identity_status"] = "LEGAL_VERIFIED" if row.get("source_role") == "OFFICIAL_PROCUREMENT" else "DOMAIN_LINKED"
     if row["buyer_name_raw"]:
         row["account_holder_type"] = "ORGANIZATION"
     elif row["contact_person_raw"]:
