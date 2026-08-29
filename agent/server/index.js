@@ -10,6 +10,7 @@ import { guardBuyerOutput } from './output-guard.js';
 import { loadFreeOpportunities, mergeFreeOpportunities, buildAgentOutcomesEntries, linkBridgedBuyers } from './repository.js';
 import { createApolloProvider } from '../providers/apollo.js';
 import { createTrademoProvider } from '../providers/trademo.js';
+import { createSandboxTradeProvider, createSandboxContactProvider } from '../providers/sandbox.js';
 import { createSmartleadProvider } from '../providers/smartlead.js';
 import { createLiveA2A6Runtime } from './a2a6-live-runtime.js';
 import { createSmartleadLiveWebhookHandler } from './smartlead-live-webhook.js';
@@ -17,10 +18,15 @@ import { createApprovalLiveExecutor } from './approval-live-executor.js';
 import { createA2FirstOutreachExecutor } from './a2-first-outreach-executor.js';
 import { createOpportunityWorkspaceHandler } from './opportunity-workspace-handler.js';
 import { createRuntimeObservabilityHandler } from './runtime-observability-handler.js';
+import { createCollectionRunner } from './collection-runner.js';
 import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../skill-runtime/python-capability-runners.mjs';
+import { createDeepSeekClient } from '../providers/deepseek.js';
+import { parseNlTarget, buildNlTargetPayload } from '../skill-runtime/nl-target-parser.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
+// Repository root (agent/server/ -> agent/ -> repo root) for spawning the Python pipeline.
+const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 // Env-overridable (full paths) so tests can isolate their state (single machine, one server).
 const STATE_FILE = process.env.AGENT_STATE_FILE || join(SERVER_DIR, 'agent-state.json');
 // Reverse-bridge output (contract v2): consumed by scripts/import_agent_outcomes.py.
@@ -29,6 +35,10 @@ const OUTCOMES_META_FILE = process.env.AGENT_OUTCOMES_META_FILE || OUTCOMES_FILE
 const PORT = Number(process.env.PORT || 3317);
 const AGENT_VERSION = 'qianpulse-agent-0.2.0';
 const SESSION_DAYS = 7;
+// A1 aggregates global public demand against a Guizhou seller capability
+// profile. A registered producer is bound to one; the opportunities carrying
+// that profile id are their matched feed. Overridable per-seller at signup.
+const DEFAULT_SELLER_PROFILE_ID = process.env.SELLER_CAPABILITY_PROFILE_ID || 'seller-guizhou-specialty-demo';
 
 const CAPABILITIES = [
   { capability_id: 'demand.normalize', version: '1.0.0', description: '标准化买家采购需求' },
@@ -113,6 +123,7 @@ const initialState = () => ({
   checkpoints: {},
   approvals: {},
   idempotency: {},
+  collection_runs: {},
   traces: []
 });
 
@@ -160,6 +171,7 @@ async function loadState() {
     state.events ||= {};
     state.users ||= {};
     state.sessions ||= {};
+    state.collection_runs ||= {};
   } catch {
     state = initialState();
     await persist();
@@ -217,7 +229,12 @@ function canAccess(user, opportunity) {
   if (user.role === 'INTERNAL') return true;
   if (opportunity.id === 'opp_demo_001') return user.role === 'SELLER' || user.role === 'BUYER';
   if (user.role === 'BUYER') return opportunity.buyer?.id === user.id;
-  if (user.role === 'SELLER') return opportunity.seller?.id === user.id;
+  if (user.role === 'SELLER') {
+    if (opportunity.seller?.id === user.id) return true;
+    // A1-bridged demand is keyed by capability profile, not by user id
+    const profileId = user.profile?.seller_capability_profile_id;
+    return Boolean(profileId) && opportunity.seller?.id === profileId;
+  }
   return false;
 }
 
@@ -512,7 +529,12 @@ async function authHandler(req, res, path) {
         country: String(payload.country || ''),
         contact_name: '',
         verification_status: 'PENDING',
-        profile_completion: 0
+        profile_completion: 0,
+        // sellers are matched against an A1 capability profile; this is what
+        // makes the aggregated demand feed visible to them (canAccess below)
+        ...(role === 'SELLER'
+          ? { seller_capability_profile_id: String(payload.seller_profile_id || DEFAULT_SELLER_PROFILE_ID) }
+          : {})
       },
       created_at: now(),
       last_login_at: null
@@ -702,6 +724,53 @@ async function handleV1(req, res, path) {
     }, user));
   }
 
+  if (req.method === 'GET' && path === '/api/v1/collection-runs') {
+    return respond(res, collectionRunner.list(user));
+  }
+  if (req.method === 'POST' && path === '/api/v1/collection-runs') {
+    return respond(res, collectionRunner.trigger(payload, user));
+  }
+  const collectionRunMatch = path.match(/^\/api\/v1\/collection-runs\/([^/]+)$/);
+  if (req.method === 'GET' && collectionRunMatch) {
+    return respond(res, collectionRunner.get(collectionRunMatch[1], user));
+  }
+
+  // A2 natural-language entry: parse free text into the canonical /runs payload.
+  // Returns the payload only — the client POSTs /api/v1/agent/runs, so auth,
+  // idempotency and approvals stay single-sourced there. DeepSeek first (when a
+  // key is set), rule parser on failure or without a key.
+  if (req.method === 'POST' && path === '/api/v1/agent/nl-targets') {
+    if (!user) return sendJson(res, 401, { error: '未登录' });
+    if (!['SELLER', 'INTERNAL'].includes(user.role)) return sendJson(res, 403, { error: '角色不允许' });
+    const text = String(payload.text || '').trim();
+    if (!text) return sendJson(res, 400, { error: 'text 不能为空' });
+
+    let parsed = null;
+    let source = 'rules';
+    if (process.env.DEEPSEEK_API_KEY) {
+      try {
+        const client = createDeepSeekClient();
+        parsed = await client.parseTarget(text, payload.language);
+        source = 'deepseek';
+      } catch {
+        parsed = null; // any LLM failure falls back to the rule parser
+      }
+    }
+    if (!parsed || !parsed.countries?.length || !parsed.product_keywords?.length) {
+      parsed = parseNlTarget(text, payload.language);
+      source = 'rules';
+    }
+    if (!parsed.countries.length || !parsed.product_keywords.length || !parsed.company_types.length) {
+      return sendJson(res, 422, { error: '无法解析目标市场/品类/买家类型，请补充：国家、产品、买家类型', parsed, parsed_source: source });
+    }
+    return sendJson(res, 200, buildNlTargetPayload({
+      parsed,
+      source,
+      seller: payload.seller || {},
+      product: payload.product || null
+    }));
+  }
+
   return sendJson(res, 404, { error: '未找到 Agent 控制面接口' });
 }
 
@@ -713,8 +782,37 @@ const mime = {
 };
 
 const baseLoadState = loadState;
+
+// Re-read the Python bridge snapshot (agent/db/opportunities.json) and merge it
+// into live state. Runtime values win (fields/stage/status/a6 survive), decision
+// and score fields refresh from the new pipeline snapshot. Runs at boot and
+// again after every real-time collection run completes.
+async function refreshFreeOpportunities() {
+  const imported = await loadFreeOpportunities();
+  for (const opportunity of imported) {
+    // Merge-on-reload: the bridge file is a full overwrite of every Free row,
+    // so re-importing it would wipe A6-mutated state (fields/stage/status/a6).
+    const existing = state.opportunities[opportunity.id];
+    state.opportunities[opportunity.id] = existing
+      ? mergeFreeOpportunities(existing, opportunity)
+      : opportunity;
+  }
+  // A2↔A1 convergence: bind A2 targets to bridged Free buyers on domain match.
+  for (const [key, ref] of linkBridgedBuyers(state.opportunities)) {
+    state.external_refs ||= {};
+    state.external_refs[key] = ref;
+  }
+  state.free_data_source = 'origin/Free';
+}
+
 loadState = async function() {
   await baseLoadState();
+  // backfill sellers registered before capability-profile binding existed
+  for (const user of Object.values(state.users || {})) {
+    if (user.role === 'SELLER' && !user.profile?.seller_capability_profile_id) {
+      user.profile = { ...(user.profile || {}), seller_capability_profile_id: DEFAULT_SELLER_PROFILE_ID };
+    }
+  }
   state.products ||= [{
     id: 'sku-matcha-demo',
     name: '贵州抹茶粉 · 饮品级',
@@ -723,23 +821,7 @@ loadState = async function() {
     status: '已上架'
   }];
   try {
-    const imported = await loadFreeOpportunities();
-    for (const opportunity of imported) {
-      // Merge-on-reload: the bridge file is a full overwrite of every Free row,
-      // so re-importing it would wipe A6-mutated state (fields/stage/status/a6).
-      // Existing runtime values win; decision/score fields refresh from the new
-      // pipeline snapshot.
-      const existing = state.opportunities[opportunity.id];
-      state.opportunities[opportunity.id] = existing
-        ? mergeFreeOpportunities(existing, opportunity)
-        : opportunity;
-    }
-    // A2↔A1 convergence: bind A2 targets to bridged Free buyers on domain match.
-    for (const [key, ref] of linkBridgedBuyers(state.opportunities)) {
-      state.external_refs ||= {};
-      state.external_refs[key] = ref;
-    }
-    state.free_data_source = 'origin/Free';
+    await refreshFreeOpportunities();
   } catch (error) {
     state.free_data_source = 'fallback';
     state.free_data_error = error.message;
@@ -747,6 +829,19 @@ loadState = async function() {
 };
 
 await loadState();
+
+// Real-time collection (A1): the panel in the agent workspace triggers the
+// Python pipeline out-of-band; jobs live in state.collection_runs and survive
+// restarts. Any job left RUNNING across a restart is marked INTERRUPTED.
+const collectionRunner = createCollectionRunner({
+  getState: () => state,
+  onMutate: persistSoon,
+  now,
+  id,
+  repoRoot: REPO_ROOT,
+  reloadFree: refreshFreeOpportunities,
+});
+await collectionRunner.markInterrupted();
 
 // A3/A4/A5 refresh delegates to Free's authoritative Python implementation when
 // its capability CLI is reachable; otherwise the bundled Node runners are used.
@@ -756,12 +851,23 @@ const dependencyRunners = pythonCapabilitiesOn
   ? createPythonDependencyRunners({ onFallback: message => console.warn('[capability]', message) })
   : undefined;
 
+// A2 discovery source: real providers when credentials are configured (or the
+// runtime is explicitly live), otherwise offline SANDBOX fixtures so the
+// proactive chain is exercisable on a clean machine. Sandbox rows are stamped
+// data_mode=SANDBOX and must never be shown as verified demand.
+const externalModeLive = String(process.env.QIANPULSE_EXTERNAL_MODE || 'sandbox').toLowerCase() === 'live';
+const discoveryCredentialed = Boolean(process.env.TRADEMO_BUYER_LIST_URL && process.env.APOLLO_API_KEY);
+const discoveryMode = (externalModeLive || discoveryCredentialed) ? 'live' : 'sandbox';
+if (discoveryMode === 'sandbox') {
+  console.warn('[a2] discovery providers = SANDBOX fixtures (no TRADEMO_BUYER_LIST_URL / APOLLO_API_KEY); results are illustrative, not verified demand');
+}
+
 liveA2A6 = createLiveA2A6Runtime({
   getState: () => state,
   onMutate: persistSoon,
   providers: {
-    trade_data: createTrademoProvider(),
-    contact_data: createApolloProvider()
+    trade_data: discoveryMode === 'sandbox' ? createSandboxTradeProvider() : createTrademoProvider(),
+    contact_data: discoveryMode === 'sandbox' ? createSandboxContactProvider() : createApolloProvider()
   },
   authorizeOpportunity: canAccess,
   now,
@@ -811,6 +917,7 @@ const server = createServer(async (req, res) => {
         model: DEEPSEEK_MODEL,
         a2_a6_runtime: 'ready',
         python_capabilities: pythonCapabilitiesOn ? 'on' : 'off',
+        a2_discovery: discoveryMode,
         smartlead: process.env.SMARTLEAD_API_KEY ? 'configured' : 'not-configured',
         smartlead_webhook: process.env.SMARTLEAD_WEBHOOK_SECRET ? 'configured' : 'not-configured'
       });
