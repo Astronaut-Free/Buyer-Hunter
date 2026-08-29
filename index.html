@@ -35,8 +35,8 @@
     .globe-breath-lines path:nth-child(4) { animation-delay:-5.1s,-20s; }
     @keyframes globe-line-breathe { 0%,100% { stroke-opacity:.07; } 50% { stroke-opacity:.22; } }
     @keyframes globe-line-drift { to { stroke-dashoffset:-418; } }
-    .hero-copy-art { --copy-x:50%; --copy-y:58px; --copy-width:1720px; position:absolute; z-index:3; top:var(--copy-y); left:var(--copy-x); width:var(--copy-width); max-width:none; height:auto; transform:translateX(-50%); user-select:none; -webkit-user-select:none; }
-    .hero-cta { --cta-x:50%; --cta-y:43%; --shine-angle:135deg; --shine-opacity:.45; position:absolute; isolation:isolate; z-index:4; left:var(--cta-x); top:var(--cta-y); transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:7px; width:max-content; min-width:0; height:clamp(34px,4.7cqw,42px); padding:0 5px 0 14px; overflow:hidden; color:#123b32; background:transparent; border:0; border-radius:999px; box-shadow:0 6px 16px rgba(32,24,6,.18); cursor:pointer; user-select:none; -webkit-user-select:none; white-space:nowrap; font:400 clamp(13px,2.6cqw,18px)/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.04em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
+    .hero-copy-art { --copy-x:50%; --copy-y:58px; --copy-width:1720px; position:absolute; z-index:3; top:var(--copy-y); left:var(--copy-x); width:var(--copy-width); max-width:none; height:auto; transform:translateX(-50%); pointer-events:none; user-select:none; -webkit-user-select:none; }
+    .hero-cta { --cta-x:50%; --cta-y:43%; --shine-angle:135deg; --shine-opacity:.45; position:absolute; isolation:isolate; z-index:4; left:var(--cta-x); top:var(--cta-y); transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:7px; width:max-content; min-width:0; height:clamp(34px,4.7cqw,42px); padding:0 5px 0 14px; overflow:hidden; color:#123b32; background:transparent; border:0; border-radius:999px; box-shadow:0 6px 16px rgba(32,24,6,.18); cursor:pointer; user-select:none; -webkit-user-select:none; white-space:nowrap; text-decoration:none; font:400 clamp(13px,2.6cqw,18px)/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.04em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
     .hero-cta::before { content:""; position:absolute; z-index:-2; inset:-100%; background:conic-gradient(from var(--shine-angle),transparent 0 35%,rgba(255,249,232,.18) 42%,#fff9e8 48%,#d5a33f 52%,#fff9e8 56%,rgba(255,249,232,.18) 62%,transparent 68%); opacity:var(--shine-opacity); transition:opacity .18s ease; }
     .hero-cta::after { content:""; position:absolute; z-index:-1; inset:1px; border-radius:999px; background:rgba(213,163,63,.96); box-shadow:0 1px 0 rgba(255,255,255,.34) inset; transition:background .24s ease; }
     .hero-cta__arrow { display:grid; place-items:center; flex:0 0 auto; width:clamp(24px,3.7cqw,29px); height:clamp(24px,3.7cqw,29px); color:#f7f4ec; background:#123b32; border-radius:50%; font-size:clamp(12px,2cqw,15px); line-height:1; transition:color .24s ease,background .24s ease,transform .24s cubic-bezier(.2,.8,.2,1); }
@@ -118,7 +118,7 @@
         <path d="M916 526 A424 424 0 0 1 526 916" />
         <path d="M474 916 A424 424 0 0 1 84 526" />
       </svg>
-      <button class="hero-cta" id="heroCta" type="button"><span>立即寻找商机</span><span class="hero-cta__arrow" aria-hidden="true">↗</span></button>
+      <a class="hero-cta" id="heroCta" href="opportunities.html"><span>立即寻找商机</span><span class="hero-cta__arrow" aria-hidden="true">↗</span></a>
       <span class="guizhou-label" id="guizhouLabel">GuiZhou</span>
       <canvas id="globe"></canvas>
       <div id="fallback" class="fallback-globe" aria-hidden="true"></div>
@@ -644,11 +644,6 @@
       guizhouLabel.style.left='75%';guizhouLabel.style.top='53%';guizhouLabel.classList.add('is-visible');
     });
   })();
-  </script>
-  <script>
-    document.getElementById('heroCta')?.addEventListener('click',() => {
-      window.location.href='opportunities.html';
-    });
   </script>
 </body>
 </html>
