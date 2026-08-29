@@ -48,7 +48,12 @@ def first_category(product_terms_json: str | None) -> str:
     return terms[0] if isinstance(terms, list) and terms else ""
 
 
+def _row_keys(row: sqlite3.Row) -> set[str]:
+    return set(row.keys())
+
+
 def summary_from(row: sqlite3.Row, full: bool) -> dict[str, Any]:
+    has_fit = "supply_pool_status" in _row_keys(row)
     return {
         "id": row["opportunity_id"],
         "rank": row["rank_position"],
@@ -66,6 +71,9 @@ def summary_from(row: sqlite3.Row, full: bool) -> dict[str, Any]:
         "decision_access": "FULL" if full else "SUMMARY",
         "lead_access_status": "UNAVAILABLE",
         "seller_fit_score": row["seller_fit_score"],
+        "supply_pool_status": row["supply_pool_status"] if has_fit else None,
+        "supply_match_verdict": row["best_verdict"] if has_fit else None,
+        "eligible_sku_match_count": row["eligible_match_count"] if has_fit else None,
         "data_mode": row["data_mode"],
     }
 
@@ -74,6 +82,9 @@ BASE_QUERY = """
 SELECT od.*, o.risk_json, o.primary_signal_id, b.canonical_name, b.country_code,
        s.product_terms_json, s.published_at, e.title, e.url AS evidence_url,
        e.excerpt, e.observed_at, e.data_mode,
+       f.supply_pool_status, f.best_verdict, f.best_fit_score AS fit_best_score,
+       f.eligible_match_count, f.evaluated_sku_count, f.summary_zh AS fit_summary,
+       f.report_json AS fit_report_json,
        (SELECT raw_value FROM field_observation fo
          WHERE fo.owner_type='SIGNAL' AND fo.owner_id=s.id AND fo.field_code='quantity_raw' LIMIT 1) AS quantity_raw
 FROM opportunity_decision od
@@ -82,6 +93,7 @@ JOIN buyer b ON b.id=o.buyer_id
 JOIN signal s ON s.id=o.primary_signal_id
 JOIN signal_evidence se ON se.signal_id=s.id AND se.evidence_role='PRIMARY'
 JOIN evidence e ON e.id=se.evidence_id
+LEFT JOIN seller_sku_fit f ON f.opportunity_id=od.opportunity_id
 """
 
 
@@ -217,11 +229,27 @@ def opportunity_decision(opportunity_id: str, x_demo_member: str | None = Header
             "risks": loads(row["risk_json"], []),
             "evidence": [{"source_url": row["evidence_url"], "claim": row["excerpt"], "observed_at": row["observed_at"]}],
             "match_results": [{"field_code": item["field_code"], "requirement_type": item["requirement_type"], "operator": item["operator"], "buyer_value": loads(item["value_json"], None), "seller_value": loads(item["seller_value_json"], None), "status": item["status"] or "UNKNOWN", "hard": bool(item["hard"]), "reason": item["reason"] or "未计算"} for item in match_rows],
+            "seller_sku_fit": _fit_block(row),
             "next_action": loads(row["next_action_json"], {}),
             "ruleset_version": row["ruleset_version"],
         }
     )
     return result
+
+
+def _fit_block(row: sqlite3.Row) -> dict[str, Any]:
+    if "fit_report_json" not in _row_keys(row) or not row["fit_report_json"]:
+        return {"supply_pool_status": "NO_MATCH", "best_verdict": "NONE", "best_fit_score": 0,
+                "summary_zh": "供需匹配数据缺失，请重建决策库", "eligible_matches": [], "all_evaluations": []}
+    report = loads(row["fit_report_json"], {})
+    return {
+        "supply_pool_status": report.get("supply_pool_status"),
+        "best_verdict": report.get("best_verdict"),
+        "best_fit_score": report.get("best_fit_score"),
+        "summary_zh": report.get("summary_zh"),
+        "eligible_matches": report.get("eligible_matches", []),
+        "all_evaluations": report.get("all_evaluations", []),
+    }
 
 
 @app.get("/api/v1/opportunities/{opportunity_id}/access-channels")

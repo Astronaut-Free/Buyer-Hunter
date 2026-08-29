@@ -168,10 +168,67 @@ function OpportunitiesPage({ isMember, items, dataMode, onOpen, onScan }) {
     </div>
   );
 }
+const CHECK_TONE = { PASS: "success", FAIL: "danger", UNKNOWN: "warning", NA: "neutral" };
+
+function SkuMatchCard({ match }) {
+  const hard = match.checks.filter((c) => c.kind === "HARD");
+  const soft = match.checks.filter((c) => c.kind === "SOFT");
+  return (
+    <div className={`sku-match sku-${match.verdictTone}`}>
+      <div className="sku-head">
+        <div>
+          <strong>{match.product}</strong>
+          <span>{match.seller} · {match.sku}{match.grade ? ` · ${match.grade}` : ""}</span>
+        </div>
+        <div className="sku-verdict">
+          <Pill tone={match.verdictTone}>{match.verdictLabel}</Pill>
+          <small>匹配度 {match.fitPoints}</small>
+        </div>
+      </div>
+      <div className="sku-checks">
+        {[...hard, ...soft].map((c) => (
+          <span key={c.dim} className={`check check-${CHECK_TONE[c.status] || "neutral"}`} title={c.detail}>
+            <em>{c.kind === "HARD" ? "硬" : "软"}</em>{c.dim} · {c.status}
+          </span>
+        ))}
+      </div>
+      {(match.blockers.length > 0 || match.gaps.length > 0) && (
+        <ul className="sku-notes">
+          {match.blockers.map((b) => <li key={b} className="blocker">{b}</li>)}
+          {match.gaps.map((g) => <li key={g}>{g}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SupplyDemandFit({ item }) {
+  const shown = item.skuMatches.slice(0, 3);
+  return (
+    <section className="detail-section">
+      <div className="detail-title">
+        <h3>供需匹配 · 贵州 Seller × SKU</h3>
+        {item.supplyPoolLabel && <Pill tone={item.supplyPoolTone}>{item.supplyPoolLabel}</Pill>}
+      </div>
+      <p className="fit-summary">{item.supplySummary || `匹配度 ${item.fit}`}</p>
+      {shown.length ? (
+        <div className="sku-match-list">
+          {shown.map((m) => <SkuMatchCard key={m.sku} match={m} />)}
+          {item.skuMatches.length > shown.length && (
+            <p className="sku-more">另有 {item.skuMatches.length - shown.length} 款可匹配 SKU（前端仅展示前 3）</p>
+          )}
+        </div>
+      ) : (
+        <div className="empty-state compact-empty"><Database size={26} /><h3>贵州供给池暂无符合条件产品</h3><p>{item.supplySummary || "换品类或补充卖方 SKU 后重试"}</p></div>
+      )}
+    </section>
+  );
+}
+
 function DecisionDetails({ item }) {
   return (
     <>
-      <section className="detail-section"><div className="detail-title"><h3>供需匹配</h3><Pill tone="success">{item.fit}% 匹配</Pill></div><div className="match-table">{item.matches.map(([f, b, s, state]) => <div key={f}><span>{f}</span><span>{b}</span><span>{s}</span><Pill tone={state === "PASS" ? "success" : "warning"}>{state}</Pill></div>)}</div></section>
+      <SupplyDemandFit item={item} />
       <section className="detail-section"><h3>证据时间线</h3><div className="timeline">{item.evidence.map(([d, src, text, level]) => <div key={d + src}><time>{d}</time><i /><div><strong>{src}<Pill tone={level === "FACT" ? "success" : level === "DERIVED" ? "blue" : "warning"}>{level}</Pill></strong><p>{text}</p></div></div>)}</div></section>
       <section className="detail-section gap-section"><WarningCircle size={19} /><div><h3>当前缺口 / 风险</h3><p>{item.gap}</p></div></section>
       <section className="detail-section action-section"><Lightning size={19} weight="fill" /><div><h3>今天怎么做</h3><p>{item.action}</p></div></section>

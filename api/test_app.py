@@ -96,6 +96,44 @@ class OpportunityApiTests(unittest.TestCase):
         response = self.client.get(f"/api/v1/opportunities/{item['id']}/access-channels")
         self.assertEqual(response.status_code, 403)
 
+    def test_summary_carries_supply_pool_status(self) -> None:
+        items = self.client.get(
+            "/api/v1/opportunities/today",
+            params={"seller_profile_id": "seller-guizhou-specialty-demo", "category_code": "MATCHA"},
+        ).json()["items"]
+        self.assertTrue(items)
+        for item in items:
+            self.assertIn(item["supply_pool_status"], {"HAS_MATCH", "CONDITIONAL_ONLY", "NO_MATCH"})
+            self.assertIn(item["supply_match_verdict"], {"MATCH", "CONDITIONAL", "BLOCK", "NONE"})
+
+    def test_member_detail_has_per_sku_fit(self) -> None:
+        item = self.client.get(
+            "/api/v1/opportunities/today",
+            params={"seller_profile_id": "seller-guizhou-specialty-demo", "category_code": "MATCHA"},
+        ).json()["items"][0]
+        body = self.client.get(
+            f"/api/v1/opportunities/{item['id']}/decision", headers={"X-Demo-Member": "true"},
+        ).json()
+        fit = body["seller_sku_fit"]
+        self.assertIn(fit["supply_pool_status"], {"HAS_MATCH", "CONDITIONAL_ONLY", "NO_MATCH"})
+        self.assertTrue(fit["summary_zh"])
+        # component seller_fit is now the fit score, not the generic requirement match
+        self.assertEqual(body["component_scores"]["seller_fit"], fit["best_fit_score"])
+        if fit["eligible_matches"]:
+            first = fit["eligible_matches"][0]
+            self.assertIn(first["verdict"], {"MATCH", "CONDITIONAL"})
+            self.assertIn("checks", first)
+            self.assertTrue(first["sku"])
+
+    def test_free_detail_has_no_sku_evaluations(self) -> None:
+        item = self.client.get(
+            "/api/v1/opportunities/today",
+            params={"seller_profile_id": "seller-guizhou-specialty-demo", "category_code": "MATCHA"},
+        ).json()["items"][0]
+        body = self.client.get(f"/api/v1/opportunities/{item['id']}/decision").json()
+        self.assertNotIn("seller_sku_fit", body)
+        self.assertIn(body["supply_pool_status"], {"HAS_MATCH", "CONDITIONAL_ONLY", "NO_MATCH"})
+
 
 if __name__ == "__main__":
     unittest.main()

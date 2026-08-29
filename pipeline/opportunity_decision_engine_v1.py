@@ -208,7 +208,10 @@ def assess_opportunity(signal: dict[str, Any], seller_profile: dict[str, Any]) -
     requirements = signal.get("requirements", [])
     matches = [compare_requirement(item, seller_profile) for item in requirements]
     truth = clamp(signal.get("truth_score"))
-    fit = calculate_fit(matches)
+    # Prefer an explicit seller-fit score (e.g. the Seller x SKU supply-demand
+    # fit report) over the generic per-requirement match, same override pattern
+    # as commercial_execution and market_access below.
+    fit = clamp(signal["seller_fit"]) if signal.get("seller_fit") is not None else calculate_fit(matches)
     window = signal.get("buying_window", {})
     window_status = str(window.get("status", "UNKNOWN")).upper()
     timing = timing_score(

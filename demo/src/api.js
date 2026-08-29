@@ -20,11 +20,41 @@ function daysSince(dateText) {
   return `${delta} 天前`;
 }
 
+const poolMeta = {
+  HAS_MATCH: ["贵州有匹配", "success"],
+  CONDITIONAL_ONLY: ["条件性匹配", "warning"],
+  NO_MATCH: ["暂无匹配供给", "danger"],
+};
+const verdictMeta = {
+  MATCH: ["完全匹配", "success"],
+  CONDITIONAL: ["条件性", "warning"],
+  BLOCK: ["硬性不符", "danger"],
+};
+
 function mapOpportunity(raw) {
   const [decisionLabel, decisionTone] = decisionMeta[raw.decision_status] || decisionMeta.WATCH;
   const whyNowReasons = raw.why_now?.length ? raw.why_now : ["采购窗口待进一步核验"];
   const component = raw.component_scores || {};
   const requirements = raw.match_results || [];
+  const fit = raw.seller_sku_fit || {};
+  const [poolLabel, poolTone] = poolMeta[raw.supply_pool_status || fit.supply_pool_status] || ["", "neutral"];
+  const skuMatches = (fit.eligible_matches || []).map((m) => {
+    const [verdictLabel, verdictTone] = verdictMeta[m.verdict] || ["", "neutral"];
+    return {
+      seller: m.company_name,
+      location: m.company_location,
+      sku: m.sku,
+      product: m.product_name,
+      grade: m.grade,
+      verdict: m.verdict,
+      verdictLabel,
+      verdictTone,
+      fitPoints: Math.round(m.fit_points || 0),
+      blockers: m.blockers || [],
+      gaps: m.gaps || [],
+      checks: (m.checks || []).map((c) => ({ dim: c.dimension, kind: c.kind, status: c.status, detail: c.detail })),
+    };
+  });
   return {
     id: raw.id,
     rank: raw.rank,
@@ -48,6 +78,12 @@ function mapOpportunity(raw) {
     action: raw.next_action?.summary || raw.next_action_summary,
     gap: raw.gaps?.join("；") || "完整判断中暂无关键缺口",
     fit: Math.round(component.seller_fit || raw.seller_fit_score || 0),
+    supplyPoolStatus: raw.supply_pool_status || fit.supply_pool_status || null,
+    supplyPoolLabel: poolLabel,
+    supplyPoolTone: poolTone,
+    supplySummary: fit.summary_zh || "",
+    skuMatches,
+    skuEvaluatedCount: raw.eligible_sku_match_count ?? (fit.all_evaluations || []).length,
     tags: [raw.category_code, raw.quantity_raw, raw.country_code].filter(Boolean),
     evidence: (raw.evidence || []).map((item) => [
       (item.observed_at || "").slice(5, 10), "原始来源", item.claim, "FACT",

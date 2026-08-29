@@ -19,6 +19,8 @@ if str(ROOT / "pipeline") not in sys.path:
     sys.path.insert(0, str(ROOT / "pipeline"))
 
 from opportunity_decision_engine_v1 import assess_opportunity  # noqa: E402
+from supply_demand_fit_v1 import evaluate as evaluate_fit  # noqa: E402
+from supply_demand_fit_v1 import load_catalog  # noqa: E402
 
 
 INPUT_BASENAME = "qualified_pending_entity_opportunities.csv"
@@ -137,6 +139,14 @@ def buyer_display_name(row: dict[str, str]) -> str:
 def contains_any(text: str, needles: list[str]) -> bool:
     folded = text.casefold()
     return any(needle in folded for needle in needles)
+
+
+def _fit_has_cert_gap(fit_report: Any) -> bool:
+    for evaluation in fit_report.all_evaluations:
+        for check in evaluation.get("checks", []):
+            if check.get("dimension") == "mandatory_certs" and check.get("status") in {"FAIL", "UNKNOWN"}:
+                return True
+    return False
 
 
 def commercial_execution_score(row: dict[str, str]) -> float:
@@ -326,6 +336,7 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
     input_csv = input_csv or resolve_input()
     rows = load_rows(input_csv)
     profile = normalized_profile(json.loads(profile_path.read_text(encoding="utf-8")))
+    catalog = load_catalog()
     now = utc_now()
     decision_date = date.today().isoformat()
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -338,9 +349,10 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
     try:
         conn.executescript((ROOT / "db/schema.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/002_opportunity_decision.sql").read_text(encoding="utf-8"))
+        conn.executescript((ROOT / "db/migrations/003_seller_sku_fit.sql").read_text(encoding="utf-8"))
         insert_base_profile(conn, profile, now)
         source_ids: dict[str, str] = {}
-        decisions: list[tuple[dict[str, str], dict[str, Any], Any]] = []
+        decisions: list[tuple[dict[str, str], dict[str, Any], Any, Any]] = []
 
         for row in rows:
             source_code = row["source_code"]
@@ -372,7 +384,13 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
                 (stable_id("field", f"{row['signal_id']}|quantity_raw"), "SIGNAL", row["signal_id"], "quantity_raw", row.get("quantity_raw") or None, 0.9, row.get("quantity_raw") or None, evidence_id, now),
             )
 
+            fit_report = evaluate_fit(row, catalog)
             signal_input = opportunity_input(row, buyer_id)
+            signal_input["seller_fit"] = fit_report.best_fit_score
+            if fit_report.supply_pool_status == "NO_MATCH":
+                signal_input["gaps"] = signal_input["gaps"] + [f"贵州供给匹配：{fit_report.summary_zh}"]
+            elif fit_report.supply_pool_status == "CONDITIONAL_ONLY":
+                signal_input["gaps"] = signal_input["gaps"] + ["贵州 SKU 为条件性匹配，需确认规格 / 数量 / 认证"]
             for requirement in signal_input["requirements"]:
                 requirement_id = stable_id("req", f"{row['signal_id']}|{requirement['field_code']}|{json.dumps(requirement['value'], sort_keys=True)}")
                 conn.execute(
@@ -381,12 +399,12 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
                 )
 
             decision = assess_opportunity(signal_input, profile)
-            decisions.append((row, signal_input, decision))
+            decisions.append((row, signal_input, decision, fit_report))
 
         decisions.sort(key=lambda item: (-item[2].opportunity_score, item[2].opportunity_id))
         eligible = [item for item in decisions if item[2].decision_status != "PASS"]
         top_ids = {item[2].opportunity_id: rank for rank, item in enumerate(eligible[:5], 1)}
-        for row, signal_input, decision in decisions:
+        for row, signal_input, decision, fit_report in decisions:
             opportunity_id = decision.opportunity_id
             risk_items: list[dict[str, str]] = []
             if not row.get("buyer_name_raw", "").strip():
@@ -397,9 +415,32 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
                 risk_items.append({"code": "SPECIFICATION_GAP", "severity": "MEDIUM", "reason": "关键规格仍需买家确认"})
             if row.get("destination_present") != "True":
                 risk_items.append({"code": "MARKET_ACCESS_UNKNOWN", "severity": "MEDIUM", "reason": "最终目的市场尚未明确"})
+            if _fit_has_cert_gap(fit_report):
+                risk_items.append({"code": "CERTIFICATION_GAP", "severity": "MEDIUM", "reason": "买方所需认证与匹配 SKU 之间存在缺口，报价前需确认适用范围"})
             conn.execute(
                 "INSERT INTO opportunity VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (opportunity_id, profile["id"], decision.buyer_id, row["signal_id"], "NEW", "；".join(decision.why_now), json.dumps(decision.gaps, ensure_ascii=False), json.dumps(risk_items, ensure_ascii=False), decision.next_action["summary"], row["published_at"], now, now),
+            )
+            conn.execute(
+                """INSERT INTO seller_sku_fit(
+                     opportunity_id, supply_pool_status, best_verdict, best_fit_score,
+                     eligible_match_count, evaluated_sku_count, summary_zh, report_json,
+                     ruleset_version, created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    opportunity_id, fit_report.supply_pool_status, fit_report.best_verdict,
+                    fit_report.best_fit_score, len(fit_report.eligible_matches),
+                    len(fit_report.all_evaluations), fit_report.summary_zh,
+                    json.dumps({
+                        "supply_pool_status": fit_report.supply_pool_status,
+                        "best_verdict": fit_report.best_verdict,
+                        "best_fit_score": fit_report.best_fit_score,
+                        "summary_zh": fit_report.summary_zh,
+                        "eligible_matches": fit_report.eligible_matches,
+                        "all_evaluations": fit_report.all_evaluations,
+                    }, ensure_ascii=False),
+                    fit_report.ruleset_version, now,
+                ),
             )
             components = decision.component_scores
             rank = top_ids.get(opportunity_id)

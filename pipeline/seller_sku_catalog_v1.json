@@ -1,0 +1,152 @@
+{
+  "catalog_version": "v1",
+  "data_mode": "DEMO_REPLACE_WITH_REAL_SELLER_INTAKE",
+  "note": "贵州抹茶供给池示例。字段结构按一期规格《6 个 SKILL 完整修改意见》第六节 A。数值贴近贵州（铜仁）抹茶产业公开情况但未逐条核验，正式使用前替换为真实卖方报送数据。",
+  "updated_at": "2026-08-29",
+  "sellers": [
+    {
+      "seller_id": "gz-seller-tongren-oustd",
+      "company_name": "黔铜抹茶科技（示例）",
+      "company_location": "贵州省铜仁市江口县",
+      "export_experience_markets": ["US", "DE", "NL", "FR", "GB", "JP"],
+      "skus": [
+        {
+          "sku": "TR-BEV-2026",
+          "product_name": "欧标饮品级抹茶粉 Beverage-grade matcha",
+          "category_code": "MATCHA",
+          "grade": "beverage",
+          "form": "powder",
+          "specification": {
+            "particle_size_mesh": 800,
+            "color": "green",
+            "moisture_pct_max": 6,
+            "origin": "Guizhou, China",
+            "shelf_life_months": 18
+          },
+          "moq_kg": 100,
+          "monthly_capacity_kg": 8000,
+          "price_range_usd_per_kg": [26, 42],
+          "packaging": ["1kg foil bag", "20kg carton", "bulk"],
+          "certifications": ["HACCP", "ISO22000", "EU_ORGANIC"],
+          "oem": true,
+          "private_label": true,
+          "sample_available": true,
+          "delivery_days": 25,
+          "evidence_refs": ["seller-declared:2026-08"]
+        },
+        {
+          "sku": "TR-CER-2026",
+          "product_name": "仪式级抹茶粉 Ceremonial matcha",
+          "category_code": "MATCHA",
+          "grade": "ceremonial",
+          "form": "powder",
+          "specification": {
+            "particle_size_mesh": 1000,
+            "color": "vivid green",
+            "moisture_pct_max": 5,
+            "origin": "Guizhou, China",
+            "shelf_life_months": 12
+          },
+          "moq_kg": 30,
+          "monthly_capacity_kg": 1200,
+          "price_range_usd_per_kg": [95, 160],
+          "packaging": ["30g tin", "1kg foil bag"],
+          "certifications": ["HACCP", "ISO22000", "EU_ORGANIC", "USDA_ORGANIC"],
+          "oem": true,
+          "private_label": true,
+          "sample_available": true,
+          "delivery_days": 30,
+          "evidence_refs": ["seller-declared:2026-08"]
+        }
+      ]
+    },
+    {
+      "seller_id": "gz-seller-fanjingshan-coop",
+      "company_name": "梵净山绿色食品合作社（示例）",
+      "company_location": "贵州省铜仁市印江县",
+      "export_experience_markets": ["US", "CA", "AU"],
+      "skus": [
+        {
+          "sku": "FJS-CUL-ORG",
+          "product_name": "有机烹饪级抹茶粉 Organic culinary matcha",
+          "category_code": "MATCHA",
+          "grade": "culinary",
+          "form": "powder",
+          "specification": {
+            "particle_size_mesh": 600,
+            "color": "green",
+            "moisture_pct_max": 6,
+            "origin": "Guizhou, China",
+            "shelf_life_months": 18
+          },
+          "moq_kg": 200,
+          "monthly_capacity_kg": 3000,
+          "price_range_usd_per_kg": [22, 34],
+          "packaging": ["20kg carton", "bulk"],
+          "certifications": ["HACCP", "EU_ORGANIC", "USDA_ORGANIC"],
+          "oem": true,
+          "private_label": false,
+          "sample_available": true,
+          "delivery_days": 28,
+          "evidence_refs": ["seller-declared:2026-08"]
+        },
+        {
+          "sku": "FJS-BAK-STD",
+          "product_name": "烘焙级抹茶粉 Bakery-grade matcha",
+          "category_code": "MATCHA",
+          "grade": "bakery",
+          "form": "powder",
+          "specification": {
+            "particle_size_mesh": 400,
+            "color": "yellow-green",
+            "moisture_pct_max": 7,
+            "origin": "Guizhou, China",
+            "shelf_life_months": 24
+          },
+          "moq_kg": 300,
+          "monthly_capacity_kg": 5000,
+          "price_range_usd_per_kg": [14, 22],
+          "packaging": ["25kg bag", "bulk"],
+          "certifications": ["HACCP"],
+          "oem": true,
+          "private_label": false,
+          "sample_available": true,
+          "delivery_days": 25,
+          "evidence_refs": ["seller-declared:2026-08"]
+        }
+      ]
+    },
+    {
+      "seller_id": "gz-seller-qianyun-oem",
+      "company_name": "黔韵茶业 OEM（示例）",
+      "company_location": "贵州省贵阳市",
+      "export_experience_markets": ["US", "GB"],
+      "skus": [
+        {
+          "sku": "QY-PL-BEV",
+          "product_name": "自有品牌饮品抹茶 Private-label beverage matcha",
+          "category_code": "MATCHA",
+          "grade": "beverage",
+          "form": "powder",
+          "specification": {
+            "particle_size_mesh": 800,
+            "color": "green",
+            "moisture_pct_max": 6,
+            "origin": "Guizhou, China",
+            "shelf_life_months": 18
+          },
+          "moq_kg": 25,
+          "monthly_capacity_kg": 1500,
+          "price_range_usd_per_kg": [30, 48],
+          "packaging": ["custom retail pouch", "1kg foil bag"],
+          "certifications": ["HACCP", "ISO22000"],
+          "oem": true,
+          "private_label": true,
+          "sample_available": true,
+          "delivery_days": 35,
+          "evidence_refs": ["seller-declared:2026-08"]
+        }
+      ]
+    }
+  ]
+}

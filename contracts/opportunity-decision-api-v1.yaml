@@ -98,6 +98,12 @@ components:
     DecisionStatus:
       type: string
       enum: [PURSUE_NOW, VERIFY_FIRST, WATCH, PASS]
+    SupplyPoolStatus:
+      type: string
+      enum: [HAS_MATCH, CONDITIONAL_ONLY, NO_MATCH]
+    SkuVerdict:
+      type: string
+      enum: [MATCH, CONDITIONAL, BLOCK, NONE]
     OpportunityDecisionSummary:
       type: object
       required: [id, rank, buyer_display_name, country_code, demand_title, decision_status, opportunity_score, truth_score, why_now, next_action_summary]
@@ -114,6 +120,9 @@ components:
         next_action_summary: {type: string}
         decision_access: {type: string, enum: [SUMMARY, FULL]}
         lead_access_status: {type: string, enum: [LOCKED, GRANTED, UNAVAILABLE]}
+        supply_pool_status: {$ref: '#/components/schemas/SupplyPoolStatus'}
+        supply_match_verdict: {$ref: '#/components/schemas/SkuVerdict'}
+        eligible_sku_match_count: {type: [integer, 'null'], minimum: 0}
     OpportunityDecisionDetail:
       allOf:
         - {$ref: '#/components/schemas/OpportunityDecisionSummary'}
@@ -161,7 +170,51 @@ components:
                 summary: {type: string}
                 checklist: {type: array, items: {type: string}}
                 due_at: {type: [string, 'null'], format: date-time}
+            seller_sku_fit:
+              type: object
+              description: >-
+                Phase-1 Supply Demand Fit: the RFQ evaluated against every
+                Guizhou Seller x SKU. Hard conditions (category, grade, capacity,
+                MOQ, mandatory certification, lead time) gate the verdict; a hard
+                FAIL is a BLOCK and cannot be offset. No forced Top 3.
+              required: [supply_pool_status, best_verdict, best_fit_score, summary_zh, eligible_matches, all_evaluations]
+              properties:
+                supply_pool_status: {$ref: '#/components/schemas/SupplyPoolStatus'}
+                best_verdict: {$ref: '#/components/schemas/SkuVerdict'}
+                best_fit_score: {type: number, minimum: 0, maximum: 100, description: Feeds the seller_fit component}
+                summary_zh: {type: string}
+                eligible_matches:
+                  type: array
+                  description: Non-BLOCK matches, best first; may be empty
+                  items: {$ref: '#/components/schemas/SkuMatch'}
+                all_evaluations:
+                  type: array
+                  items: {$ref: '#/components/schemas/SkuMatch'}
             ruleset_version: {type: string}
+    SkuMatch:
+      type: object
+      required: [seller_id, company_name, sku, product_name, grade, verdict, fit_points, checks, blockers, gaps]
+      properties:
+        seller_id: {type: string}
+        company_name: {type: string}
+        company_location: {type: string}
+        sku: {type: string}
+        product_name: {type: string}
+        grade: {type: string}
+        verdict: {$ref: '#/components/schemas/SkuVerdict'}
+        fit_points: {type: number, minimum: 0, maximum: 100}
+        blockers: {type: array, items: {type: string}, description: Failed hard checks; non-empty means BLOCK}
+        gaps: {type: array, items: {type: string}, description: UNKNOWN hard checks and failed soft checks}
+        checks:
+          type: array
+          items:
+            type: object
+            required: [dimension, kind, status, detail]
+            properties:
+              dimension: {type: string, description: 'category | grade | quantity_capacity | moq | mandatory_certs | lead_time | price | oem | private_label | packaging | sample | export_experience'}
+              kind: {type: string, enum: [HARD, SOFT]}
+              status: {type: string, enum: [PASS, FAIL, UNKNOWN, NA]}
+              detail: {type: string}
     AccessChannel:
       type: object
       required: [type, value, source_url, verified_at]
