@@ -69,6 +69,7 @@ test('A6 buyer progression keeps waiting when automatic dependency refresh lacks
   assert.ok(result.envelope.domain_result.dependency_refresh.required.includes('qianpulse.a4.supply_match'));
   assert.ok(result.dependency_refresh.refreshed_capabilities.includes('qianpulse.a3.purchase_timing'));
   assert.ok(result.opportunity.evidence_ids.includes('ev_reply'));
+  assert.equal(result.opportunity.fields.quantity, '20 tons');
 });
 
 test('A6 automatically refreshes A3 and A4 then resumes the same buyer message', () => {
@@ -96,4 +97,46 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
   assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
   assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
   assert.equal(result.opportunity.stage, 'REPLIED');
+});
+
+test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportunity facts', () => {
+  const store = createMemoryOpportunityStore();
+  const opportunity = store.upsertSeed({
+    seed_key: 'a2:seller:buyer:multi-change',
+    seller: { id: 'seller' },
+    buyer: { id: 'buyer', name: 'Buyer' },
+    status: 'ACTIVE',
+    stage: 'CONTACTED',
+    fields: { quantity: '5 tons', destination: 'US' },
+    evidence_ids: ['ev_seed']
+  });
+  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:30:00Z' });
+  const result = orchestrator.runBuyerProgression({
+    opportunityId: opportunity.id,
+    event: {
+      event_id: 'evt3',
+      event_type: 'BUYER_MESSAGE',
+      content: 'We need 20 tons. Please deliver 20 tons to Germany by October 2026. What is your delivery lead time?',
+      evidence_ref: 'ev_multi_change'
+    },
+    sellerContext: {
+      capacity: '30 tons/month',
+      delivery: '20 days',
+      market_access: 'EU distribution allowed',
+      evidence_refs: ['seller_capacity', 'seller_delivery', 'seller_market_access']
+    }
+  });
+
+  assert.equal(result.run_status, 'DONE');
+  assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
+    'qianpulse.a3.purchase_timing',
+    'qianpulse.a4.supply_match',
+    'qianpulse.a5.trade_risk'
+  ].sort());
+  assert.equal(result.opportunity.fields.quantity, '20 tons');
+  assert.equal(result.opportunity.fields.destination, 'Germany');
+  assert.equal(result.opportunity.fields.delivery_date, 'October 2026');
+  assert.equal(result.opportunity.a6.pending_structured_extraction.length, 0);
+  assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
+  assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
 });
