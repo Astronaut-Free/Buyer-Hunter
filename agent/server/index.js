@@ -17,6 +17,7 @@ import { createApprovalLiveExecutor } from './approval-live-executor.js';
 import { createA2FirstOutreachExecutor } from './a2-first-outreach-executor.js';
 import { createOpportunityWorkspaceHandler } from './opportunity-workspace-handler.js';
 import { createRuntimeObservabilityHandler } from './runtime-observability-handler.js';
+import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../skill-runtime/python-capability-runners.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -697,6 +698,14 @@ loadState = async function() {
 
 await loadState();
 
+// A3/A4/A5 refresh delegates to Free's authoritative Python implementation when
+// its capability CLI is reachable; otherwise the bundled Node runners are used.
+const pythonCapabilitiesOff = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() === 'off';
+const pythonCapabilitiesOn = !pythonCapabilitiesOff && pythonCapabilitiesAvailable();
+const dependencyRunners = pythonCapabilitiesOn
+  ? createPythonDependencyRunners({ onFallback: message => console.warn('[capability]', message) })
+  : undefined;
+
 liveA2A6 = createLiveA2A6Runtime({
   getState: () => state,
   onMutate: persistSoon,
@@ -708,7 +717,8 @@ liveA2A6 = createLiveA2A6Runtime({
   now,
   id,
   hash,
-  agentVersion: AGENT_VERSION
+  agentVersion: AGENT_VERSION,
+  dependencyRunners
 });
 
 opportunityWorkspaceHandler = createOpportunityWorkspaceHandler({
@@ -750,6 +760,7 @@ const server = createServer(async (req, res) => {
         agent_version: AGENT_VERSION,
         model: DEEPSEEK_MODEL,
         a2_a6_runtime: 'ready',
+        python_capabilities: pythonCapabilitiesOn ? 'on' : 'off',
         smartlead: process.env.SMARTLEAD_API_KEY ? 'configured' : 'not-configured',
         smartlead_webhook: process.env.SMARTLEAD_WEBHOOK_SECRET ? 'configured' : 'not-configured'
       });

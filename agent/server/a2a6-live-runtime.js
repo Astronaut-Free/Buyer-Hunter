@@ -67,12 +67,19 @@ export function createLiveA2A6Runtime({
   now = () => new Date().toISOString(),
   id = defaultId,
   hash = defaultHash,
-  agentVersion = 'qianpulse-agent-0.2.0'
+  agentVersion = 'qianpulse-agent-0.2.0',
+  dependencyRunners = undefined
 } = {}) {
   if (typeof getState !== 'function') throw new Error('getState required');
 
   const opportunityStore = createAgentStateOpportunityStore({ getState, onMutate, now });
-  const orchestrator = createQianPulseSkillOrchestrator({ providers, opportunityStore, clock: now });
+  // dependencyRunners is optional: when omitted the orchestrator falls back to the
+  // bundled Node A3/A4/A5 refresh runners (unchanged behaviour). server/index.js
+  // injects Python-delegating runners when Free's capability CLI is available.
+  const orchestrator = createQianPulseSkillOrchestrator({
+    providers, opportunityStore, clock: now,
+    ...(dependencyRunners ? { dependencyRunners } : {})
+  });
 
   function currentState() {
     return ensureState(getState());
