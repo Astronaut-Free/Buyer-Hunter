@@ -2,14 +2,21 @@ import {
   createA2BatchPipeline,
   runA6Skill,
   enrichA6Envelope,
-  applyA6DependencyGate
+  applyA6DependencyGate,
+  runInvalidatedDependencies,
+  DEFAULT_DEPENDENCY_RUNNERS
 } from './skill-runtime/index.js';
 import { createOpportunitySeeds } from './opportunity-seeder.js';
 import { createMemoryOpportunityStore } from './opportunity-store.js';
 
+function unique(values = []) {
+  return [...new Set((values || []).filter(Boolean))];
+}
+
 export function createQianPulseSkillOrchestrator({
   providers = {},
   opportunityStore = createMemoryOpportunityStore(),
+  dependencyRunners = DEFAULT_DEPENDENCY_RUNNERS,
   clock = () => new Date().toISOString()
 } = {}) {
   const runA2Batch = createA2BatchPipeline();
@@ -41,7 +48,8 @@ export function createQianPulseSkillOrchestrator({
     event,
     sellerContext = {},
     dependencyResults = {},
-    refreshedCapabilities = []
+    refreshedCapabilities = [],
+    autoRefreshDependencies = true
   } = {}) {
     const opportunity = opportunityStore.get(opportunityId);
     if (!opportunity) {
@@ -50,7 +58,8 @@ export function createQianPulseSkillOrchestrator({
         code: 'NEEDS_CONTEXT',
         missing_evidence: ['opportunity_id'],
         opportunity: null,
-        envelope: null
+        envelope: null,
+        dependency_refresh: null
       };
     }
 
@@ -62,32 +71,92 @@ export function createQianPulseSkillOrchestrator({
           evidence_ref: rawMessage?.evidence_ref || event?.evidence_ref || null,
           evidence_refs: rawMessage?.evidence_refs || event?.evidence_refs || []
         };
+    const fieldUpdates = event?.payload?.field_updates || {};
+    const opportunityState = {
+      stage: opportunity.stage || 'CONTACTED',
+      fields: opportunity.fields || {}
+    };
 
-    const baseEnvelope = runA6Skill({
-      opportunity_id: opportunity.id,
-      trigger_event: {
-        event_id: event?.event_id || null,
-        event_type: event?.event_type || 'BUYER_MESSAGE',
-        timestamp: event?.timestamp || clock()
-      },
-      latest_buyer_message: latestBuyerMessage,
-      field_updates: event?.payload?.field_updates || {},
-      opportunity_state: {
-        stage: opportunity.stage || 'CONTACTED',
-        fields: opportunity.fields || {}
-      },
-      seller_context: sellerContext,
-      a3_result: dependencyResults.a3 || null,
-      a4_result: dependencyResults.a4 || null,
-      a5_result: dependencyResults.a5 || null
-    });
+    function executeA6(results) {
+      return runA6Skill({
+        opportunity_id: opportunity.id,
+        trigger_event: {
+          event_id: event?.event_id || null,
+          event_type: event?.event_type || 'BUYER_MESSAGE',
+          timestamp: event?.timestamp || clock()
+        },
+        latest_buyer_message: latestBuyerMessage,
+        field_updates: fieldUpdates,
+        opportunity_state: opportunityState,
+        seller_context: sellerContext,
+        a3_result: results.a3 || null,
+        a4_result: results.a4 || null,
+        a5_result: results.a5 || null
+      });
+    }
+
+    const firstEnvelope = executeA6(dependencyResults);
+    const invalidated = firstEnvelope?.domain_result?.invalidated_capabilities || [];
+    const alreadyRefreshed = new Set(refreshedCapabilities || []);
+    const toRefresh = autoRefreshDependencies
+      ? invalidated.filter(capabilityId => !alreadyRefreshed.has(capabilityId))
+      : [];
+
+    const refresh = toRefresh.length
+      ? runInvalidatedDependencies({
+          capabilities: toRefresh,
+          opportunity,
+          event: {
+            ...event,
+            changed_fields: firstEnvelope?.domain_result?.changed_business_fields || []
+          },
+          sellerContext,
+          dependencyResults,
+          runners: dependencyRunners
+        })
+      : {
+          executions: [],
+          dependency_results: { ...(dependencyResults || {}) },
+          refreshed_capabilities: [],
+          missing_evidence: []
+        };
+
+    const mergedResults = refresh.dependency_results;
+    const mergedRefreshed = unique([...(refreshedCapabilities || []), ...(refresh.refreshed_capabilities || [])]);
+    const baseEnvelope = refresh.executions.length ? executeA6(mergedResults) : firstEnvelope;
     const enriched = enrichA6Envelope(baseEnvelope, {
       sellerContext,
-      opportunityState: { stage: opportunity.stage || 'CONTACTED', fields: opportunity.fields || {} }
+      opportunityState
     });
-    const envelope = applyA6DependencyGate(enriched, { refreshedCapabilities });
+    const gated = applyA6DependencyGate(enriched, { refreshedCapabilities: mergedRefreshed });
+    const envelope = {
+      ...gated,
+      missing_evidence: unique([...(gated.missing_evidence || []), ...(refresh.missing_evidence || [])]),
+      domain_result: gated?.domain_result ? {
+        ...gated.domain_result,
+        dependency_refresh: {
+          ...(gated.domain_result.dependency_refresh || { required: [], completed: [] }),
+          attempted: toRefresh,
+          executions: refresh.executions.map(result => ({
+            capability_id: result.capability_id,
+            run_status: result.run_status,
+            missing_evidence: result.missing_evidence || []
+          }))
+        }
+      } : gated.domain_result
+    };
     const updated = opportunityStore.applyA6Envelope({ opportunityId, envelope, at: clock() });
-    return { run_status: envelope.run_status, envelope, opportunity: updated };
+    return {
+      run_status: envelope.run_status,
+      envelope,
+      opportunity: updated,
+      dependency_refresh: {
+        attempted: toRefresh,
+        refreshed_capabilities: mergedRefreshed,
+        executions: refresh.executions,
+        missing_evidence: refresh.missing_evidence
+      }
+    };
   }
 
   return { opportunityStore, runProactiveDevelopment, runBuyerProgression };
