@@ -1,13 +1,7 @@
 {
-  "name": "buyer-hunter-mvp",
-  "version": "0.1.0",
+  "name": "qianpulse-agent-workbench-reference",
   "private": true,
   "type": "module",
-  "scripts": {
-    "start": "node --env-file=.env server/index.js",
-    "dev": "node --env-file=.env --watch server/index.js"
-  },
-  "engines": {
-    "node": ">=18"
-  }
+  "scripts": { "start": "node --env-file=.env server/index.js" },
+  "engines": { "node": ">=18" }
 }

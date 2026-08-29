@@ -82,6 +82,21 @@ async function handleV1(req, res, path) { const payload = await readBody(req); c
 function respond(res, result) { return sendJson(res, result.status, result.body); }
 const controlHandler = handleV1;
 handleV1 = async function(req, res, path) {
+  if ((req.method === 'GET' || req.method === 'POST') && path === '/api/v1/seller/profile') {
+    const user = userFromRequest(req);
+    if (!user) return sendJson(res, 401, { error: '请先登录' });
+    if (user.role !== 'SELLER') return sendJson(res, 403, { error: '只有 SELLER 可以管理供给档案' });
+    if (req.method === 'GET') return sendJson(res, 200, { profile: user.profile?.supply_profile || {}, updated_at: user.profile?.supply_profile_updated_at || null });
+    const body = await readBody(req);
+    const incoming = body.profile && typeof body.profile === 'object' ? body.profile : body;
+    const allowed = ['product', 'specification', 'capacity', 'moq', 'markets', 'buyer_type', 'certifications', 'company_name', 'contact_name', 'sample_cycle'];
+    const supply = { ...(user.profile?.supply_profile || {}) };
+    allowed.forEach(key => { if (incoming[key] !== undefined && incoming[key] !== null) supply[key] = String(incoming[key]).trim(); });
+    const filled = ['product', 'specification', 'capacity', 'moq', 'markets', 'buyer_type', 'certifications'].filter(key => supply[key]);
+    user.profile = { ...(user.profile || {}), supply_profile: supply, supply_profile_completion: Math.round(filled.length / 7 * 100), supply_profile_updated_at: now() };
+    persistSoon();
+    return sendJson(res, 200, { profile: supply, completion: user.profile.supply_profile_completion, updated_at: user.profile.supply_profile_updated_at });
+  }
   if (req.method === 'POST' && path === '/api/v1/agent/intake') {
     const user = userFromRequest(req); if (!user) return sendJson(res, 401, { error: '请先登录后使用 AI 对话' });
     const body = await readBody(req); const sellerContext = { buyer: { role: 'SELLER' }, fields: body.profile || {}, conversation: body.history || [] }; const result = await askDeepSeek(`卖家当前供给档案：${JSON.stringify(body.profile || {})}\n历史对话：${JSON.stringify(body.history || [])}\n本轮消息：${String(body.message || '')}`, sellerContext);
@@ -107,7 +122,7 @@ handleV1 = async function(req, res, path) {
   }
   return controlHandler(req, res, path);
 };
-const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8' };
+const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.geojson': 'application/geo+json', '.ico': 'image/x-icon' };
 const baseLoadState = loadState;
 loadState = async function() { await baseLoadState(); state.products ||= [{ id: 'sku-matcha-demo', name: '贵州抹茶粉 · 饮品级', markets: 'US, JP, EU, UK, AU', certs: 'USDA Organic · HACCP · JAS', status: '已上架' }]; try { const imported = await loadFreeOpportunities(); for (const opportunity of imported) state.opportunities[opportunity.id] = opportunity; state.free_data_source = 'origin/Free'; } catch (error) { state.free_data_source = 'fallback'; state.free_data_error = error.message; } };
 await loadState();
