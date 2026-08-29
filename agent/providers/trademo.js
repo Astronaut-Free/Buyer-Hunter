@@ -1,6 +1,10 @@
 import { createJsonClient } from './http.js';
 
-function normalizeCompany(company = {}) {
+function evidenceRecord({ id, sourceType, fact, rawSnapshotRef, confidence = 'HIGH' }) {
+  return { evidence_id: id, source_type: sourceType, provider: 'trademo', source_ref: rawSnapshotRef, source_url: null, captured_at: new Date().toISOString(), fact, raw_snapshot_ref: rawSnapshotRef, confidence };
+}
+
+export function normalizeTrademoCompany(company = {}) {
   const providerId = company.companyId || company.id || null;
   const matchedProductKeywords = company.matchedProductKeyword || [];
   const matchedHsCodes = company.matchedHsCodes || [];
@@ -10,8 +14,13 @@ function normalizeCompany(company = {}) {
   const tradeEvidence = Number(company.numberOfShipments || 0) > 0 && providerId ? [`trademo:company:${providerId}:trade`] : [];
   const website = company.website || company.websiteUrl || company.companyWebsite || company.domain || '';
   const matchedLabel = [...matchedProductKeywords, ...matchedHsCodes].filter(Boolean).join(', ');
+  const evidenceRecords = [
+    ...(providerId ? [evidenceRecord({ id: companyEvidence[0], sourceType: 'COMPANY_IDENTITY', fact: `Trademo identifies ${company.companyName || company.name || providerId}`, rawSnapshotRef: `trademo:company:${providerId}` })] : []),
+    ...(productEvidence.length ? [evidenceRecord({ id: productEvidence[0], sourceType: 'TRADE_DATA', fact: `Trade data matched ${matchedLabel}`, rawSnapshotRef: `trademo:company:${providerId}:product-match` })] : []),
+    ...(tradeEvidence.length ? [evidenceRecord({ id: tradeEvidence[0], sourceType: 'TRADE_DATA', fact: `Trade records contain ${Number(company.numberOfShipments || 0)} shipments`, rawSnapshotRef: `trademo:company:${providerId}:trade` })] : [])
+  ];
   return {
-    buyer_company_id: providerId,
+    buyer_company_id: null,
     legal_or_display_name: company.companyName || company.name || '',
     country: company.country || '',
     state: company.state || '',
@@ -24,14 +33,17 @@ function normalizeCompany(company = {}) {
     matched_product_keywords: matchedProductKeywords,
     matched_hs_codes: matchedHsCodes,
     trading_partner_count: company.tradingPartnerCount ?? null,
-    sells_or_uses_product: productMatched ? true : undefined,
-    buyer_type: 'buyer',
+    trade_product_match: productMatched,
+    provider_company_role: company.companyRole || 'buyer',
+    buyer_type: 'UNKNOWN',
     why_fit: productMatched ? `trade activity matching ${matchedLabel}` : '',
     evidence_refs: companyEvidence,
     product_evidence: productEvidence,
     trade_evidence: tradeEvidence,
     provider: 'trademo',
     provider_company_id: providerId,
+    external_ids: providerId ? { trademo: String(providerId) } : {},
+    evidence_records: evidenceRecords,
     raw: company
   };
 }
@@ -82,7 +94,7 @@ export function createTrademoProvider({
       sort: { field: 'numberOfShipments', direction: 'desc' }
     };
     const data = await request(buyerListUrl, { method: 'POST', headers: headers(), body });
-    const companies = Array.isArray(data?.companies) ? data.companies.map(normalizeCompany) : [];
+    const companies = Array.isArray(data?.companies) ? data.companies.map(normalizeTrademoCompany) : [];
     return { total_companies: Number(data?.totalCompanies || companies.length), companies, provider: 'trademo' };
   }
 

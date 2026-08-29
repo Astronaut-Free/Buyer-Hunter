@@ -73,12 +73,26 @@ export function createApolloProvider({
         buyer_company_id: null,
         name: record.name || [record.first_name, record.last_name].filter(Boolean).join(' ') || person.first_name || '',
         title: record.title || person.title || '',
+        department: record.departments?.[0] || record.department || person.department || '',
+        seniority: record.seniority || person.seniority || '',
         work_email: record.email || '',
         email_status: record.email_status || 'unknown',
         linkedin_url: record.linkedin_url || '',
         organization: record.organization || person.organization || null,
         provider: 'apollo',
-        provider_person_id: record.id || person.id
+        provider_person_id: record.id || person.id,
+        source_refs: [
+          `apollo:person:${record.id || person.id}`,
+          ...(record.organization?.id || person.organization?.id ? [`apollo:organization:${record.organization?.id || person.organization?.id}`] : [])
+        ],
+        evidence_records: [
+          {
+            evidence_id: `apollo:person:${record.id || person.id}`,
+            source_type: 'CONTACT_DATA', provider: 'apollo', source_ref: `apollo:person:${record.id || person.id}`,
+            source_url: null, captured_at: new Date().toISOString(), fact: 'Apollo business contact record',
+            raw_snapshot_ref: `apollo:person:${record.id || person.id}`, confidence: 'MEDIUM'
+          }
+        ]
       });
     }
     return enriched;
