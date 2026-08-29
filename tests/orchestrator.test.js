@@ -46,7 +46,7 @@ test('A2 batch persists READY candidates as idempotent Opportunity records', asy
   assert.equal(first.opportunities[0].status, 'READY_FOR_OUTREACH_APPROVAL');
 });
 
-test('A6 buyer progression updates the same Opportunity and waits for dependency refresh when required', async () => {
+test('A6 buyer progression keeps waiting when automatic dependency refresh lacks seller evidence', () => {
   const store = createMemoryOpportunityStore();
   const opportunity = store.upsertSeed({
     seed_key: 'a2:seller:buyer',
@@ -61,12 +61,39 @@ test('A6 buyer progression updates the same Opportunity and waits for dependency
   const result = orchestrator.runBuyerProgression({
     opportunityId: opportunity.id,
     event: { event_id: 'evt1', event_type: 'BUYER_MESSAGE', content: 'We need 20 tons. What is your delivery lead time?', evidence_ref: 'ev_reply' },
-    sellerContext: { delivery: '20 days' },
-    refreshedCapabilities: []
+    sellerContext: { delivery: '20 days' }
   });
   assert.equal(result.run_status, 'MORE_EVIDENCE');
   assert.equal(result.opportunity.id, opportunity.id);
   assert.equal(result.opportunity.status, 'WAITING_EVIDENCE');
   assert.ok(result.envelope.domain_result.dependency_refresh.required.includes('qianpulse.a4.supply_match'));
+  assert.ok(result.dependency_refresh.refreshed_capabilities.includes('qianpulse.a3.purchase_timing'));
   assert.ok(result.opportunity.evidence_ids.includes('ev_reply'));
+});
+
+test('A6 automatically refreshes A3 and A4 then resumes the same buyer message', () => {
+  const store = createMemoryOpportunityStore();
+  const opportunity = store.upsertSeed({
+    seed_key: 'a2:seller:buyer:delivery',
+    seller: { id: 'seller' },
+    buyer: { id: 'buyer', name: 'Buyer' },
+    status: 'ACTIVE',
+    stage: 'CONTACTED',
+    fields: {},
+    evidence_ids: ['ev_seed']
+  });
+  const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T02:20:00Z' });
+  const result = orchestrator.runBuyerProgression({
+    opportunityId: opportunity.id,
+    event: { event_id: 'evt2', event_type: 'BUYER_MESSAGE', content: 'What is your delivery lead time?', evidence_ref: 'ev_delivery' },
+    sellerContext: { delivery: '20 days', evidence_refs: ['seller_delivery_policy'] }
+  });
+  assert.equal(result.run_status, 'DONE');
+  assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
+    'qianpulse.a3.purchase_timing',
+    'qianpulse.a4.supply_match'
+  ].sort());
+  assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
+  assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
+  assert.equal(result.opportunity.stage, 'REPLIED');
 });
