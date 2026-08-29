@@ -4,7 +4,7 @@
     .\run.ps1 -Setup     install python + node deps
     .\run.ps1 -Build     build the decision store from the committed fixture
     .\run.ps1 -Export    bridge the store into the agent runtime feed + import agent outcomes back
-    .\run.ps1 -Up        build + export + import, then run site + api + agent + demo in background
+    .\run.ps1 -Up        build + export + import, then run site + api + agent in background
     .\run.ps1 -Down      stop the background services started by -Up
     .\run.ps1 -Test      pytest + agent npm test
     .\run.ps1 -Audit     cross-runtime audit -> docs\AUDIT_<date>.md
@@ -20,7 +20,6 @@ param(
     [switch]$Audit,
     [int]$ApiPort = 8000,
     [int]$AgentPort = 3317,
-    [int]$DemoPort = 4173,
     [int]$SitePort = 4180
 )
 
@@ -49,7 +48,6 @@ function Invoke-Import {
 if ($Setup) {
     & $Py -m pip install -r (Join-Path $Root 'requirements.txt')
     Push-Location (Join-Path $Root 'agent'); npm ci; Pop-Location
-    Push-Location (Join-Path $Root 'demo'); npm ci; Pop-Location
     return
 }
 
@@ -71,8 +69,6 @@ if ($Audit) {
 }
 
 if ($Down) {
-    # taskkill /T because the demo runs under cmd.exe -> npm -> vite; Stop-Process
-    # would kill only the wrapper and orphan the vite server on $DemoPort.
     if (Test-Path $PidFile) {
         (Get-Content $PidFile -Raw | ConvertFrom-Json) | ForEach-Object {
             if (Get-Process -Id $_ -ErrorAction SilentlyContinue) {
@@ -82,8 +78,8 @@ if ($Down) {
         }
         Remove-Item $PidFile
     } else { Write-Host 'no .run-pids.json' }
-    # safety net: free any of the four ports still held (e.g. a re-parented child)
-    foreach ($port in @($SitePort, $DemoPort, $ApiPort, $AgentPort)) {
+    # safety net: free any of the three ports still held (e.g. a re-parented child)
+    foreach ($port in @($SitePort, $ApiPort, $AgentPort)) {
         Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
             Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object {
                 & taskkill.exe /F /T /PID $_ *> $null
@@ -93,7 +89,29 @@ if ($Down) {
     return
 }
 
+function Assert-PortsFree {
+    param([int[]]$Ports)
+    $held = @()
+    foreach ($port in $Ports) {
+        $owner = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
+                 Select-Object -ExpandProperty OwningProcess -Unique
+        if ($owner) {
+            $name = (Get-Process -Id $owner -ErrorAction SilentlyContinue).ProcessName
+            $held += "  port $port held by pid $owner ($name)"
+        }
+    }
+    if ($held.Count -gt 0) {
+        Write-Host "Ports already in use - aborting (otherwise the stack silently serves a STALE build):" -ForegroundColor Red
+        $held | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+        Write-Host "`nRun first:  .\run.ps1 -Down" -ForegroundColor Yellow
+        exit 1
+    }
+}
+
 if ($Up) {
+    # A stale listener silently wins the port and the freshly spawned process
+    # dies on EADDRINUSE — the stack then serves an old build. Fail loudly.
+    Assert-PortsFree @($SitePort, $ApiPort, $AgentPort)
     Invoke-Db
     Invoke-Export
     Invoke-Import
@@ -104,15 +122,11 @@ if ($Up) {
     $env:PORT = "$AgentPort"
     $agent = Start-Process -PassThru -WorkingDirectory (Join-Path $Root 'agent') 'node' `
         -ArgumentList 'server\bootstrap.js'
-    # npm is npm.cmd on Windows; Start-Process needs a real executable, so go via cmd.
-    $demo = Start-Process -PassThru -WorkingDirectory (Join-Path $Root 'demo') 'cmd.exe' `
-        -ArgumentList '/c', "npm run dev -- --host 127.0.0.1 --port $DemoPort"
-    @($site.Id, $api.Id, $agent.Id, $demo.Id) | ConvertTo-Json | Set-Content $PidFile -Encoding utf8
+    @($site.Id, $api.Id, $agent.Id) | ConvertTo-Json | Set-Content $PidFile -Encoding utf8
     Write-Host ""
     Write-Host "site  -> http://127.0.0.1:$SitePort   (pid $($site.Id))   <- front door"
-    Write-Host "demo  -> http://127.0.0.1:$DemoPort   (pid $($demo.Id))   <- app / workbench"
     Write-Host "api   -> http://127.0.0.1:$ApiPort   (pid $($api.Id))"
-    Write-Host "agent -> http://127.0.0.1:$AgentPort   (pid $($agent.Id))"
+    Write-Host "agent -> http://127.0.0.1:$AgentPort   (pid $($agent.Id))   <- workbench"
     Write-Host "`nstop with:  .\run.ps1 -Down"
     return
 }
