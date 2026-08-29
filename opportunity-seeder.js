@@ -17,6 +17,7 @@ export function createOpportunitySeeds({ batchResult, seller, product, createdAt
         ...(company.evidence_refs || []),
         ...(contact?.source_refs || [])
       ].filter(Boolean))];
+      const sellerContext = seller?.seller_context || seller?.sellerContext || null;
       return {
         seed_key: `a2:${seller?.seller_id || seller?.id || 'seller'}:${company.buyer_company_id || company.id || index}`,
         source: 'A2_PROACTIVE_BUYER_DEVELOPMENT',
@@ -25,6 +26,7 @@ export function createOpportunitySeeds({ batchResult, seller, product, createdAt
           company_id: seller?.company_id || null,
           name: seller?.company_name || seller?.name || null
         },
+        seller_context: sellerContext,
         buyer: {
           id: company.buyer_company_id || company.id || null,
           name: company.legal_or_display_name || company.name || null,
