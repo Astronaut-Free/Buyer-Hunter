@@ -31,14 +31,19 @@ test('trade provider returns Trademo-shaped companies filtered by country + keyw
   assert.deepEqual(shipments, [...shipments].sort((a, b) => b - a));
 });
 
-test('every discovered company scores high buyer-fit (drives outreach readiness)', async () => {
+test('discovered companies clear the buyer-fit gate', async () => {
   const provider = createSandboxTradeProvider();
   const { companies } = await provider.searchBuyers({ countries: ['US'], product_keywords: ['matcha'] });
+  let qualified = 0;
   for (const company of companies) {
     const fit = evaluateBuyerFit(company);
-    assert.equal(fit.product_relevance, 'yes');
-    assert.equal(fit.confidence, 'high');
+    // product_relevance is a graded object since the A2 v1.1 rework
+    assert.equal(fit.product_relevance.value, 'DIRECT');
+    assert.ok(fit.product_relevance.evidence_refs.length > 0, 'relevance must cite evidence');
+    assert.ok(fit.evidence_refs.length >= 2);
+    if (fit.decision === 'FIT_QUALIFIED') qualified += 1;
   }
+  assert.ok(qualified >= 3, `expected >=3 FIT_QUALIFIED, got ${qualified}`);
 });
 
 test('country filter accepts ISO, English and Chinese aliases', async () => {
@@ -72,7 +77,7 @@ test('contact lookup is deterministic and empty for unknown domains', async () =
   await assert.rejects(() => contacts.findDecisionMakers({}), /domain required/);
 });
 
-test('A2 batch pipeline reaches READY outreach drafts using only sandbox providers', async () => {
+test('A2 batch pipeline drafts evidence-backed outreach using only sandbox providers', async () => {
   const runA2Batch = createA2BatchPipeline();
   const result = await runA2Batch({
     input: A2_INPUT,
@@ -80,12 +85,23 @@ test('A2 batch pipeline reaches READY outreach drafts using only sandbox provide
     maxReady: 3,
   });
   assert.equal(result.status, 'DONE');
-  assert.ok(result.summary.ready >= 1, `expected >=1 ready, got ${result.summary.ready}`);
-  const ready = result.opportunity_candidates.filter(c => c.readiness === 'READY');
-  assert.ok(ready.length >= 1);
-  const draft = ready[0].envelope.domain_result.outreach;
-  assert.ok(draft, 'outreach draft missing');
+  assert.ok(result.summary.discovered >= 5, `discovered=${result.summary.discovered}`);
+  assert.ok(result.summary.fit_qualified >= 1, `fit_qualified=${result.summary.fit_qualified}`);
+  assert.ok(result.summary.contact_enriched >= 1, `contact_enriched=${result.summary.contact_enriched}`);
+
+  const drafted = result.opportunity_candidates.filter(c => c.envelope?.domain_result?.outreach);
+  assert.ok(drafted.length >= 1, 'no outreach draft produced');
+  const draft = drafted[0].envelope.domain_result.outreach;
   assert.ok(draft.subject && draft.content);
   assert.equal(draft.prohibited_claims_checked, true);
-  assert.ok(draft.evidence_refs.length > 0);
+  assert.ok(draft.evidence_refs.length > 0, 'draft must cite buyer evidence');
+  assert.equal(drafted[0].envelope.domain_result.lifecycle, 'READY_FOR_DRAFT');
+
+  // A2 v1.1 will not promote a draft to READY_FOR_APPROVAL until A4 has
+  // confirmed Guizhou can actually supply, so discovery alone never yields
+  // an approvable outreach -- that gate belongs to the A6 dependency cycle.
+  assert.equal(result.summary.ready, 0);
+  for (const candidate of drafted) {
+    assert.equal(candidate.envelope.domain_result.outreach_readiness.reason, 'A4_SUPPLY_CHECK_REQUIRED');
+  }
 });

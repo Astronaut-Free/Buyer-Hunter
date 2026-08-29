@@ -97,17 +97,13 @@ export function createAgentStateOpportunityStore({
     if (!opportunity) throw new Error('Opportunity not found');
     if (!envelope?.domain_result) throw new Error('A6 envelope domain_result required');
     const result = envelope.domain_result;
-    const changedBusinessFields = result.changed_business_fields || [];
+    const changedBusinessFields = result.field_observations?.updates || result.changed_business_fields || [];
     const appliedFieldUpdates = {};
     const pendingStructuredExtraction = [];
     opportunity.fields ||= {};
 
     for (const change of changedBusinessFields) {
       if (!change?.field) continue;
-      if (change.needs_structured_extraction) {
-        pendingStructuredExtraction.push(change.field);
-        continue;
-      }
       if (!Object.prototype.hasOwnProperty.call(change, 'after') || change.after === null || change.after === undefined) continue;
       opportunity.fields[change.field] = change.after;
       appliedFieldUpdates[change.field] = change.after;
@@ -117,7 +113,9 @@ export function createAgentStateOpportunityStore({
       run_status: envelope.run_status,
       buyer_reply: result.buyer_reply || null,
       next_action: result.next_action || null,
-      execution_mode: result.execution_mode || null,
+      execution_mode: result.next_action?.execution_mode || result.execution_mode || null,
+      decision_state: result.decision_state || null,
+      communication_brief: result.communication_brief || null,
       dependency_refresh: result.dependency_refresh || null,
       outcome: result.outcome || null,
       applied_field_updates: appliedFieldUpdates,
@@ -131,8 +129,8 @@ export function createAgentStateOpportunityStore({
     ]);
 
     if (envelope.run_status === 'DONE') {
-      if (result.stage?.after) opportunity.stage = result.stage.after;
-      if (result.outcome?.outcome) opportunity.status = result.outcome.outcome;
+      if (result.stage_transition?.after || result.stage?.after) opportunity.stage = result.stage_transition?.after || result.stage.after;
+      if (result.outcome?.type || result.outcome?.outcome) opportunity.status = result.outcome?.type || result.outcome.outcome;
       else if (result.next_action?.action === 'HUMAN_TAKEOVER') opportunity.status = 'HUMAN_TAKEOVER';
       else opportunity.status = 'ACTIVE';
     } else if (envelope.run_status === 'MORE_EVIDENCE') {

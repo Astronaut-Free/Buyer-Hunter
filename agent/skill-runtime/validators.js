@@ -18,8 +18,14 @@ export function validateA2Envelope(envelope = {}) {
   const errors = [...base.errors];
   const result = envelope.domain_result || {};
   if (!result.target_definition) errors.push('domain_result.target_definition required');
-  if (!result.outreach_readiness) errors.push('domain_result.outreach_readiness required');
-  if (!result.followup) errors.push('domain_result.followup required');
+  if (Array.isArray(result.candidates)) {
+    if (!result.summary) errors.push('domain_result.summary required');
+    if (!result.provider_trace) errors.push('domain_result.provider_trace required');
+    if (!result.next_state) errors.push('domain_result.next_state required');
+  } else {
+    if (!result.outreach_readiness) errors.push('domain_result.outreach_readiness required');
+    if (!result.followup) errors.push('domain_result.followup required');
+  }
   return { valid: errors.length === 0, errors };
 }
 
@@ -27,8 +33,17 @@ export function validateA6Envelope(envelope = {}) {
   const base = validateCapabilityEnvelope(envelope);
   const errors = [...base.errors];
   const result = envelope.domain_result || {};
-  if (envelope.run_status !== 'BLOCKED' && !result.opportunity_id) errors.push('domain_result.opportunity_id required');
-  if (envelope.run_status !== 'BLOCKED' && !result.stage) errors.push('domain_result.stage required');
-  if (envelope.run_status !== 'BLOCKED' && !result.next_action) errors.push('domain_result.next_action required');
+  if (envelope.run_status !== 'BLOCKED') {
+    for (const field of [
+      'opportunity_id', 'buyer_reply', 'field_observations', 'affected_skills',
+      'stage_transition', 'decision_state', 'next_action', 'evaluated_at', 'ruleset_version'
+    ]) {
+      if (result[field] === undefined || result[field] === null) errors.push(`domain_result.${field} required`);
+    }
+    if (!Array.isArray(result.field_observations?.updates)) errors.push('domain_result.field_observations.updates must be array');
+    if (!Array.isArray(result.field_observations?.mentions)) errors.push('domain_result.field_observations.mentions must be array');
+    if (!Array.isArray(result.affected_skills)) errors.push('domain_result.affected_skills must be array');
+    if (!result.next_action?.action || !result.next_action?.execution_mode) errors.push('domain_result.next_action contract invalid');
+  }
   return { valid: errors.length === 0, errors };
 }

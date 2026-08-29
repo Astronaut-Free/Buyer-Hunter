@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMemoryOpportunityStore } from '../opportunity-store.js';
 import { createQianPulseSkillOrchestrator } from '../qianpulse-skill-orchestrator.js';
+import { composeReply } from '../services/reply-composer.js';
 
 const input = {
   seller: { seller_id: 'seller1', company_id: 'company1', product_id: 'p1', company_name: 'Guizhou Tea', product_name: 'Matcha' },
   target: { countries: ['US'], product_keywords: ['matcha'] },
   buyer_profile: { company_types: ['importer'], buyer_roles: ['Procurement Manager'] },
   constraints: { max_candidates: 5, language: 'en', contact_limit_per_company: 1 },
-  execution: { channel: 'email', human_gate: true }
+  execution: { channel: 'email', human_gate: true, campaign_id: 12 }
 };
 
 function providerCompany() {
@@ -66,7 +67,8 @@ test('A6 buyer progression keeps waiting when automatic dependency refresh lacks
   assert.equal(result.run_status, 'MORE_EVIDENCE');
   assert.equal(result.opportunity.id, opportunity.id);
   assert.equal(result.opportunity.status, 'WAITING_EVIDENCE');
-  assert.ok(result.envelope.domain_result.dependency_refresh.required.includes('qianpulse.a4.supply_match'));
+  assert.equal(result.envelope.domain_result.decision_state, 'VERIFY');
+  assert.ok(result.dependency_refresh.executions.some(item => item.capability_id === 'qianpulse.a4.supply_match' && item.run_status === 'MORE_EVIDENCE'));
   assert.ok(result.dependency_refresh.refreshed_capabilities.includes('qianpulse.a3.purchase_timing'));
   assert.ok(result.opportunity.evidence_ids.includes('ev_reply'));
   assert.equal(result.opportunity.fields.quantity, '20 tons');
@@ -92,11 +94,12 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
   assert.equal(result.run_status, 'DONE');
   assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
     'qianpulse.a3.purchase_timing',
-    'qianpulse.a4.supply_match',
-    'qianpulse.a8.deal_action'
+    'qianpulse.a4.supply_match'
   ].sort());
   assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
-  assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
+  const draft = composeReply({ communicationBrief: result.envelope.domain_result.communication_brief });
+  assert.match(draft.content, /Lead time: 20 days/);
+  assert.equal(result.envelope.domain_result.reply_draft, undefined);
   assert.equal(result.opportunity.stage, 'REPLIED');
 });
 
@@ -132,13 +135,20 @@ test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportu
   assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
     'qianpulse.a3.purchase_timing',
     'qianpulse.a4.supply_match',
-    'qianpulse.a5.trade_risk',
-    'qianpulse.a8.deal_action'
+    'qianpulse.a5.trade_risk'
   ].sort());
   assert.equal(result.opportunity.fields.quantity, '20 tons');
   assert.equal(result.opportunity.fields.destination, 'Germany');
   assert.equal(result.opportunity.fields.delivery_date, 'October 2026');
   assert.equal(result.opportunity.a6.pending_structured_extraction.length, 0);
   assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
-  assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
+  const draft = composeReply({ communicationBrief: result.envelope.domain_result.communication_brief });
+  assert.match(draft.content, /Lead time: 20 days/);
+  assert.deepEqual(result.trace.map(item => `${item.capability_id}:${item.phase}`), [
+    'qianpulse.a6.opportunity_progression:ANALYSIS',
+    'qianpulse.a3.purchase_timing:REFRESH',
+    'qianpulse.a4.supply_match:REFRESH',
+    'qianpulse.a5.trade_risk:REFRESH',
+    'qianpulse.a6.opportunity_progression:FINAL'
+  ]);
 });

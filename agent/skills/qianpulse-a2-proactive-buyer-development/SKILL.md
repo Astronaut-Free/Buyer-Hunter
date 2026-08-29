@@ -45,7 +45,7 @@ A2 处理“可能会买”的主动开发。
 
 1. 哪家公司值得联系。
 2. 为什么值得联系。
-3. 为什么当前值得联系。
+3. 为什么值得开发；若 A3 提供了近期时机证据，再单独展示可选的 `why_now`。
 4. 应联系谁。
 5. 证据是什么。
 6. 当前是否具备外联条件。
@@ -190,7 +190,7 @@ buyer_fit:
   buyer_type: string
   likely_use_case: string
   why_fit: string
-  why_now: string
+  why_now: optional string
   evidence_refs: []
   confidence: low|medium|high
 ```
@@ -198,7 +198,8 @@ buyer_fit:
 判断规则：
 
 - `why_fit` 必须由企业经营范围、产品、贸易行为或公开业务证据支撑。
-- `why_now` 需要近期信号支撑；没有近期信号时允许为空或标记 `MORE_EVIDENCE`。
+- `why_now` 仅在 A3 提供近期时机证据时填写；没有 A3 证据时保持为空，但不阻断 A2 Discovery。
+- A3 是采购时机与 `why_now` 的唯一权威 SKILL，A2 不从 shipment recency 推断采购窗口。
 - 无证据时不得生成采购事实。
 - 存在严重冲突证据时标记 `NEEDS_REVIEW`。
 

@@ -40,7 +40,8 @@ A6 structured field extraction        DONE
 A6 dependency refresh gate            DONE
 A6 auto dependency re-run             DONE
 A6 key-question resolver              DONE
-A6 evidence-safe reply draft          DONE
+A6 evidence-grounded communication    DONE
+A6 Reply Composer separation          DONE
 A6 Opportunity update contract        DONE
 A6 verified field persistence         DONE
 A6 Human Gate runtime                 DONE
@@ -53,7 +54,8 @@ Event routing metadata                DONE
 Deterministic validators              DONE
 Mock providers                        DONE
 Golden-path tests                     DONE
-Node test suite                       109/109 PASS
+Node test suite                       162/162 PASS
+Python test suite                     115 PASS / 1 SKIP
 GitHub Actions workflow               PASS
 Runnable server layout                DONE
 Server health smoke test              PASS
@@ -102,16 +104,15 @@ Seller Target
 → Raw-body Signature Verification
 → Webhook Idempotency
 → BUYER_MESSAGE
-→ Conservative Structured Field Extraction
-→ A6 Intent / Changed Fields / Stage
-→ invalidated_capabilities
+→ A6 ANALYSIS (Intent + Field Observations)
+→ affected_skills
 → Automatic A3 Purchase Timing Refresh
 → Automatic A4 Supply Match Refresh
 → Automatic A5 Trade Risk Refresh when required
-→ Dependency Evidence Gate
-→ A6 re-evaluation in the same progression cycle
-→ Opportunity verified-field persistence
-→ Evidence-safe Draft / Human Gate
+→ Agent Freshness Gate (input_hash + generated_at)
+→ A6 FINAL in the same Agent Run
+→ Contract Validation / Opportunity apply once
+→ Communication Brief / Reply Composer / Human Gate
 → Approval API
 → Smartlead Lead Activities
 → email_stats_id Resolution
@@ -122,13 +123,15 @@ Seller Target
 
 自动执行负责中间判断、证据刷新、状态更新与路由；系统只在人工审批、证据不足、显式风险阻断和高风险商业动作处停住。
 
-## 当前验证基线
+## 当前验证基线（2026-08-29）
 
 ```text
-GitHub Actions Run #85
-109 tests
-109 passed
-0 failed
+make test                             PASS
+make audit                            ALL CHECKS PASS
+Node                                  162/162 passed
+Python                                115 passed / 1 skipped
+Decision API                          HEALTHY
+Agent A2-A6 runtime                   HEALTHY
 ```
 
 覆盖：

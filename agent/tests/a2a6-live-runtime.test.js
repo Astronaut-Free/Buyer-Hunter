@@ -59,7 +59,7 @@ test('authenticated seller runs A2 through AgentRun and creates an accessible Op
   assert.equal(result.body.generated_opportunity_ids.length, 1);
   const opportunity = result.body.opportunities[0];
   assert.equal(opportunity.seller.id, user.id);
-  assert.equal(opportunity.status, 'READY_FOR_OUTREACH_APPROVAL');
+  assert.equal(opportunity.status, 'READY_FOR_DRAFT');
   assert.equal(Object.values(state.runs).length, 1);
   assert.equal(Object.values(state.steps)[0].capability_id, 'qianpulse.a2.proactive_buyer_development');
   assert.equal(Object.values(state.checkpoints).length, 1);
@@ -120,12 +120,13 @@ test('buyer reply enters A6 AgentRun and waits for invalidated dependency refres
   assert.equal(result.body.envelope.run_status, 'MORE_EVIDENCE');
   assert.equal(result.body.run.status, 'WAITING_EVIDENCE');
   assert.equal(result.body.opportunity.status, 'WAITING_EVIDENCE');
-  assert.ok(result.body.envelope.domain_result.dependency_refresh.required.includes('qianpulse.a4.supply_match'));
+  assert.equal(result.body.envelope.domain_result.decision_state, 'VERIFY');
+  assert.ok(result.body.envelope.missing_evidence.includes('capacity_or_moq'));
   assert.ok(result.body.opportunity.evidence_ids.includes('email:mail-001'));
   assert.deepEqual(result.body.run.capabilities_called, [
-    'qianpulse.a4.supply_match',
+    'qianpulse.a6.opportunity_progression',
     'qianpulse.a3.purchase_timing',
-    'qianpulse.a8.deal_action',
+    'qianpulse.a4.supply_match',
     'qianpulse.a6.opportunity_progression'
   ]);
   const runSteps = Object.values(state.steps)
@@ -135,7 +136,7 @@ test('buyer reply enters A6 AgentRun and waits for invalidated dependency refres
   assert.equal(runSteps.at(-1).capability_id, 'qianpulse.a6.opportunity_progression');
 });
 
-test('A6 verified low-risk answer creates a Human Gate approval with evidence-safe draft', async () => {
+test('A6 verified low-risk answer creates a Human Gate approval after Reply Composer', async () => {
   const { state, runtime, user } = runtimeFixture();
   const proactive = await runtime.runProactive({ event_type: 'SELLER_PROACTIVE_DEVELOPMENT', idempotency_key: 'a2-live-3', input: targetInput, max_ready: 1 }, user);
   const opportunityId = proactive.body.generated_opportunity_ids[0];
@@ -143,16 +144,17 @@ test('A6 verified low-risk answer creates a Human Gate approval with evidence-sa
   const result = runtime.runBuyerMessage({
     opportunity_id: opportunityId,
     idempotency_key: 'buyer-msg-2',
-    message: 'What is your MOQ?',
+    message: 'What is your delivery lead time?',
     evidence_ref: 'email:mail-002',
-    seller_context: { moq: '500 kg' }
+    seller_context: { delivery: '20 days', evidence_refs: ['seller:delivery-policy:1'] }
   }, user);
 
   assert.equal(result.status, 201);
   assert.equal(result.body.envelope.run_status, 'DONE');
   assert.equal(result.body.run.status, 'WAITING_APPROVAL');
   assert.equal(result.body.approval.status, 'PENDING');
-  assert.match(result.body.approval.payload.draft.content, /MOQ: 500 kg/);
+  assert.match(result.body.approval.payload.draft.content, /Lead time: 20 days/);
+  assert.ok(result.body.approval.payload.communication_brief);
   assert.equal(Object.values(state.approvals).length, 1);
 });
 

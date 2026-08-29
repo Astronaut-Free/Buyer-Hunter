@@ -38,6 +38,7 @@ DOCS = ROOT / "docs"
 PY = sys.executable
 NPM = shutil.which("npm") or shutil.which("npm.cmd") or "npm"
 NODE = shutil.which("node") or "node"
+LOCAL_HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 # --------------------------------------------------------------------------- #
@@ -63,7 +64,9 @@ def wait_http(url: str, timeout: float = 20.0) -> bool:
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            with urllib.request.urlopen(url, timeout=2) as resp:
+            # Audit targets are loopback services.  Bypass macOS/system proxy
+            # settings so 127.0.0.1 health checks cannot leak to a local proxy.
+            with LOCAL_HTTP.open(url, timeout=2) as resp:
                 if resp.status < 500:
                     return True
         except (urllib.error.URLError, ConnectionError, socket.timeout):
@@ -73,8 +76,13 @@ def wait_http(url: str, timeout: float = 20.0) -> bool:
 
 def get_json(url: str, headers: dict[str, str] | None = None) -> Any:
     req = urllib.request.Request(url, headers=headers or {})
-    with urllib.request.urlopen(req, timeout=5) as resp:
+    with LOCAL_HTTP.open(req, timeout=5) as resp:
         return json.loads(resp.read().decode("utf-8"))
+
+
+def current_branch() -> str:
+    proc = run(["git", "branch", "--show-current"], timeout=5)
+    return proc.stdout.strip() if proc.returncode == 0 and proc.stdout.strip() else "unknown"
 
 
 class Check:
@@ -393,7 +401,7 @@ def audit_landing_site() -> None:
                 codes = []
                 for path in ("/index.html", "/opportunities.html", "/nav-bridge.js"):
                     try:
-                        with urllib.request.urlopen(f"{base}{path}", timeout=3) as r:
+                        with LOCAL_HTTP.open(f"{base}{path}", timeout=3) as r:
                             codes.append(r.status)
                     except urllib.error.HTTPError as e:  # noqa: PERF203
                         codes.append(e.code)
@@ -437,6 +445,106 @@ def audit_orchestrator_skills() -> None:
         f"{len(list(skills_dir.glob('*/SKILL.md')))} skills, "
         f"frontmatter-missing={missing or 'none'}, doc-unreferenced={unreferenced or 'none'}",
     )
+
+
+def audit_a2_contracts() -> None:
+    script = r"""
+import { createCapabilityAdapter } from './capability-adapter.js';
+import { A2_CAPABILITY_ID } from './skill-runtime/index.js';
+import { getQianPulseSkillMetadata } from './skill-runtime/registry.js';
+const metadata = getQianPulseSkillMetadata(A2_CAPABILITY_ID);
+const envelope = await createCapabilityAdapter()(A2_CAPABILITY_ID, {
+  seller: { seller_id: 'audit', company_id: 'audit', product_id: 'audit' },
+  target: { countries: ['US'], product_keywords: ['matcha'] },
+  buyer_profile: { company_types: ['IMPORTER'], buyer_roles: ['Procurement'] },
+  constraints: { max_candidates: 5, language: 'en', contact_limit_per_company: 1 },
+  execution: { channel: 'email', human_gate: true }
+});
+console.log(JSON.stringify({
+  registry: ['target_definition','candidates','summary','provider_trace','next_state'].every(key => metadata.produced_outputs.includes(key)),
+  direct: envelope.capability_id === A2_CAPABILITY_ID && Array.isArray(envelope.domain_result?.candidates) && Boolean(envelope.domain_result?.summary),
+  envelope
+}));
+"""
+    proc = run([NODE, "--input-type=module", "-e", script], cwd=AGENT)
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        payload = {}
+    check("A2 canonical registry").record(payload.get("registry") is True, f"canonical outputs={payload.get('registry')}")
+    check("A2 agent direct dispatch").record(payload.get("direct") is True, f"canonical envelope={payload.get('direct')}")
+    contract = AGENT / "skills" / "qianpulse-a2-proactive-buyer-development" / "contracts" / "a2-result.schema.json"
+    try:
+        schema = json.loads(contract.read_text(encoding="utf-8"))
+        required = set(schema.get("required", []))
+        contract_ok = {"target_definition", "candidates", "summary", "provider_trace", "next_state"} <= required
+    except (OSError, json.JSONDecodeError):
+        contract_ok = False
+    check("A2 batch contract").record(contract_ok, f"canonical required fields={contract_ok}")
+
+
+def audit_a6_progression() -> None:
+    a6_dir = AGENT / "skill-runtime" / "a6"
+    sources = "\n".join(path.read_text(encoding="utf-8") for path in sorted(a6_dir.glob("*.js")))
+    parser_count = len(re.findall(r"(?:function|const)\s+(?:observeA6Fields|detectA6ChangedFields)\b", sources))
+    check("A6 duplicate field parser count = 1").record(parser_count == 1, f"count={parser_count}")
+
+    raw_fact_hits = re.findall(r"sellerContext\.(?:moq|delivery|lead_time|certifications?)", sources)
+    check("A6 raw seller fact outbound claim = 0").record(not raw_fact_hits, f"hits={len(raw_fact_hits)}")
+    dependency_hits = re.findall(r"\b(?:runA3PurchaseTiming|runA4SupplyMatch|runA5TradeRisk|runAffectedSkills)\b", sources)
+    check("A6 direct dependency invocation = 0").record(not dependency_hits, f"hits={len(dependency_hits)}")
+    provider_hits = re.findall(r"\b(?:fetch|smartlead|apollo|trademo|provider)\s*\(", sources, re.I)
+    check("A6 direct provider invocation = 0").record(not provider_hits, f"hits={len(provider_hits)}")
+
+    script = r"""
+import { transitionStage } from './skill-runtime/a6/stage-machine.js';
+import { createMemoryOpportunityStore } from './opportunity-store.js';
+import { createQianPulseSkillOrchestrator } from './qianpulse-skill-orchestrator.js';
+const regression = transitionStage({ currentStage: 'COMMERCIAL_DISCUSSION', intent: { primary: 'DELIVERY_REQUEST' } });
+const terminal = transitionStage({ currentStage: 'WON', intent: { primary: 'DELIVERY_REQUEST' }, triggerEvent: { event_type: 'BUYER_MESSAGE' } });
+const store = createMemoryOpportunityStore([{ id: 'audit-opp', status: 'ACTIVE', stage: 'CONTACTED', fields: {}, evidence_ids: [] }]);
+const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store, clock: () => '2026-08-29T00:00:00Z' });
+const result = orchestrator.runBuyerProgression({
+  opportunityId: 'audit-opp',
+  event: { event_id: 'audit-event', event_type: 'BUYER_MESSAGE', content: 'We need 2 tons delivered to Japan by October 2026. JAS required.', evidence_ref: 'conversation:audit' },
+  sellerContext: { capacity: '5 tons/month', delivery: '20 days', certifications: ['JAS'], market_access: 'Japan allowed', evidence_refs: ['seller:capacity:1', 'seller:delivery:1', 'seller:jas:1', 'risk:japan:1'] }
+});
+const claims = result.envelope.domain_result.communication_brief?.allowed_claims || [];
+console.log(JSON.stringify({
+  regression,
+  terminal,
+  trace: result.trace.map(item => `${item.capability_id}:${item.phase}`),
+  claimsCovered: claims.length > 0 && claims.every(item => item.evidence_refs?.length),
+  briefOnly: !Object.hasOwn(result.envelope.domain_result, 'reply_draft')
+}));
+"""
+    proc = run([NODE, "--input-type=module", "-e", script], cwd=AGENT)
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        payload = {}
+    regression_ok = payload.get("regression", {}).get("reason") == "ILLEGAL_STAGE_REGRESSION"
+    terminal_ok = payload.get("terminal", {}).get("reason") == "TERMINAL_STATE_LOCKED"
+    expected_trace = [
+        "qianpulse.a6.opportunity_progression:ANALYSIS",
+        "qianpulse.a3.purchase_timing:REFRESH",
+        "qianpulse.a4.supply_match:REFRESH",
+        "qianpulse.a5.trade_risk:REFRESH",
+        "qianpulse.a6.opportunity_progression:FINAL",
+    ]
+    check("A6 illegal stage regression").record(regression_ok, payload.get("regression", {}).get("reason", "node check failed"))
+    check("A6 terminal state lock").record(terminal_ok, payload.get("terminal", {}).get("reason", "node check failed"))
+    check("A6 communication brief evidence coverage").record(
+        payload.get("claimsCovered") is True and payload.get("briefOnly") is True,
+        f"claims covered={payload.get('claimsCovered')}, no reply_draft={payload.get('briefOnly')}",
+    )
+    check("Agent A6→A3/A4/A5→A6 trace").record(payload.get("trace") == expected_trace, " -> ".join(payload.get("trace", [])))
+
+    live_source = (AGENT / "server" / "a2a6-live-runtime.js").read_text(encoding="utf-8")
+    smartlead_source = (AGENT / "server" / "smartlead-live-webhook.js").read_text(encoding="utf-8")
+    human_gate = all(token in live_source for token in ("composeReply", "state.approvals", "WAITING_APPROVAL"))
+    no_direct_send = "replyEmailThread" not in smartlead_source and "send" not in smartlead_source
+    check("Smartlead reply Human Gate").record(human_gate and no_direct_send, f"approval={human_gate}, webhook direct send={not no_direct_send}")
 
 
 # --------------------------------------------------------------------------- #
@@ -487,10 +595,10 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
         },
         {
             "module": "A6 成交自动推进",
-            "runtime": "Node — agent/skill-runtime/a6*.js + 两趟判断 + dependency gate",
+            "runtime": "Node — agent/skill-runtime/a6/* + Agent-owned skill dependency gate + Reply Composer",
             "state": "sandbox 闭环" if disp_ok else "异常",
-            "evidence": "16 意图 taxonomy + 11 阶段机 + 15 动作 taxonomy；买家回复 -> 变更字段 -> 自动刷新 A3/A4/A5 -> "
-            "证据安全草稿 -> Human Gate；高风险强制人工；skill 调度审计通过",
+            "evidence": "固定 Intent/Stage/Action taxonomy；买家回复 -> A6 Analysis -> 按 input_hash 刷新 A3/A4/A5 -> A6 Final -> "
+            "Communication Brief -> Reply Composer -> Human Gate；高风险强制人工；Opportunity 仅最终写一次",
             "gap": "实网回复回路未验证（缺 Smartlead 凭据）；LLM 判断层未加（仍规则化）",
         },
         {
@@ -550,11 +658,12 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
 # --------------------------------------------------------------------------- #
 def write_markdown(path: Path, matrix: list[dict[str, str]], dispatch: dict[str, Any]) -> None:
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    branch = current_branch()
     hard_ok = all(c.ok for c in results)
     lines = [
         "# 整合仓库审计报告",
         "",
-        f"> 生成时间：{now}　·　分支：`integration`　·　结论：**{'全部通过' if hard_ok else '存在失败项'}**",
+        f"> 生成时间：{now}　·　分支：`{branch}`　·　结论：**{'全部通过' if hard_ok else '存在失败项'}**",
         "",
         "## 1. 硬性检查",
         "",
@@ -635,6 +744,7 @@ def write_html(path: Path, matrix: list[dict[str, str]], dispatch: dict[str, Any
         for r in matrix
     )
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    branch = current_branch()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         f"""<!doctype html><meta charset="utf-8"><title>整合仓库审计</title>
@@ -654,7 +764,7 @@ code{{background:#8882;padding:1px 4px;border-radius:3px;font-size:12px}}
 .v-ok{{background:#13733322;color:#137333}} .v-bad{{background:#c5221f22;color:#c5221f}}
 </style>
 <h1>整合仓库审计报告</h1>
-<div class="sub">{now} · 分支 <code>integration</code> ·
+<div class="sub">{now} · 分支 <code>{branch}</code> ·
  <span class="verdict {'v-ok' if hard_ok else 'v-bad'}">{'全部通过' if hard_ok else '存在失败项'}</span></div>
 <h2>1. 硬性检查</h2>
 <table><tr><th>检查项</th><th>结果</th><th>详情</th></tr>{rows_checks}</table>
@@ -776,6 +886,8 @@ def main() -> int:
     audit_agent_boot()
     dispatch = audit_skill_dispatch()
     audit_orchestrator_skills()
+    audit_a2_contracts()
+    audit_a6_progression()
     audit_landing_site()
     audit_portal_wiring()
     audit_a2_sandbox_chain()

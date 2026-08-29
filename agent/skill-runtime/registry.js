@@ -2,8 +2,7 @@ import { A2_CAPABILITY_ID, A2_VERSION } from './a2.js';
 import { A3_CAPABILITY_ID, A3_VERSION } from './a3.js';
 import { A4_CAPABILITY_ID, A4_VERSION } from './a4.js';
 import { A5_CAPABILITY_ID, A5_VERSION } from './a5.js';
-import { A6_CAPABILITY_ID, A6_VERSION } from './a6.js';
-import { A8_CAPABILITY_ID, A8_VERSION } from './a8.js';
+import { A6_CAPABILITY_ID, A6_VERSION } from './a6/index.js';
 
 export const QIANPULSE_SKILL_REGISTRY = Object.freeze([
   {
@@ -11,7 +10,7 @@ export const QIANPULSE_SKILL_REGISTRY = Object.freeze([
     version: A2_VERSION,
     description: '主动开发海外潜在买家：Buyer Company → Buyer Fit → Contact → Email-ready → pre-reply follow-up。',
     required_inputs: ['seller', 'target', 'buyer_profile', 'constraints', 'execution'],
-    produced_outputs: ['target_definition', 'buyer_company', 'buyer_fit', 'contact', 'outreach_readiness', 'followup', 'handoff'],
+    produced_outputs: ['target_definition', 'candidates', 'summary', 'provider_trace', 'next_state'],
     status_contract: ['DONE', 'MORE_EVIDENCE', 'BLOCKED', 'NOT_APPLICABLE', 'ERROR'],
     timeout_seconds: 120,
     enabled: true
@@ -50,20 +49,10 @@ export const QIANPULSE_SKILL_REGISTRY = Object.freeze([
     capability_id: A6_CAPABILITY_ID,
     version: A6_VERSION,
     description: '买家回复后的 Opportunity Progression：意图、变化、阶段、下一动作、Human Gate 与 Outcome。',
-    required_inputs: ['opportunity_id', 'trigger_event', 'conversation_context', 'opportunity_state', 'seller_context'],
-    produced_outputs: ['buyer_reply', 'stage', 'changed_business_fields', 'next_action', 'execution_mode', 'outcome'],
+    required_inputs: ['opportunity_id', 'trigger_event', 'conversation_context', 'opportunity_state', 'skill_results', 'seller_execution_policy', 'evaluated_at'],
+    produced_outputs: ['buyer_reply', 'field_observations', 'affected_skills', 'stage_transition', 'decision_state', 'next_action', 'communication_brief', 'outcome'],
     status_contract: ['DONE', 'MORE_EVIDENCE', 'BLOCKED', 'NOT_APPLICABLE', 'ERROR'],
     timeout_seconds: 90,
-    enabled: true
-  },
-  {
-    capability_id: A8_CAPABILITY_ID,
-    version: A8_VERSION,
-    description: 'Phase 8：Free 的商业判断（决策快照 + 风险 + 门禁）作为 deal-action 快照喂给 A6；A6 保有 next_action 唯一所有权。',
-    required_inputs: ['opportunity_id', 'decision', 'risks', 'access_status'],
-    produced_outputs: ['primary_action', 'secondary_action', 'action_reasoning', 'contact_strategy', 'follow_up', 'required_assets', 'human_approval_required'],
-    status_contract: ['DONE', 'MORE_EVIDENCE', 'BLOCKED', 'NOT_APPLICABLE', 'ERROR'],
-    timeout_seconds: 30,
     enabled: true
   }
 ]);

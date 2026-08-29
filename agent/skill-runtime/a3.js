@@ -1,6 +1,7 @@
 import { CAPABILITY_STATUS, makeCapabilityEnvelope, normalizeEvidenceRefs } from './guards.js';
+import { A3_CAPABILITY_ID } from './capability-ids.js';
 
-export const A3_CAPABILITY_ID = 'qianpulse.a3.purchase_timing';
+export { A3_CAPABILITY_ID };
 export const A3_VERSION = '1.0.0';
 
 function value(...items) {

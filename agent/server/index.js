@@ -23,6 +23,8 @@ import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../s
 import { createDeepSeekClient } from '../providers/deepseek.js';
 import { parseNlTarget, buildNlTargetPayload } from '../skill-runtime/nl-target-parser.js';
 import { createAgentConversation } from './agent-conversation.js';
+import { A2_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
+import { getQianPulseSkillMetadata } from '../skill-runtime/registry.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -48,8 +50,10 @@ const CAPABILITIES = [
   { capability_id: 'market.access', version: '1.0.0', description: '核验目标市场准入资料' },
   { capability_id: 'conversation.qualify', version: '1.0.0', description: '计算沟通字段完整度' },
   { capability_id: 'reply.draft', version: '1.0.0', description: '生成待人工确认的回复草稿' },
-  { capability_id: 'qianpulse.a2.proactive_buyer_development', version: '1.0.0', description: '主动开发潜在海外采购商' },
-  { capability_id: 'qianpulse.a6.opportunity_progression', version: '1.0.0', description: '根据买家反馈动态推进 Opportunity' }
+  ...[A2_CAPABILITY_ID, A6_CAPABILITY_ID].map(capabilityId => {
+    const metadata = getQianPulseSkillMetadata(capabilityId);
+    return { capability_id: metadata.capability_id, version: metadata.version, description: metadata.description };
+  })
 ];
 
 const ROUTING_POLICY = {

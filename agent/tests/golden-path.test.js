@@ -5,11 +5,12 @@ import { runA6Skill } from '../skill-runtime/a6.js';
 import { createMockProviders } from '../skill-runtime/mock-providers.js';
 
 const baseTarget = {
-  seller: { seller_id: 'seller_001', company_id: 'company_001', product_id: 'matcha_001' },
+  seller: { seller_id: 'seller_001', company_id: 'company_001', product_id: 'matcha_001', company_name: 'Guizhou Tea', product_name: 'Matcha' },
   target: { countries: ['US'], product_keywords: ['matcha powder'] },
   buyer_profile: { company_types: ['importer'], buyer_roles: ['procurement'] },
   constraints: { max_candidates: 20, language: 'en', contact_limit_per_company: 2 },
-  execution: { channel: 'email', human_gate: true }
+  execution: { channel: 'email', human_gate: true, campaign_id: 12 },
+  dependencies: { a4: { run_status: 'DONE' }, a5: { run_status: 'DONE' } }
 };
 
 test('golden path: A2 produces READY from evidence-backed company and bound contact', async () => {
@@ -28,9 +29,10 @@ test('golden path: buyer reply transitions from A2 world into A6 progression', (
     opportunity_id: 'opp_demo_001',
     latest_buyer_message: { content: 'We are interested. Please send more information.' },
     opportunity_state: { stage: 'CONTACTED', fields: {} },
-    seller_context: {}
+    seller_execution_policy: { approved_materials: [{ title: 'Approved catalog', approved: true }] }
   });
-  assert.equal(result.domain_result.stage.after, 'REPLIED');
+  assert.equal(result.domain_result.stage_transition.after, 'REPLIED');
   assert.equal(result.domain_result.next_action.action, 'SEND_MATERIAL');
-  assert.equal(result.domain_result.execution_mode, 'APPROVAL');
+  assert.equal(result.domain_result.next_action.execution_mode, 'APPROVAL');
+  assert.equal(result.domain_result.communication_brief.approved_assets.length, 1);
 });

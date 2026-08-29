@@ -1,6 +1,7 @@
 import { CAPABILITY_STATUS, makeCapabilityEnvelope, normalizeEvidenceRefs } from './guards.js';
+import { A5_CAPABILITY_ID } from './capability-ids.js';
 
-export const A5_CAPABILITY_ID = 'qianpulse.a5.trade_risk';
+export { A5_CAPABILITY_ID };
 export const A5_VERSION = '1.0.0';
 
 function has(value) {

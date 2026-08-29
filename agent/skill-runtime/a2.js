@@ -1,7 +1,12 @@
 import { CAPABILITY_STATUS, hasSuppression, isA5Blocked, makeCapabilityEnvelope, normalizeEvidenceRefs } from './guards.js';
+import { A2_CAPABILITY_ID } from './capability-ids.js';
+import { evaluateA2BuyerFit } from './a2-buyer-fit.js';
+import { evaluateA2ContactFit } from './a2-contact-fit.js';
+import { bindBuyerCompanyIdentity } from './a2-company-identity.js';
+import { decideA2Followup } from './a2-state-machine.js';
 
-export const A2_CAPABILITY_ID = 'qianpulse.a2.proactive_buyer_development';
-export const A2_VERSION = '1.0.0';
+export { A2_CAPABILITY_ID };
+export const A2_VERSION = '1.1.0';
 
 function array(value) {
   return Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
@@ -14,9 +19,21 @@ export function normalizeA2Target(input = {}) {
     countries: array(target.countries || target.country),
     product_keywords: array(target.product_keywords || target.productKeywords),
     hs_codes: array(target.hs_codes || target.hsCodes),
-    industries: array(target.industries),
+    industries: array(target.industries || profile.industries),
     buyer_company_types: array(profile.company_types || profile.companyTypes),
     decision_maker_roles: array(profile.buyer_roles || profile.buyerRoles),
+    preferred_business_models: array(profile.preferred_business_models),
+    excluded_company_types: array(profile.excluded_company_types),
+    exclude_companies: array(input.constraints?.exclude_companies),
+    exclude_domains: array(input.constraints?.exclude_domains),
+    exclude_existing_customers: input.constraints?.exclude_existing_customers !== false,
+    market_scope: target.market_scope || null,
+    product_context: target.product_context || input.product_context || {
+      product_id: input.seller?.product_id || null,
+      product_name: input.seller?.product_name || array(target.product_keywords)[0] || null,
+      category: null, specifications: null, certifications: null, price_position: null, moq: null, supply_capacity: null
+    },
+    seller_value_context: target.seller_value_context || input.seller_value_context || null,
     exclusions: [...array(input.constraints?.exclude_companies), ...array(input.constraints?.exclude_domains)]
   };
 }
@@ -29,49 +46,66 @@ export function validateA2Target(targetDefinition = {}) {
   return missing;
 }
 
-export function evaluateBuyerFit(candidate = {}) {
-  const companyEvidence = normalizeEvidenceRefs(candidate.evidence_refs, candidate.source_refs);
-  const productEvidence = normalizeEvidenceRefs(
-    candidate.product_evidence,
-    typeof candidate.product_relevance === 'object' ? candidate.product_relevance?.evidence_refs : null
-  );
-  const tradeEvidence = normalizeEvidenceRefs(candidate.import_evidence, candidate.trade_evidence);
-  const marketEvidence = normalizeEvidenceRefs(candidate.market_evidence);
-  const productStatus = typeof candidate.product_relevance === 'string'
-    ? candidate.product_relevance
-    : candidate.product_relevance?.status;
-  const relevant = candidate.sells_or_uses_product === true || productStatus === 'yes' || productEvidence.length > 0;
-  const identified = Boolean(candidate.buyer_company_id || candidate.id || candidate.domain || candidate.legal_or_display_name || candidate.name);
-  const evidenceRefs = normalizeEvidenceRefs(companyEvidence, productEvidence, tradeEvidence, marketEvidence);
-  const confidence = identified && relevant && evidenceRefs.length >= 2 ? 'high' : identified && relevant && evidenceRefs.length ? 'medium' : 'low';
+export function evaluateBuyerFit(candidate = {}, targetDefinition = {}) {
+  return evaluateA2BuyerFit(candidate, targetDefinition);
+}
+
+export function canonicalizeA2Envelope(envelope = {}) {
+  const result = envelope.domain_result || {};
+  if (Array.isArray(result.candidates)) return envelope;
+  const hasCandidate = Boolean(result.buyer_company);
+  const candidate = hasCandidate ? {
+    candidate_id: `a2c_${result.buyer_company?.buyer_company_key || result.buyer_company?.buyer_company_id || 'direct'}`,
+    buyer_company: result.buyer_company,
+    buyer_fit: result.buyer_fit,
+    development_priority: result.buyer_fit ? { score: result.buyer_fit.development_priority_score || 0, score_components: result.buyer_fit.score_components || {} } : null,
+    contact: result.contact || null,
+    dependency_status: result.dependencies || null,
+    outreach_readiness: result.outreach_readiness,
+    outreach: result.outreach || null,
+    lifecycle: result.lifecycle || (result.outreach_readiness?.status === 'READY' ? 'READY_FOR_APPROVAL' : 'NEEDS_EVIDENCE'),
+    evidence_refs: envelope.evidence_refs || [],
+    errors: []
+  } : null;
+  const candidates = candidate ? [candidate] : [];
   return {
-    buyer_company_id: candidate.buyer_company_id || candidate.id || null,
-    product_relevance: relevant ? 'yes' : candidate.sells_or_uses_product === false || productStatus === 'no' ? 'no' : 'unknown',
-    buyer_type: candidate.buyer_type || 'unknown',
-    why_fit: candidate.why_fit || '',
-    why_now: candidate.why_now || '',
-    confidence,
-    evidence_refs: evidenceRefs
+    ...envelope,
+    domain_result: {
+      target_definition: result.target_definition || {}, candidates,
+      summary: { discovered: candidates.length, researched: candidates.length, fit_qualified: candidate?.buyer_fit?.decision === 'FIT_QUALIFIED' ? 1 : 0, contact_enriched: candidate?.contact ? 1 : 0, ready: candidate?.outreach_readiness?.status === 'READY' ? 1 : 0, blocked: candidate?.outreach_readiness?.status === 'BLOCKED' ? 1 : 0, errors: 0 },
+      provider_trace: { direct_adapter: { status: 'OK' } },
+      missing_evidence: envelope.missing_evidence || [],
+      next_state: result.handoff ? 'HANDED_OFF_A6' : candidate?.lifecycle || 'TARGET_DEFINED',
+      human_review_required: Boolean(envelope.human_review_required)
+    }
   };
 }
 
-export function evaluateOutreachReadiness({ buyerCompany, buyerFit, contact, a5Result, suppression } = {}) {
-  if (hasSuppression(suppression)) return { status: 'BLOCKED', reason: '命中 suppression / unsubscribe / manual stop' };
+function dependencyStatus(result) {
+  return String(result?.run_status || result?.status || result?.domain_result?.status || '').toUpperCase();
+}
+
+export function evaluateOutreachReadiness({ buyerCompany, buyerFit, contact, contactFit, a4Result, a5Result, suppression, execution = {}, seller = {}, existingOpportunity } = {}) {
+  if (hasSuppression(suppression || {})) return { status: 'BLOCKED', reason: '命中 suppression / unsubscribe / manual stop' };
+  if (existingOpportunity) return { status: 'BLOCKED', reason: 'EXISTING_OPPORTUNITY', existing_opportunity_id: existingOpportunity.id || existingOpportunity.opportunity_id };
   if (isA5Blocked(a5Result)) return { status: 'BLOCKED', reason: 'A5 返回明确交易阻断' };
   if (!buyerCompany) return { status: 'MORE_EVIDENCE', reason: '缺少 Buyer Company' };
-  if (!buyerFit || buyerFit.product_relevance !== 'yes' || !buyerFit.evidence_refs?.length) return { status: 'MORE_EVIDENCE', reason: 'Buyer Fit 缺少产品相关性或证据' };
-  if (!contact || !contact.buyer_company_id) return { status: 'MORE_EVIDENCE', reason: '缺少与 Buyer Company 绑定的联系人' };
-  if (!contact.work_email) return { status: 'MORE_EVIDENCE', reason: '缺少可用企业邮箱' };
-  return { status: 'READY', reason: 'Buyer Company、Buyer Fit、联系人与风险条件已满足一期外联 Gate' };
+  if (!buyerFit || buyerFit.decision !== 'FIT_QUALIFIED' || !buyerFit.evidence_refs?.length) return { status: 'MORE_EVIDENCE', reason: 'BUYER_FIT_NOT_QUALIFIED' };
+  if (!contact || contactFit?.status !== 'READY') return { status: 'MORE_EVIDENCE', reason: contactFit?.reason || '缺少与 Buyer Company 绑定的合格联系人' };
+  if (!seller.company_name && !seller.name) return { status: 'MORE_EVIDENCE', reason: 'SELLER_COMPANY_NAME_REQUIRED' };
+  if (!seller.product_name && !seller.product?.name && !seller.product_id) return { status: 'MORE_EVIDENCE', reason: 'SELLER_PRODUCT_REQUIRED' };
+  const a4Status = dependencyStatus(a4Result);
+  const a5Status = dependencyStatus(a5Result);
+  if (a4Status === 'BLOCKED') return { status: 'BLOCKED', reason: 'A4_SUPPLY_BLOCKED' };
+  if (!['DONE', 'PASS', 'READY'].includes(a4Status)) return { status: 'MORE_EVIDENCE', reason: 'A4_SUPPLY_CHECK_REQUIRED' };
+  if (!['DONE', 'PASS', 'READY', 'REVIEWED'].includes(a5Status)) return { status: 'MORE_EVIDENCE', reason: 'A5_MARKET_RISK_CHECK_REQUIRED' };
+  if (execution.human_gate !== true) return { status: 'BLOCKED', reason: 'HUMAN_GATE_REQUIRED' };
+  if (!execution.campaign_id) return { status: 'MORE_EVIDENCE', reason: 'TRANSPORT_CAMPAIGN_REQUIRED', missing_evidence: ['execution.campaign_id'] };
+  return { status: 'READY', reason: 'Buyer Fit、联系人、A4/A5、Suppression、Transport 与 Human Gate 均已满足', human_review_required: contactFit?.human_review_required !== false };
 }
 
 export function decidePreReplyFollowup({ hasReply = false, deliveryState = 'DELIVERED', suppression = {}, sendCount = 0, maxSendCount = 3, timeAllowed = false, newSignal = false, buyerFitChanged = false } = {}) {
-  if (hasReply) return { status: 'HANDOFF_A6' };
-  if (hasSuppression(suppression) || ['HARD_BOUNCE', 'BOUNCED'].includes(deliveryState)) return { status: 'STOP' };
-  if (sendCount >= maxSendCount) return { status: 'STOP' };
-  if (newSignal || buyerFitChanged) return { status: 'REFRESH_RESEARCH' };
-  if (timeAllowed) return { status: 'FOLLOW_UP' };
-  return { status: 'WAIT' };
+  return decideA2Followup({ hasReply, deliveryState, suppression: { ...suppression, active: hasSuppression(suppression) }, sendCount, maxSendCount, timeAllowed, newSignal, buyerFitChanged });
 }
 
 export function runA2Skill(context = {}) {
@@ -93,15 +127,24 @@ export function runA2Skill(context = {}) {
     });
   }
 
-  const buyerCompany = context.buyer_company || input.buyer_company || null;
-  const buyerFit = buyerCompany ? evaluateBuyerFit(context.buyer_fit || input.buyer_fit || buyerCompany) : null;
-  const contact = context.contact || input.contact || null;
+  const rawBuyerCompany = context.buyer_company || input.buyer_company || null;
+  const buyerCompany = rawBuyerCompany ? bindBuyerCompanyIdentity(rawBuyerCompany) : null;
+  const suppliedFit = context.buyer_fit || input.buyer_fit;
+  const buyerFit = buyerCompany ? (suppliedFit?.development_priority_score !== undefined ? suppliedFit : evaluateA2BuyerFit({ ...buyerCompany, ...(suppliedFit || {}) }, targetDefinition)) : null;
+  const rawContact = context.contact || input.contact || null;
+  const contactFit = rawContact && buyerCompany ? evaluateA2ContactFit(rawContact, buyerCompany, { companySize: buyerCompany.company_size }) : null;
+  const contact = contactFit?.contact || rawContact;
   const readiness = evaluateOutreachReadiness({
     buyerCompany,
     buyerFit,
     contact,
-    a5Result: context.a5_result || input.a5_result,
-    suppression: context.suppression || input.suppression
+    contactFit,
+    a4Result: context.a4_result || input.a4_result || input.dependencies?.a4,
+    a5Result: context.a5_result || input.a5_result || input.dependencies?.a5,
+    suppression: context.suppression || input.suppression,
+    execution: input.execution || {},
+    seller: input.seller || {},
+    existingOpportunity: context.existing_opportunity || input.existing_opportunity
   });
   const followup = decidePreReplyFollowup(context.followup_state || input.followup_state || {});
   const evidenceRefs = normalizeEvidenceRefs(buyerFit?.evidence_refs, buyerCompany?.evidence_refs, contact?.source_refs);
@@ -125,7 +168,13 @@ export function runA2Skill(context = {}) {
       buyer_company: buyerCompany,
       buyer_fit: buyerFit,
       contact,
-      contact_reason: contact?.role_reason || null,
+      contact_fit: contactFit,
+      contact_reason: contactFit?.reason || contact?.role_reason || null,
+      dependencies: {
+        a3: context.a3_result || input.a3_result || input.dependencies?.a3 || null,
+        a4: context.a4_result || input.a4_result || input.dependencies?.a4 || null,
+        a5: context.a5_result || input.a5_result || input.dependencies?.a5 || null
+      },
       outreach_readiness: readiness,
       outreach: context.outreach || input.outreach || null,
       followup,

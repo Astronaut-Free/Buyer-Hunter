@@ -37,7 +37,9 @@ test('Trademo provider maps documented buyer list request shape and keeps endpoi
   const calls = [];
   const provider = createTrademoProvider({ buyerListUrl: 'https://trade.example/buyers', apiKey: 'k', apiKeyHeader: 'x-demo-key', fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ totalCompanies: 1, companies: [{ companyId: 'c1', companyName: 'Buyer One', country: 'US', numberOfShipments: 9 }] }); } });
   const result = await provider.searchBuyers({ countries: ['US'], product_keywords: ['matcha'], hs_codes: ['0902'], countries_trading_with: ['China'] });
-  assert.equal(result.companies[0].buyer_company_id, 'c1');
+  assert.equal(result.companies[0].buyer_company_id, null);
+  assert.equal(result.companies[0].external_ids.trademo, 'c1');
+  assert.equal(result.companies[0].buyer_type, 'UNKNOWN');
   const body = JSON.parse(calls[0].options.body);
   assert.equal(body.companyRole, 'buyer');
   assert.deepEqual(body.companyCountryName, ['US']);
