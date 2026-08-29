@@ -23,7 +23,25 @@ export function createSmartleadProvider({
     return request(`${baseUrl}/campaigns/${campaignId}/leads`, {
       method: 'POST',
       query: authQuery(),
-      body: { lead_list: leads, ...settings }
+      body: { lead_list: leads, settings }
+    });
+  }
+
+  async function getCampaignSequences({ campaignId } = {}) {
+    requireKey(apiKey);
+    if (!campaignId) throw new Error('campaignId required');
+    return request(`${baseUrl}/campaigns/${campaignId}/sequences`, {
+      method: 'GET',
+      query: authQuery()
+    });
+  }
+
+  async function getLeadByEmail({ email } = {}) {
+    requireKey(apiKey);
+    if (!email) throw new Error('email required');
+    return request(`${baseUrl}/leads/`, {
+      method: 'GET',
+      query: authQuery({ email })
     });
   }
 
@@ -60,7 +78,14 @@ export function createSmartleadProvider({
     });
   }
 
-  return { addLeadsToCampaign, getMessageHistory, replyEmailThread, unsubscribeLead };
+  return {
+    addLeadsToCampaign,
+    getCampaignSequences,
+    getLeadByEmail,
+    getMessageHistory,
+    replyEmailThread,
+    unsubscribeLead
+  };
 }
 
 export { DEFAULT_BASE_URL as SMARTLEAD_BASE_URL };
