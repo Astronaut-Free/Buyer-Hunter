@@ -78,12 +78,12 @@ npm start
 
 ## 注册与登录
 
-首页登录入口使用统一认证页。用户可注册为 `SELLER` 或 `BUYER`，后端使用 Node `scrypt` 保存密码哈希，登录返回 7 天会话 Token。卖家注册后进入卖家供给档案，买家注册后进入买家需求发布页。认证状态保存在服务端 `server/agent-state.json`，前端只保存 Token；生产环境请设置随机 `AUTH_SECRET` 环境变量并迁移到正式数据库。
+首页登录入口使用统一认证页。用户可注册为 `SELLER` 或 `BUYER`，后端使用 Node `scrypt` 保存密码哈希，登录返回 7 天会话 Token。卖家注册后进入卖家供给档案，买家注册后进入买家需求发布页。`INTERNAL` 注册为邀请制：服务器设置 `INTERNAL_INVITE_CODE` 后，注册请求携带匹配的 `invite_code` 才可创建 INTERNAL 账号（未设置环境变量则 INTERNAL 注册整体关闭）。认证状态保存在服务端 `server/agent-state.json`，前端只保存 Token；生产环境请设置随机 `AUTH_SECRET` 环境变量并迁移到正式数据库。
 
 认证接口：
 
 ```text
-POST /api/v1/auth/register  { email, password, role, company_name }
+POST /api/v1/auth/register  { email, password, role, company_name[, invite_code] }
 POST /api/v1/auth/login     { email, password }
 GET  /api/v1/auth/me
 POST /api/v1/auth/logout

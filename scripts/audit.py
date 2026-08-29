@@ -3,8 +3,8 @@
     python scripts/audit.py [--skip-tests] [--no-html]
 
 Runs the Python + Node test suites, exercises the A1->A5 pipeline + decision API,
-the Free->agent bridge, the agent runtime boot, and the A2-A6 skill-dispatch
-check, then writes:
+the bidirectional Free<->agent bridge, the agent runtime boot, the A2-A6
+skill-dispatch check, and the portal live-data wiring, then writes:
 
     docs/AUDIT_<date>.md      the report
     docs/audit/audit.html     a standalone artifact (unless --no-html)
@@ -200,6 +200,102 @@ def audit_bridge() -> None:
         )
         detail = f"{len(rows)} rows exported (db non-PASS = {expect})"
     check("Free -> agent bridge").record(ok, detail)
+
+
+def audit_reverse_bridge() -> None:
+    """Smoke the reverse channel against the real store: a temp agent-outcomes.json
+    (one WON outcome for a real non-PASS opportunity + one A2 target) is imported
+    twice; row counts must increase once and stay put on replay."""
+    import sqlite3
+    import tempfile
+
+    db = ROOT / "runtime" / "buyer_hunter.db"
+    try:
+        with sqlite3.connect(db) as conn:
+            opp_id = conn.execute(
+                "SELECT opportunity_id FROM opportunity_decision "
+                "WHERE decision_status!='PASS' ORDER BY rank_position LIMIT 1"
+            ).fetchone()[0]
+            before_outcomes = conn.execute("SELECT COUNT(*) FROM deal_outcome").fetchone()[0]
+            before_targets = conn.execute("SELECT COUNT(*) FROM agent_discovered_target").fetchone()[0]
+    except (sqlite3.Error, TypeError):
+        check("reverse bridge (agent -> Free)").record(False, "store not queryable")
+        return
+
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    payload = {
+        "exported_at": stamp,
+        "contract": "contracts/opportunity-bridge-v1.md (v2 reverse)",
+        "direction": "agent -> free (v2 reverse)",
+        "entries": {
+            "a6_outcomes": [
+                {
+                    "opportunity_id": opp_id,
+                    "seed_key": f"bridge:free:{opp_id}",
+                    "source": "FREE_PIPELINE",
+                    "outcome": "WON",
+                    "reason": "audit smoke",
+                    "next_action": None,
+                    "stage_after": "NEGOTIATING",
+                    "reported_at": stamp,
+                }
+            ],
+            "a2_targets": [
+                {
+                    "seed_key": "a2:audit:smoke",
+                    "source": "A2_PROACTIVE_BUYER_DEVELOPMENT",
+                    "seller": {"id": "seller-guizhou-specialty-demo", "name": "audit"},
+                    "buyer": {"id": "audit_buyer", "name": "Audit Smoke Co", "country": "DE",
+                              "domain": "audit-smoke.invalid"},  # non-matching: no entity link rows
+                    "contact": None, "stage": None, "status": "READY_FOR_OUTREACH_APPROVAL",
+                    "a2": {"rank_score": 50.0}, "evidence_ids": [],
+                    "created_at": stamp, "updated_at": stamp,
+                }
+            ],
+        },
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        in_path = Path(tmp) / "agent-outcomes.json"
+        in_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        proc1 = run([PY, "scripts/import_agent_outcomes.py", "--db", str(db), "--in", str(in_path)])
+        proc2 = run([PY, "scripts/import_agent_outcomes.py", "--db", str(db), "--in", str(in_path)])
+
+    with sqlite3.connect(db) as conn:
+        after_outcomes = conn.execute("SELECT COUNT(*) FROM deal_outcome").fetchone()[0]
+        after_targets = conn.execute("SELECT COUNT(*) FROM agent_discovered_target").fetchone()[0]
+    ok = (
+        proc1.returncode == 0
+        and proc2.returncode == 0
+        and after_outcomes == before_outcomes + 1
+        and after_targets == before_targets + 1
+    )
+    check("reverse bridge (agent -> Free)").record(
+        ok,
+        f"deal_outcome {before_outcomes}->{after_outcomes}, "
+        f"targets {before_targets}->{after_targets}, replay idempotent",
+    )
+
+
+def audit_portal_wiring() -> None:
+    """Static checks: API CORS admits the site origin; the opportunities page
+    loads the live-data shim."""
+    cors_ok = False
+    try:
+        source = (ROOT / "api" / "app.py").read_text(encoding="utf-8")
+        cors_ok = all(origin in source for origin in ("http://127.0.0.1:4180", "http://localhost:4180"))
+    except OSError:
+        pass
+    live_js = ROOT / "site" / "opportunities-live.js"
+    page = ROOT / "site" / "opportunities.html"
+    wired = live_js.exists() and (
+        'src="opportunities-live.js"' in page.read_text(encoding="utf-8", errors="replace")
+        if page.exists()
+        else False
+    )
+    check("portal live wiring (CORS + opportunities-live.js)").record(
+        cors_ok and wired,
+        f"CORS 4180={cors_ok}, live js wired={wired}",
+    )
 
 
 def audit_agent_boot() -> None:
@@ -405,25 +501,30 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
         },
         {
             "module": "门户站点 (landing)",
-            "runtime": "静态 — site/(index.html + opportunities.html)，vendored 自 origin/ui",
+            "runtime": "静态 — site/(index.html + opportunities.html)，vendored 自 origin/ui @ c7d5634",
             "state": "就绪(前门)",
-            "evidence": "WebGL/canvas 首页 + 全球商机展示页；离线地图数据自带；nav-bridge.js 把登录/CTA 指向 demo；"
-            "run.ps1 -Up / make up 起在 4180",
-            "gap": "样例订单为设计稿静态内容，未接实时 API（可选增强）；作者 yayaw2826-oss 仍在 origin/ui 迭代",
+            "evidence": "WebGL/canvas 首页 + 全球商机展示页（network-stage + deal-section）；离线地图数据自带；"
+            "nav-bridge.js 把登录/CTA 指向 demo；opportunities-live.js 把精选卡片/需求行/KPI 换成 /api/v1 实时数据"
+            "（API 失败静默回退静态样例，LIVE/FALLBACK 徽标）；run.ps1 -Up / make up 起在 4180",
+            "gap": "作者 yayaw2826-oss 仍在 origin/ui 迭代（re-sync 时需重加两行 script）",
         },
         {
             "module": "Agent 控制面",
             "runtime": "Node — AgentRun / Step / Checkpoint / Approval / Trace / Idempotency",
             "state": "就绪",
-            "evidence": "每个 capability 调用记为 Step；四层幂等；INTERNAL 可观测性；registry + 事件路由审计通过",
-            "gap": "INTERNAL 用户无法自注册（需手工种子或环境变量）；控制面与 Free 采集为单向桥",
+            "evidence": "每个 capability 调用记为 Step；四层幂等；INTERNAL 可观测性；registry + 事件路由审计通过；"
+            "INTERNAL 注册经 INTERNAL_INVITE_CODE 邀请码开放",
+            "gap": "控制面与 Free 采集为文件桥（非实时 API 写回）",
         },
         {
-            "module": "数据桥 (Free -> agent)",
-            "runtime": "Python — scripts/export_opportunities_for_agent.py",
-            "state": "就绪(v1 单向)",
-            "evidence": "决策 store -> agent/db/opportunities.json；非 PASS 行；证据 URL 可回溯；6 个测试",
-            "gap": "单向；A2 发现与 A6 结果不回流；无 domain 实体合并",
+            "module": "数据桥 (Free <-> agent)",
+            "runtime": "Python — scripts/export_opportunities_for_agent.py + scripts/import_agent_outcomes.py · "
+            "Node — persist 写 agent-outcomes.json + boot 时 merge-on-reload",
+            "state": "就绪(v2 双向)",
+            "evidence": "正向：决策 store -> agent/db/opportunities.json（非 PASS 行，证据 URL 可回溯）；"
+            "反向：A6 结果 -> deal_outcome、A2 目标 -> agent_discovered_target，幂等 upsert，重建后可重放；"
+            "domain 实体解析自动建 buyer_alias + entity_merge_audit（AUTO_MERGE）并在 agent 侧绑定 free:buyer 引用",
+            "gap": "实网 A6 回流待 Smartlead 凭据；实体合并待 buyer domain 填充生效（当前 51 买家均无 domain）",
         },
         {
             "module": "Capability 合同 + Python 桥",
@@ -497,6 +598,7 @@ def write_markdown(path: Path, matrix: list[dict[str, str]], dispatch: dict[str,
         "python -m pytest -q              # Python 测试",
         "cd agent && npm test            # Node 测试",
         "node agent/scripts/skill-dispatch-audit.mjs   # 仅 skill 调度",
+        "python scripts/import_agent_outcomes.py       # 反向桥（幂等）",
         "```",
         "",
         "## 5. 不在整合范围（后续）",
@@ -504,11 +606,9 @@ def write_markdown(path: Path, matrix: list[dict[str, str]], dispatch: dict[str,
         "- 单语言统一（Node ↔ Python 移植）",
         "- 统一 Opportunity 主键（Phase 4，设计见 `contracts/opportunity-v2.md`）",
         "- A2 自然语言入口接线",
-        "- A2↔A1 双向汇合（被开发公司之后发 RFQ 自动升进）",
         "- 实网 provider smoke（Smartlead / Apollo / Trademo 凭据）",
-        "- INTERNAL 用户种子 / 控制面反向写回",
+        "- 控制面实时反向写回（当前为文件桥，非 API）",
         "- `brand2` 前端增量 cherry-pick（联系方式解锁双态 UX）",
-        "- 门户站点接实时 API（把 site/opportunities.html 的样例订单换成 /api/v1 数据）",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -582,10 +682,12 @@ def main() -> int:
     store_counts = audit_pipeline_store()
     audit_decision_api()
     audit_bridge()
+    audit_reverse_bridge()
     audit_agent_boot()
     dispatch = audit_skill_dispatch()
     audit_orchestrator_skills()
     audit_landing_site()
+    audit_portal_wiring()
 
     matrix = completeness_matrix(store_counts, dispatch)
     DOCS.mkdir(exist_ok=True)
