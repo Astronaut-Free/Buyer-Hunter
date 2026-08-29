@@ -27,7 +27,7 @@
       mask-image:linear-gradient(to top,#000,transparent 92%); -webkit-mask-image:linear-gradient(to top,#000,transparent 92%);
     }
     .lightfall-canvas { position:absolute; z-index:0; inset:58px 0 0; width:100%; height:calc(100% - 58px); display:block; pointer-events:none; opacity:.5; mix-blend-mode:screen; filter:saturate(.78); mask-image:linear-gradient(90deg,#000 0%,#000 13%,rgba(0,0,0,.72) 21%,transparent 37%,transparent 63%,rgba(0,0,0,.72) 79%,#000 87%,#000 100%); -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 13%,rgba(0,0,0,.72) 21%,transparent 37%,transparent 63%,rgba(0,0,0,.72) 79%,#000 87%,#000 100%); }
-    .globe-wrap { --globe-x:50%; --globe-y:67%; --globe-size:68vmin; position:absolute; z-index:1; width:min(var(--globe-size),1400px); aspect-ratio:1; left:var(--globe-x); top:var(--globe-y); transform:translate(-50%,-50%); filter:drop-shadow(0 28px 33px rgba(0,20,14,.16)); container-type:inline-size; }
+    .globe-wrap { --globe-x:50%; --globe-y:89%; --globe-size:99.5vmin; position:absolute; z-index:1; width:min(var(--globe-size),1400px); aspect-ratio:1; left:var(--globe-x); top:var(--globe-y); transform:translate(-50%,-50%); filter:drop-shadow(0 28px 33px rgba(0,20,14,.16)); container-type:inline-size; }
     .globe-breath-lines { position:absolute; z-index:0; left:50%; top:50%; width:118%; height:118%; overflow:visible; transform:translate(-50%,-50%); pointer-events:none; }
     .globe-breath-lines path { fill:none; stroke:#f7f4ec; stroke-width:1; stroke-linecap:round; vector-effect:non-scaling-stroke; stroke-dasharray:108 26 54 230; filter:drop-shadow(0 0 4px rgba(247,244,236,.15)); animation:globe-line-breathe 6.8s ease-in-out infinite,globe-line-drift 24s linear infinite; }
     .globe-breath-lines path:nth-child(2) { animation-delay:-1.7s,-8s; }
@@ -35,8 +35,8 @@
     .globe-breath-lines path:nth-child(4) { animation-delay:-5.1s,-20s; }
     @keyframes globe-line-breathe { 0%,100% { stroke-opacity:.07; } 50% { stroke-opacity:.22; } }
     @keyframes globe-line-drift { to { stroke-dashoffset:-418; } }
-    .hero-copy-art { --copy-x:50%; --copy-y:58px; --copy-width:1720px; position:absolute; z-index:3; top:var(--copy-y); left:var(--copy-x); width:min(var(--copy-width),100vw); max-width:none; height:auto; transform:translateX(-50%); pointer-events:none; user-select:none; -webkit-user-select:none; }
-    .hero-cta { --cta-x:50%; --cta-y:43%; --shine-angle:135deg; --shine-opacity:.45; position:absolute; isolation:isolate; z-index:4; left:var(--cta-x); top:var(--cta-y); transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:7px; width:max-content; min-width:0; height:clamp(34px,4.7cqw,42px); padding:0 5px 0 14px; overflow:hidden; color:#123b32; background:transparent; border:0; border-radius:999px; box-shadow:0 6px 16px rgba(32,24,6,.18); cursor:pointer; user-select:none; -webkit-user-select:none; white-space:nowrap; text-decoration:none; font:400 clamp(13px,2.6cqw,18px)/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.04em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
+    .hero-copy-art { --copy-x:51%; --copy-y:10.6vh; --copy-width:52.5vw; position:absolute; z-index:3; top:var(--copy-y); left:var(--copy-x); width:min(var(--copy-width),1720px); max-width:none; height:auto; transform:translateX(-50%); pointer-events:none; user-select:none; -webkit-user-select:none; }
+    .hero-cta { --cta-x:50.5%; --cta-y:-1.8%; --shine-angle:135deg; --shine-opacity:.45; position:absolute; isolation:isolate; z-index:4; left:var(--cta-x); top:var(--cta-y); transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:7px; width:max-content; min-width:0; height:clamp(34px,4.7cqw,42px); padding:0 5px 0 14px; overflow:hidden; color:#123b32; background:transparent; border:0; border-radius:999px; box-shadow:0 6px 16px rgba(32,24,6,.18); cursor:pointer; user-select:none; -webkit-user-select:none; white-space:nowrap; text-decoration:none; font:400 clamp(13px,2.6cqw,18px)/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.04em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
     .hero-cta::before { content:""; position:absolute; z-index:-2; inset:-100%; background:conic-gradient(from var(--shine-angle),transparent 0 35%,rgba(255,249,232,.18) 42%,#fff9e8 48%,#d5a33f 52%,#fff9e8 56%,rgba(255,249,232,.18) 62%,transparent 68%); opacity:var(--shine-opacity); transition:opacity .18s ease; }
     .hero-cta::after { content:""; position:absolute; z-index:-1; inset:1px; border-radius:999px; background:rgba(213,163,63,.96); box-shadow:0 1px 0 rgba(255,255,255,.34) inset; transition:background .24s ease; }
     .hero-cta__arrow { display:grid; place-items:center; flex:0 0 auto; width:clamp(24px,3.7cqw,29px); height:clamp(24px,3.7cqw,29px); color:#f7f4ec; background:#123b32; border-radius:50%; font-size:clamp(12px,2cqw,15px); line-height:1; transition:color .24s ease,background .24s ease,transform .24s cubic-bezier(.2,.8,.2,1); }
@@ -280,167 +280,6 @@
     }
     addLivingShine(document.getElementById('loginButton'));
     addLivingShine(document.getElementById('heroCta'),.46);
-  })();
-  </script>
-  <script>
-  (() => {
-    const globe=document.querySelector('.globe-wrap');
-    try{
-      if(localStorage.getItem('qianpulse-globe-layout-version')!=='down-67-v2'){
-        localStorage.setItem('qianpulse-globe-y','67');localStorage.setItem('qianpulse-globe-layout-version','down-67-v2');
-      }
-      const x=Number(localStorage.getItem('qianpulse-globe-x'));
-      const y=Number(localStorage.getItem('qianpulse-globe-y'));
-      const size=Number(localStorage.getItem('qianpulse-globe-size'));
-      if(x>=5&&x<=95)globe.style.setProperty('--globe-x',`${x}%`);
-      if(y>=12&&y<=95)globe.style.setProperty('--globe-y',`${y}%`);
-      if(size>=35&&size<=160)globe.style.setProperty('--globe-size',`${size}vmin`);
-    }catch{}
-  })();
-  </script>
-  <script>
-  (() => {
-    const globe=document.querySelector('.globe-wrap');
-    const editor=document.getElementById('textEditor'),status=document.getElementById('textEditorStatus');
-    if(!editor){
-      const texts=[...document.querySelectorAll('[data-text-key]')];
-      texts.forEach(item=>{
-        const key=item.dataset.textKey;
-        try{
-          const x=localStorage.getItem(`qianpulse-text-${key}-x`),y=localStorage.getItem(`qianpulse-text-${key}-y`),size=localStorage.getItem(`qianpulse-text-${key}-size`);
-          if(x!==null)item.style.setProperty('--text-x',`${Number(x)}%`);
-          if(y!==null)item.style.setProperty('--text-y',`${Number(y)}%`);
-          if(size!==null)item.style.setProperty('--text-size',`${Number(size)}px`);
-        }catch{}
-      });
-      const cta=document.getElementById('heroCta');
-      try{
-        const x=localStorage.getItem('qianpulse-cta-x'),y=localStorage.getItem('qianpulse-cta-y');
-        if(x!==null)cta.style.setProperty('--cta-x',`${Number(x)}%`);
-        if(y!==null)cta.style.setProperty('--cta-y',`${Number(y)}%`);
-      }catch{}
-      return;
-    }
-    const sizeInput=document.getElementById('textSize'),sizeOutput=document.getElementById('textSizeOutput');
-    const globeVertical=document.getElementById('globeVertical'),globeVerticalOutput=document.getElementById('globeVerticalOutput');
-    const cta=document.getElementById('heroCta'),ctaDefault=[50,43];
-    const defaults={zh:[20,4],en:[68,17],tagline:[50,31]};
-    const sizeRanges={zh:[48,200],en:[20,120],tagline:[14,72]};
-    const items=[...document.querySelectorAll('[data-text-key]')];
-    const tagline=items.find(item=>item.dataset.textKey==='tagline');
-    let selected=null;
-    function syncCtaFont(){cta.style.fontSize=getComputedStyle(tagline).fontSize;}
-    function setPosition(item,x,y,save=false){
-      x=Math.min(140,Math.max(-40,x));y=Math.min(140,Math.max(-40,y));
-      item.style.setProperty('--text-x',`${x}%`);item.style.setProperty('--text-y',`${y}%`);
-      if(save){
-        const key=item.dataset.textKey;
-        try{localStorage.setItem(`qianpulse-text-${key}-x`,String(x));localStorage.setItem(`qianpulse-text-${key}-y`,String(y));}catch{}
-      }
-      return [x,y];
-    }
-    function setSize(item,value,save=false){
-      const key=item.dataset.textKey,[min,max]=sizeRanges[key];
-      const size=Math.min(max,Math.max(min,Math.round(Number(value)||min)));
-      item.style.setProperty('--text-size',`${size}px`);
-      if(key==='tagline')syncCtaFont();
-      if(save)try{localStorage.setItem(`qianpulse-text-${key}-size`,String(size));}catch{}
-      if(item===selected){sizeInput.value=String(size);sizeOutput.value=`${size} px`;}
-    }
-    function selectItem(item){
-      selected=item;items.forEach(node=>node.classList.toggle('is-selected',node===item));
-      cta.classList.remove('is-selected');sizeInput.disabled=false;
-      const [min,max]=sizeRanges[item.dataset.textKey],size=Math.round(parseFloat(getComputedStyle(item).fontSize));
-      sizeInput.min=String(min);sizeInput.max=String(max);sizeInput.value=String(Math.min(max,Math.max(min,size)));sizeOutput.value=`${size} px`;
-      status.textContent=`当前选中：${item.dataset.textName}`;
-    }
-    items.forEach(item=>{
-      const key=item.dataset.textKey,base=defaults[key];let x=base[0],y=base[1];
-      try{
-        const sx=localStorage.getItem(`qianpulse-text-${key}-x`),sy=localStorage.getItem(`qianpulse-text-${key}-y`),ss=localStorage.getItem(`qianpulse-text-${key}-size`);
-        if(sx!==null&&Number.isFinite(Number(sx)))x=Number(sx);
-        if(sy!==null&&Number.isFinite(Number(sy)))y=Number(sy);
-        if(ss!==null&&Number.isFinite(Number(ss)))setSize(item,Number(ss));
-      }catch{}
-      setPosition(item,x,y);
-    });
-    function setCtaPosition(x,y,save=false){
-      x=Math.min(140,Math.max(-40,x));y=Math.min(140,Math.max(-40,y));
-      cta.style.setProperty('--cta-x',`${x}%`);cta.style.setProperty('--cta-y',`${y}%`);
-      if(save)try{localStorage.setItem('qianpulse-cta-x',String(x));localStorage.setItem('qianpulse-cta-y',String(y));}catch{}
-      return [x,y];
-    }
-    let ctaX=ctaDefault[0],ctaY=ctaDefault[1];
-    try{
-      const sx=localStorage.getItem('qianpulse-cta-x'),sy=localStorage.getItem('qianpulse-cta-y');
-      if(sx!==null&&Number.isFinite(Number(sx)))ctaX=Number(sx);
-      if(sy!==null&&Number.isFinite(Number(sy)))ctaY=Number(sy);
-    }catch{}
-    setCtaPosition(ctaX,ctaY);
-    let drag=null;
-    items.forEach(item=>{
-      item.addEventListener('pointerdown',e=>{
-        selectItem(item);item.classList.add('is-dragging');
-        const x=parseFloat(getComputedStyle(item).getPropertyValue('--text-x')),y=parseFloat(getComputedStyle(item).getPropertyValue('--text-y'));
-        drag={item,startX:e.clientX,startY:e.clientY,x,y};item.setPointerCapture(e.pointerId);
-        status.textContent=`正在移动：${item.dataset.textName}`;e.preventDefault();e.stopPropagation();
-      });
-      item.addEventListener('pointermove',e=>{
-        if(!drag||drag.item!==item)return;
-        const rect=globe.getBoundingClientRect();
-        const pos=setPosition(item,drag.x+(e.clientX-drag.startX)/rect.width*100,drag.y+(e.clientY-drag.startY)/rect.height*100);
-        status.textContent=`${item.dataset.textName}：X ${pos[0].toFixed(1)}% · Y ${pos[1].toFixed(1)}%`;
-      });
-      const stop=e=>{
-        if(!drag||drag.item!==item)return;
-        const x=parseFloat(item.style.getPropertyValue('--text-x')),y=parseFloat(item.style.getPropertyValue('--text-y'));
-        setPosition(item,x,y,true);item.classList.remove('is-dragging');drag=null;
-        try{item.releasePointerCapture(e.pointerId);}catch{}
-      };
-      item.addEventListener('pointerup',stop);item.addEventListener('pointercancel',stop);
-    });
-    cta.addEventListener('pointerdown',e=>{
-      items.forEach(node=>node.classList.remove('is-selected'));selected=null;sizeInput.disabled=true;sizeOutput.value='—';
-      cta.classList.add('is-selected','is-dragging');
-      const x=parseFloat(getComputedStyle(cta).getPropertyValue('--cta-x')),y=parseFloat(getComputedStyle(cta).getPropertyValue('--cta-y'));
-      drag={item:cta,startX:e.clientX,startY:e.clientY,x,y};cta.setPointerCapture(e.pointerId);
-      status.textContent='正在移动：立即寻找商机';e.preventDefault();e.stopPropagation();
-    });
-    cta.addEventListener('pointermove',e=>{
-      if(!drag||drag.item!==cta)return;
-      const rect=globe.getBoundingClientRect();
-      const pos=setCtaPosition(drag.x+(e.clientX-drag.startX)/rect.width*100,drag.y+(e.clientY-drag.startY)/rect.height*100);
-      status.textContent=`按钮：X ${pos[0].toFixed(1)}% · Y ${pos[1].toFixed(1)}%`;
-    });
-    const stopCta=e=>{
-      if(!drag||drag.item!==cta)return;
-      const x=parseFloat(cta.style.getPropertyValue('--cta-x')),y=parseFloat(cta.style.getPropertyValue('--cta-y'));
-      setCtaPosition(x,y,true);cta.classList.remove('is-dragging');drag=null;
-      try{cta.releasePointerCapture(e.pointerId);}catch{}
-    };
-    cta.addEventListener('pointerup',stopCta);cta.addEventListener('pointercancel',stopCta);
-    document.getElementById('textEditorToggle').addEventListener('click',e=>{
-      const collapsed=editor.classList.toggle('is-collapsed');e.currentTarget.setAttribute('aria-expanded',String(!collapsed));
-    });
-    sizeInput.addEventListener('input',e=>{if(selected)setSize(selected,e.target.value,true);});
-    const initialGlobeY=parseFloat(getComputedStyle(globe).getPropertyValue('--globe-y'))||67;
-    globeVertical.value=String(initialGlobeY);globeVerticalOutput.value=`${initialGlobeY}%`;
-    globeVertical.addEventListener('input',e=>{
-      const y=Math.min(95,Math.max(10,Number(e.target.value)||67));
-      globe.style.setProperty('--globe-y',`${y}%`);globeVerticalOutput.value=`${y}%`;
-      try{localStorage.setItem('qianpulse-globe-y',String(y));}catch{}
-    });
-    document.getElementById('textReset').addEventListener('click',()=>{
-      items.forEach(item=>{
-        const key=item.dataset.textKey;setPosition(item,...defaults[key],true);item.style.removeProperty('--text-size');
-        try{localStorage.removeItem(`qianpulse-text-${key}-size`);}catch{}
-      });
-      setCtaPosition(...ctaDefault,true);globe.style.setProperty('--globe-y','67%');globeVertical.value='67';globeVerticalOutput.value='67%';syncCtaFont();
-      try{localStorage.setItem('qianpulse-globe-y','67');}catch{}
-      selectItem(items[0]);status.textContent='已恢复推荐布局与字号';
-    });
-    new ResizeObserver(syncCtaFont).observe(tagline);syncCtaFont();
-    selectItem(items[0]);
   })();
   </script>
   <script>
