@@ -1,10 +1,21 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-const DATA_FILE = fileURLToPath(new URL('../db/free-opportunities.json', import.meta.url));
+// Bridge output from the Python pipeline (scripts/export_opportunities_for_agent.py);
+// the hand-authored demo seed is kept as a fallback for a clean checkout.
+const BRIDGE_FILE = fileURLToPath(new URL('../db/opportunities.json', import.meta.url));
+const SEED_FILE = fileURLToPath(new URL('../db/free-opportunities.json', import.meta.url));
 
 export async function loadFreeOpportunities() {
-  return JSON.parse(await readFile(DATA_FILE, 'utf8'));
+  for (const file of [BRIDGE_FILE, SEED_FILE]) {
+    try {
+      const rows = JSON.parse(await readFile(file, 'utf8'));
+      if (Array.isArray(rows)) return rows;
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+  }
+  return [];
 }
 
 export function matchProducts(opportunity, products = []) {
