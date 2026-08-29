@@ -2,12 +2,19 @@ name: QianPulse Skill Tests
 
 on:
   push:
-    branches: [MVP]
+    branches: [MVP, MVP-a2a6-runtime-fix]
     paths:
       - 'skill-runtime/**'
       - 'skills/**'
       - 'tests/**'
+      - 'providers/**'
+      - 'webhooks/**'
+      - 'server/**'
+      - 'db/**'
       - 'capability-adapter.js'
+      - 'agent-skill-bridge.js'
+      - 'external-action-executor.js'
+      - 'opportunity-seeder.js'
       - 'package.json'
       - '.github/workflows/skill-tests.yml'
   pull_request:
@@ -15,7 +22,14 @@ on:
       - 'skill-runtime/**'
       - 'skills/**'
       - 'tests/**'
+      - 'providers/**'
+      - 'webhooks/**'
+      - 'server/**'
+      - 'db/**'
       - 'capability-adapter.js'
+      - 'agent-skill-bridge.js'
+      - 'external-action-executor.js'
+      - 'opportunity-seeder.js'
       - 'package.json'
 
 jobs:
