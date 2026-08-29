@@ -53,7 +53,16 @@ export function createQianPulseSkillOrchestrator({
         envelope: null
       };
     }
-    const message = event?.payload?.message || event?.payload?.content || event?.content || '';
+
+    const rawMessage = event?.payload?.message || event?.payload?.content || event?.content || '';
+    const latestBuyerMessage = typeof rawMessage === 'string'
+      ? { content: rawMessage, evidence_ref: event?.evidence_ref || null }
+      : {
+          ...rawMessage,
+          evidence_ref: rawMessage?.evidence_ref || event?.evidence_ref || null,
+          evidence_refs: rawMessage?.evidence_refs || event?.evidence_refs || []
+        };
+
     const baseEnvelope = runA6Skill({
       opportunity_id: opportunity.id,
       trigger_event: {
@@ -61,7 +70,7 @@ export function createQianPulseSkillOrchestrator({
         event_type: event?.event_type || 'BUYER_MESSAGE',
         timestamp: event?.timestamp || clock()
       },
-      latest_buyer_message: typeof message === 'string' ? { content: message, evidence_ref: event?.evidence_ref || null } : message,
+      latest_buyer_message: latestBuyerMessage,
       field_updates: event?.payload?.field_updates || {},
       opportunity_state: {
         stage: opportunity.stage || 'CONTACTED',
