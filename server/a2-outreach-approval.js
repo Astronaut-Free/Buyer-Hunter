@@ -20,7 +20,7 @@ export function createA2OutreachApprovals({
 
   for (const opportunity of opportunities) {
     const draft = opportunity?.a2?.outreach;
-    const contact = opportunity?.a2?.contact || {};
+    const contact = opportunity?.contact || opportunity?.a2?.contact || {};
     if (opportunity?.status !== 'READY_FOR_OUTREACH_APPROVAL' || !draft || !contact.work_email) continue;
 
     const existing = Object.values(state.approvals).find(item =>
