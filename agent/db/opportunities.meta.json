@@ -1,0 +1,8 @@
+{
+  "source_db": "runtime\\buyer_hunter.db",
+  "exported_at": "2026-08-29T04:54:03+00:00",
+  "row_count": 18,
+  "ruleset_version": "opportunity-v1.1.0",
+  "contract": "contracts/opportunity-bridge-v1.md",
+  "direction": "free_pipeline -> agent (one-way, v1)"
+}
