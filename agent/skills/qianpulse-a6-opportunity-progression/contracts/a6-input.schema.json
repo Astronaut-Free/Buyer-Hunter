@@ -1,1 +1,52 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"QianPulse A6 Input","type":"object","required":["opportunity_id","trigger_event","conversation_context","opportunity_state","seller_context"],"properties":{"opportunity_id":{"type":"string"},"trigger_event":{"type":"object","required":["event_id","event_type","timestamp"],"properties":{"event_id":{"type":"string"},"event_type":{"enum":["BUYER_MESSAGE","FOLLOWUP_DUE","QUOTE_UPDATED","SAMPLE_UPDATED","SELLER_UPDATE","APPROVAL_RESULT","SYSTEM_NEW_SIGNAL","EVIDENCE_ADDED","MANUAL_RESUME"]},"timestamp":{"type":"string"}},"additionalProperties":true},"latest_buyer_message":{"type":["object","string","null"]},"conversation_context":{"type":"object"},"opportunity_state":{"type":"object"},"seller_context":{"type":"object"},"refreshed_capabilities":{"type":"array","items":{"type":"string"}},"a3_result":{"type":["object","null"]},"a4_result":{"type":["object","null"]},"a5_result":{"type":["object","null"]},"pending_approval":{"type":["object","null"]}},"additionalProperties":true}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QianPulse A6 Input v1.1",
+  "type": "object",
+  "required": ["opportunity_id", "evaluated_at", "trigger_event", "conversation_context", "opportunity_state", "skill_results", "seller_execution_policy"],
+  "properties": {
+    "opportunity_id": { "type": "string", "minLength": 1 },
+    "evaluated_at": { "type": "string" },
+    "trigger_event": {
+      "type": "object",
+      "required": ["event_id", "event_type", "timestamp"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "event_type": {
+          "enum": ["BUYER_MESSAGE", "FOLLOWUP_DUE", "EVIDENCE_ADDED", "APPROVAL_RESULT", "MANUAL_RESUME", "ORDER_CONFIRMED", "PO_RECEIVED", "CONTRACT_CONFIRMED", "MANUAL_WON", "MANUAL_LOST", "COMPLIANCE_STOP", "MANUAL_STOP"]
+        },
+        "timestamp": { "type": "string" },
+        "evidence_ref": { "type": ["string", "null"] },
+        "human_approved": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "conversation_context": {
+      "type": "object",
+      "required": ["latest_message"],
+      "properties": { "latest_message": { "type": ["object", "string"] } },
+      "additionalProperties": true
+    },
+    "opportunity_state": {
+      "type": "object",
+      "required": ["status", "stage", "fields"],
+      "properties": {
+        "status": { "type": "string" },
+        "stage": { "type": "string" },
+        "fields": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "skill_results": {
+      "type": "object",
+      "required": ["a3", "a4", "a5"],
+      "properties": {
+        "a3": { "type": ["object", "null"] },
+        "a4": { "type": ["object", "null"] },
+        "a5": { "type": ["object", "null"] }
+      }
+    },
+    "seller_execution_policy": { "type": "object" },
+    "field_updates": { "type": "object" }
+  },
+  "additionalProperties": true
+}
