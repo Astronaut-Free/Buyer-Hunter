@@ -1,6 +1,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { createQianPulseSkillOrchestrator } from '../qianpulse-skill-orchestrator.js';
 import { createAgentStateOpportunityStore } from './agent-state-opportunity-store.js';
+import { createA2OutreachApprovals } from './a2-outreach-approval.js';
 
 const A2_EVENT_TYPES = new Set(['SELLER_PROACTIVE_DEVELOPMENT', 'SYSTEM_NEW_PROSPECT_SIGNAL']);
 
@@ -159,6 +160,17 @@ export function createLiveA2A6Runtime({
       };
       state.steps[step.step_id] = step;
 
+      const campaignId = payload.campaign_id || input.execution?.campaign_id || null;
+      const approvals = campaignId ? createA2OutreachApprovals({
+        state,
+        run,
+        opportunities: result.opportunities,
+        campaignId,
+        id,
+        now,
+        requestedBy: user.id
+      }) : [];
+
       const checkpoint = {
         checkpoint_id: id('cp'),
         run_id: run.run_id,
@@ -177,6 +189,8 @@ export function createLiveA2A6Runtime({
         generated_opportunity_ids: run.generated_opportunity_ids,
         opportunities: result.opportunities,
         batch_result: result.batch_result,
+        outreach_approvals: approvals,
+        outreach_approval_required: result.opportunities.some(item => item.status === 'READY_FOR_OUTREACH_APPROVAL'),
         checkpoint_id: checkpoint.checkpoint_id
       };
       state.idempotency[idem] = response;
