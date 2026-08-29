@@ -64,7 +64,7 @@ test('server boots and health endpoint is usable', async () => {
   }
 });
 
-test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state, and INTERNAL approval sends current stats-id reply', async () => {
+test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state, approval sends reply, and observability reflects the flow', async () => {
   const qianpulsePort = 3398;
   const webhookSecret = 'http-e2e-webhook-secret';
   const internalToken = 'http-e2e-internal-token';
@@ -242,6 +242,21 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
     assert.equal(completedWorkspace.approvals[0].status, 'APPROVED');
     assert.equal(completedWorkspace.approvals[0].execution_status, 'SENT');
     assert.equal(completedWorkspace.activity.external_actions[0].status, 'SENT');
+
+    const observabilityResponse = await fetch(`http://127.0.0.1:${qianpulsePort}/api/v1/internal/observability`, {
+      headers: { authorization: `Bearer ${internalToken}` }
+    });
+    const observability = await observabilityResponse.json();
+    assert.equal(observabilityResponse.status, 200);
+    assert.equal(observability.observability_version, '1.0.0');
+    assert.equal(observability.totals.opportunities >= 1, true);
+    assert.equal(observability.funnel.a6_runs, 1);
+    assert.equal(observability.funnel.buyer_replied, 1);
+    assert.equal(observability.integrations.smartlead_bound_leads, 1);
+    assert.equal(observability.execution.external_action_status.SENT, 1);
+
+    const deniedObservability = await fetch(`http://127.0.0.1:${qianpulsePort}/api/v1/internal/observability`);
+    assert.equal(deniedObservability.status, 401);
 
     assert.equal(smartleadCalls.filter(call => call.pathname === '/api/v1/campaigns/all-leads-activities').length, 1);
     assert.equal(smartleadCalls.filter(call => call.pathname === '/api/v1/campaigns/123/reply-email-thread').length, 1);
