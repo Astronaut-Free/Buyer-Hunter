@@ -75,6 +75,7 @@ export function createSmartleadLiveWebhookHandler({
       evidence_ref: mapped.evidence_ref || `smartlead:request:${normalized.request_id}`,
       timestamp: mapped.timestamp || normalized.created_at,
       source: 'smartlead',
+      seller_context: opportunity.seller_context || {},
       transport: mapped.transport || null,
       provider_event_type: normalized.event_type
     }, buyerActor);
