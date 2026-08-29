@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buyer-hunter/contracts/capability-result-envelope-v1",
+  "title": "CapabilityResultEnvelope",
+  "description": "The single result shape every QianPulse capability returns, regardless of runtime. Node emits it via agent/skill-runtime/guards.js makeCapabilityEnvelope; Python emits it via scripts/capability_cli.py. A6's dependency refresh and gate consume only these top-level fields plus domain_result.status / domain_result.decision (for A5).",
+  "type": "object",
+  "required": [
+    "capability_id",
+    "capability_version",
+    "run_status",
+    "changed_fields",
+    "missing_evidence",
+    "evidence_refs",
+    "human_review_required",
+    "domain_result"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "description": "e.g. qianpulse.a4.supply_match"
+    },
+    "capability_version": {
+      "type": "string",
+      "description": "Node: 1.0.0. Python: 1.0.0-python. fallback: 'fallback'."
+    },
+    "run_status": {
+      "type": "string",
+      "enum": ["DONE", "MORE_EVIDENCE", "BLOCKED", "NOT_APPLICABLE", "ERROR"],
+      "description": "DONE / NOT_APPLICABLE / BLOCKED count as 'refreshed' to the A6 dependency gate; MORE_EVIDENCE leaves the opportunity WAITING_EVIDENCE."
+    },
+    "changed_fields": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "missing_evidence": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_review_required": { "type": "boolean" },
+    "domain_result": {
+      "type": "object",
+      "description": "Capability-specific payload. Conventional keys: A3 { purchase_window, timing_signal, readiness, timing_score }; A4 { match_status, supply_pool_status, best_verdict, best_fit_score, summary_zh }; A5 { status, decision, destination, market_access }. Two optional provenance keys are added by the integration layer: 'capability_runtime' ('python') set by the CLI, and 'source' ('python' | 'node-fallback') set by the Node delegating runner.",
+      "properties": {
+        "status": { "type": "string" },
+        "decision": { "type": "string" },
+        "capability_runtime": { "type": "string", "enum": ["python"] },
+        "source": { "type": "string", "enum": ["python", "node-fallback"] }
+      }
+    },
+    "error": {
+      "type": ["object", "string", "null"]
+    }
+  }
+}
