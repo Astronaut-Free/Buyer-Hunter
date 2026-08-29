@@ -4,7 +4,8 @@ import {
   enrichA6Envelope,
   applyA6DependencyGate,
   runInvalidatedDependencies,
-  DEFAULT_DEPENDENCY_RUNNERS
+  DEFAULT_DEPENDENCY_RUNNERS,
+  extractA6FieldUpdates
 } from './skill-runtime/index.js';
 import { createOpportunitySeeds } from './opportunity-seeder.js';
 import { createMemoryOpportunityStore } from './opportunity-store.js';
@@ -71,7 +72,11 @@ export function createQianPulseSkillOrchestrator({
           evidence_ref: rawMessage?.evidence_ref || event?.evidence_ref || null,
           evidence_refs: rawMessage?.evidence_refs || event?.evidence_refs || []
         };
-    const fieldUpdates = event?.payload?.field_updates || {};
+    const structuredFieldExtraction = extractA6FieldUpdates(
+      latestBuyerMessage.content || '',
+      event?.payload?.field_updates || {}
+    );
+    const fieldUpdates = structuredFieldExtraction.updates;
     const opportunityState = {
       stage: opportunity.stage || 'CONTACTED',
       fields: opportunity.fields || {}
@@ -108,7 +113,11 @@ export function createQianPulseSkillOrchestrator({
           opportunity,
           event: {
             ...event,
-            changed_fields: firstEnvelope?.domain_result?.changed_business_fields || []
+            changed_fields: firstEnvelope?.domain_result?.changed_business_fields || [],
+            payload: {
+              ...(event?.payload || {}),
+              field_updates: fieldUpdates
+            }
           },
           sellerContext,
           dependencyResults,
@@ -134,6 +143,7 @@ export function createQianPulseSkillOrchestrator({
       missing_evidence: unique([...(gated.missing_evidence || []), ...(refresh.missing_evidence || [])]),
       domain_result: gated?.domain_result ? {
         ...gated.domain_result,
+        structured_field_extraction: structuredFieldExtraction,
         dependency_refresh: {
           ...(gated.domain_result.dependency_refresh || { required: [], completed: [] }),
           attempted: toRefresh,
@@ -150,6 +160,7 @@ export function createQianPulseSkillOrchestrator({
       run_status: envelope.run_status,
       envelope,
       opportunity: updated,
+      structured_field_extraction: structuredFieldExtraction,
       dependency_refresh: {
         attempted: toRefresh,
         refreshed_capabilities: mergedRefreshed,
