@@ -1,5 +1,5 @@
 import { verifySmartleadWebhook, normalizeSmartleadWebhook, makeWebhookIdempotencyKey } from '../webhooks/smartlead.js';
-import { mapSmartleadReply } from '../webhooks/smartlead-reply-mapper.js';
+import { mapSmartleadEvent } from '../webhooks/smartlead-event-mapper.js';
 
 function parseBody(rawBody, body) {
   if (body && typeof body === 'object') return body;
@@ -10,7 +10,7 @@ function parseBody(rawBody, body) {
 export function createSmartleadLiveWebhookHandler({
   liveRuntime,
   signingSecret,
-  replyMapper = mapSmartleadReply
+  replyMapper = mapSmartleadEvent
 } = {}) {
   if (!liveRuntime?.opportunityStore || !liveRuntime?.runBuyerMessage) throw new Error('liveRuntime required');
 
@@ -45,7 +45,6 @@ export function createSmartleadLiveWebhookHandler({
         }
       };
     }
-    if (!mapped?.content) return { status: 422, body: { code: 'MESSAGE_CONTENT_REQUIRED', idempotency_key: idempotencyKey } };
 
     const opportunity = liveRuntime.opportunityStore.resolveExternalRef({
       provider: 'smartlead',
@@ -62,6 +61,22 @@ export function createSmartleadLiveWebhookHandler({
         }
       };
     }
+
+    if (mapped.event_kind === 'LIFECYCLE') {
+      return liveRuntime.handleA2EmailEvent({
+        opportunityId: opportunity.id,
+        idempotencyKey,
+        event: {
+          event_type: mapped.lifecycle_event,
+          provider_event_id: mapped.provider_event_id,
+          message_id: mapped.message_id,
+          timestamp: mapped.timestamp || normalized.created_at,
+          campaign_id: mapped.campaign_id,
+          external_lead_id: mapped.external_lead_id
+        }
+      });
+    }
+    if (!mapped?.content) return { status: 422, body: { code: 'MESSAGE_CONTENT_REQUIRED', idempotency_key: idempotencyKey } };
 
     const buyerActor = {
       id: opportunity.buyer?.id || mapped.lead_email || `smartlead-lead-${mapped.external_lead_id}`,

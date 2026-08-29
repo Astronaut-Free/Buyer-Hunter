@@ -4,8 +4,9 @@ import { composeReply } from '../services/reply-composer.js';
 import { A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 import { createAgentStateOpportunityStore } from './agent-state-opportunity-store.js';
 import { createA2OutreachApprovals } from './a2-outreach-approval.js';
+import { applyA2EmailEvent, decideA2Followup } from '../skill-runtime/a2-state-machine.js';
 
-const A2_EVENT_TYPES = new Set(['SELLER_PROACTIVE_DEVELOPMENT', 'SYSTEM_NEW_PROSPECT_SIGNAL']);
+const A2_EVENT_TYPES = new Set(['SELLER_PROACTIVE_DEVELOPMENT', 'SYSTEM_NEW_PROSPECT_SIGNAL', 'PRE_REPLY_FOLLOWUP_DUE']);
 
 function defaultId(prefix) {
   return `${prefix}_${Date.now()}_${randomBytes(4).toString('hex')}`;
@@ -103,6 +104,14 @@ export function createLiveA2A6Runtime({
     const cached = replay(idem);
     if (cached) return cached;
     if (!user || !['SELLER', 'INTERNAL'].includes(user.role)) return { status: 403, body: { code: 'SELLER_REQUIRED', error: '只有卖家或内部角色可以发起主动拓展' } };
+    if (payload.event_type === 'PRE_REPLY_FOLLOWUP_DUE') {
+      const followupResult = runPreReplyFollowup(payload, user);
+      if (followupResult.status < 400) {
+        currentState().idempotency[idem] = followupResult.body;
+        onMutate();
+      }
+      return followupResult;
+    }
 
     const state = currentState();
     const eventType = A2_EVENT_TYPES.has(payload.event_type) ? payload.event_type : 'SELLER_PROACTIVE_DEVELOPMENT';
@@ -137,7 +146,12 @@ export function createLiveA2A6Runtime({
     state.runs[run.run_id] = run;
 
     try {
-      const input = payload.input || payload;
+      const rawInput = payload.input || payload;
+      const campaignId = payload.campaign_id || rawInput.execution?.campaign_id || null;
+      const input = {
+        ...rawInput,
+        execution: { ...(rawInput.execution || {}), campaign_id: campaignId }
+      };
       const seller = sellerFromAuthenticatedUser(user, input.seller || payload.seller || {});
       const result = await orchestrator.runProactiveDevelopment({
         input: { ...input, seller },
@@ -160,20 +174,20 @@ export function createLiveA2A6Runtime({
         capability_id: 'qianpulse.a2.proactive_buyer_development',
         capability_version: '1.0.0',
         input_hash: hash({ event_id: event.event_id, seller_id: user.id, input }),
-        output_hash: hash(result),
+        output_hash: hash(result.envelope),
         status: result.run_status,
         started_at: run.started_at,
         completed_at: run.completed_at,
-        evidence_refs: result.opportunities.flatMap(item => item.evidence_ids || []),
-        result
+        evidence_refs: result.envelope?.evidence_refs || [],
+        result: result.envelope
       };
       state.steps[step.step_id] = step;
 
-      const campaignId = payload.campaign_id || input.execution?.campaign_id || null;
       const approvals = campaignId ? createA2OutreachApprovals({
         state,
         run,
         opportunities: result.opportunities,
+        envelope: result.envelope,
         campaignId,
         id,
         now,
@@ -198,8 +212,9 @@ export function createLiveA2A6Runtime({
         generated_opportunity_ids: run.generated_opportunity_ids,
         opportunities: result.opportunities,
         batch_result: result.batch_result,
+        envelope: result.envelope,
         outreach_approvals: approvals,
-        outreach_approval_required: result.opportunities.some(item => item.status === 'READY_FOR_OUTREACH_APPROVAL'),
+        outreach_approval_required: approvals.some(item => item.status === 'PENDING'),
         checkpoint_id: checkpoint.checkpoint_id
       };
       state.idempotency[idem] = response;
@@ -277,6 +292,10 @@ export function createLiveA2A6Runtime({
       });
       const envelope = progression.envelope;
       const capabilityTrace = progression.trace || [];
+      progression.opportunity.a2 ||= {};
+      progression.opportunity.a2.lifecycle_status = 'HANDED_OFF_A6';
+      progression.opportunity.a2.outreach_state = 'REPLIED';
+      progression.opportunity.a2.followup = { ...(progression.opportunity.a2.followup || {}), next_eligible_at: null };
       run.capabilities_called = capabilityTrace.map(item => item.capability_id).filter(Boolean);
       run.status = agentStatus(progression.run_status);
       run.state_after = { status: progression.opportunity.status, stage: progression.opportunity.stage || 'CONTACTED' };
@@ -375,11 +394,58 @@ export function createLiveA2A6Runtime({
     }
   }
 
+  function handleA2EmailEvent({ opportunityId, event, idempotencyKey } = {}) {
+    const state = currentState();
+    if (idempotencyKey && state.idempotency[idempotencyKey]) return { status: 200, body: state.idempotency[idempotencyKey], replayed: true };
+    const opportunity = opportunityStore.get(opportunityId);
+    if (!opportunity) return { status: 422, body: { code: 'OPPORTUNITY_REQUIRED' } };
+    const applied = applyA2EmailEvent(opportunity, event, event.timestamp || now());
+    if (!applied.applied) return { status: 200, body: { status: 'IGNORED' } };
+    state.email_events ||= {};
+    state.suppressions ||= {};
+    const eventId = event.provider_event_id || idempotencyKey || id('email-event');
+    state.email_events[eventId] = { ...event, opportunity_id: opportunityId, applied_at: now() };
+    if (applied.suppression_reason) {
+      const email = opportunity.contact?.work_email || opportunity.outreach?.email || '';
+      const key = `${opportunity.seller?.id || ''}:${opportunity.buyer?.id || ''}:${email}:email`;
+      state.suppressions[key] = { key, reason: applied.suppression_reason, permanent: true, created_at: now() };
+    }
+    const body = { status: 'PROCESSED', opportunity_id: opportunityId, lifecycle_status: opportunity.a2?.lifecycle_status, outreach_state: opportunity.a2?.outreach_state, suppression_reason: applied.suppression_reason };
+    if (idempotencyKey) state.idempotency[idempotencyKey] = body;
+    onMutate();
+    return { status: 202, body };
+  }
+
+  function runPreReplyFollowup(payload = {}, user) {
+    const opportunity = opportunityStore.get(payload.opportunity_id);
+    if (!opportunity) return { status: 422, body: { code: 'OPPORTUNITY_REQUIRED' } };
+    if (!authorizeOpportunity(user, opportunity, 'followup')) return { status: 403, body: { code: 'FORBIDDEN' } };
+    const state = opportunity.a2?.followup || {};
+    const decision = decideA2Followup({
+      hasReply: opportunity.a2?.lifecycle_status === 'HANDED_OFF_A6' || opportunity.a2?.outreach_state === 'REPLIED',
+      deliveryState: opportunity.a2?.outreach_state || state.last_delivery_state,
+      suppression: { active: ['STOPPED'].includes(opportunity.a2?.lifecycle_status) },
+      sendCount: state.send_count || 0, maxSendCount: state.max_send_count || 3,
+      timeAllowed: payload.time_allowed === true, newSignal: payload.new_signal === true, buyerFitChanged: payload.buyer_fit_changed === true
+    });
+    if (decision.status === 'FOLLOW_UP') {
+      opportunity.a2.followup = { ...state, outreach_round: Number(state.outreach_round || 1) + 1 };
+      opportunity.a2.lifecycle_status = 'FOLLOWUP_DUE';
+      opportunity.status = 'READY_FOR_OUTREACH_APPROVAL';
+    } else if (decision.status === 'HANDOFF_A6') opportunity.a2.lifecycle_status = 'HANDED_OFF_A6';
+    else if (decision.status === 'STOP') opportunity.a2.lifecycle_status = 'STOPPED';
+    else if (decision.status === 'REFRESH_RESEARCH') opportunity.a2.lifecycle_status = 'RESEARCHING';
+    onMutate();
+    return { status: 200, body: { opportunity, decision } };
+  }
+
   return {
     opportunityStore,
     orchestrator,
     isA2EventType: eventType => A2_EVENT_TYPES.has(eventType),
     runProactive,
-    runBuyerMessage
+    runBuyerMessage,
+    runPreReplyFollowup,
+    handleA2EmailEvent
   };
 }

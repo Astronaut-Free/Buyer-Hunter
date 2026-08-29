@@ -21,11 +21,13 @@ export function createA2OutreachApprovals({
   for (const opportunity of opportunities) {
     const draft = opportunity?.a2?.outreach;
     const contact = opportunity?.contact || opportunity?.a2?.contact || {};
+    const outreachRound = Number(opportunity?.a2?.followup?.outreach_round || 1);
     if (opportunity?.status !== 'READY_FOR_OUTREACH_APPROVAL' || !draft || !contact.work_email) continue;
 
     const existing = Object.values(state.approvals).find(item =>
       item.action_type === 'A2_OUTREACH_DRAFT' &&
       item.opportunity_id === opportunity.id &&
+      Number(item.outreach_round || 1) === outreachRound &&
       ['PENDING', 'APPROVED', 'EDITED'].includes(item.status)
     );
     if (existing) {
@@ -40,6 +42,12 @@ export function createA2OutreachApprovals({
       opportunity_id: opportunity.id,
       run_id: run.run_id,
       action_type: 'A2_OUTREACH_DRAFT',
+      outreach_round: outreachRound,
+      original_draft: structuredClone(draft),
+      approved_draft: null,
+      edited_fields: [],
+      evidence_snapshot: [...new Set(opportunity.evidence_ids || [])],
+      risk_snapshot: opportunity.a2?.dependency_status || opportunity.a2?.dependencies || null,
       payload: {
         draft,
         transport: {
@@ -65,6 +73,9 @@ export function createA2OutreachApprovals({
     };
     state.approvals[approval.approval_id] = approval;
     opportunity.outreach_approval_id = approval.approval_id;
+    opportunity.a2 ||= {};
+    opportunity.a2.lifecycle_status = 'WAITING_APPROVAL';
+    opportunity.a2.outreach_state = 'APPROVAL_PENDING';
     approvals.push(approval);
   }
 
