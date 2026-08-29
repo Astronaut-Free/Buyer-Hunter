@@ -11,10 +11,14 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 
 
+import sys
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "pipeline"))
 DEFAULT_DB = ROOT / "runtime/buyer_hunter.db"
 
 app = FastAPI(title="Buyer Hunter Opportunity Decision API", version="1.1.0")
@@ -79,11 +83,15 @@ def summary_from(row: sqlite3.Row, full: bool) -> dict[str, Any]:
         "supply_match_verdict": row["best_verdict"] if has_fit else None,
         "eligible_sku_match_count": row["eligible_match_count"] if has_fit else None,
         "data_mode": row["data_mode"],
+        "buyer_identity_status": row["buyer_identity_status"] if "buyer_identity_status" in _row_keys(row) else None,
+        "access_status": row["access_status"] if "access_status" in _row_keys(row) else None,
     }
 
 
 BASE_QUERY = """
-SELECT od.*, o.risk_json, o.primary_signal_id, b.canonical_name, b.country_code,
+SELECT od.*, o.risk_json, o.primary_signal_id,
+       o.buyer_identity_status, o.access_status, o.buying_profile, o.same_account_public_history,
+       b.canonical_name, b.country_code,
        s.product_terms_json, s.published_at, e.title, e.url AS evidence_url,
        e.excerpt, e.observed_at, e.data_mode,
        f.supply_pool_status, f.best_verdict, f.best_fit_score AS fit_best_score,
@@ -236,6 +244,8 @@ def opportunity_decision(opportunity_id: str, x_demo_member: str | None = Header
             "match_results": [{"field_code": item["field_code"], "requirement_type": item["requirement_type"], "operator": item["operator"], "buyer_value": loads(item["value_json"], None), "seller_value": loads(item["seller_value_json"], None), "status": item["status"] or "UNKNOWN", "hard": bool(item["hard"]), "reason": item["reason"] or "未计算"} for item in match_rows],
             "seller_sku_fit": _fit_block(row),
             "next_action": loads(row["next_action_json"], {}),
+            "buying_profile": loads(row["buying_profile"], None) if "buying_profile" in _row_keys(row) else None,
+            "same_account_public_history": loads(row["same_account_public_history"], []) if "same_account_public_history" in _row_keys(row) else [],
             "ruleset_version": row["ruleset_version"],
         }
     )
@@ -255,6 +265,33 @@ def _fit_block(row: sqlite3.Row) -> dict[str, Any]:
         "eligible_matches": report.get("eligible_matches", []),
         "all_evaluations": report.get("all_evaluations", []),
     }
+
+
+@app.get("/api/v1/opportunities/{opportunity_id}/brief.pdf")
+def opportunity_brief(
+    opportunity_id: str,
+    member: str | None = Query(default=None, description="pass member=1 for the full brief"),
+    x_demo_member: str | None = Header(default=None),
+) -> Response:
+    """《全球采购商机简报》PDF.
+
+    Membership gates the full brief exactly like /decision. The flag is also
+    accepted as a query param because the workbench opens this in a new tab,
+    where custom headers cannot be set.
+    """
+    full = x_demo_member == "true" or member in ("1", "true")
+    payload = opportunity_decision(opportunity_id, "true" if full else None)
+    from opportunity_brief_v1 import render_brief
+
+    pdf = render_brief(payload)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="qianpulse-brief-{opportunity_id}.pdf"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @app.get("/api/v1/opportunities/{opportunity_id}/access-channels")

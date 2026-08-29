@@ -15,6 +15,7 @@ Exit code is non-zero if any hard check fails.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import re
@@ -707,6 +708,57 @@ def audit_a2_sandbox_chain() -> None:
                   f"evidence_refs={r['evidence']} all rows SANDBOX-tagged={r['sandbox_tagged']}"))
 
 
+def audit_opportunity_brief() -> None:
+    """一期 P0 交付物：《全球采购商机简报》PDF 必须能从真实决策数据渲染出来，
+    且会员/非会员两档内容分级正确（摘要版不得谎称「无匹配」）。"""
+    c = check("商机简报 PDF (brief.pdf)")
+    sys.path.insert(0, str(ROOT / "pipeline"))
+    try:
+        from opportunity_brief_v1 import find_cjk_font, render_brief
+    except Exception as exc:  # pragma: no cover
+        c.record(False, f"import failed: {exc}")
+        return
+    if find_cjk_font() is None:
+        c.record(False, "no CJK font available - the brief would drop all Chinese text")
+        return
+    db = ROOT / "runtime" / "buyer_hunter.db"
+    if not db.exists():
+        c.record(False, "decision store missing; run the pipeline first")
+        return
+    import sqlite3
+    from pypdf import PdfReader
+
+    with closing(sqlite3.connect(db)) as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT opportunity_id FROM opportunity_decision "
+            "WHERE decision_status != 'PASS' ORDER BY opportunity_score DESC LIMIT 1"
+        ).fetchone()
+    if not row:
+        c.record(False, "no non-PASS decision to render")
+        return
+
+    sys.path.insert(0, str(ROOT))
+    from api.app import opportunity_decision
+
+    full = opportunity_decision(row["opportunity_id"], "true")
+    summary = opportunity_decision(row["opportunity_id"], None)
+    pdf_full, pdf_sum = render_brief(full), render_brief(summary)
+
+    def text(data: bytes) -> str:
+        return chr(10).join(p.extract_text() or "" for p in PdfReader(io.BytesIO(data)).pages)
+
+    tf, ts = text(pdf_full), text(pdf_sum)
+    pages = len(PdfReader(io.BytesIO(pdf_full)).pages)
+    ok = (
+        pdf_full.startswith(b"%PDF") and 2 <= pages <= 3
+        and "全球采购商机简报" in tf and "入围 Seller" in tf and "风险项" in tf
+        and "摘要版" in ts and "暂无符合条件的产品" not in ts
+    )
+    c.record(ok, (f"full={len(pdf_full)}B/{pages}p sections=True · "
+                  f"summary gated={'摘要版' in ts} 不谎称无匹配={'暂无符合条件的产品' not in ts}"))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-tests", action="store_true", help="skip pytest + npm test (fast)")
@@ -727,6 +779,7 @@ def main() -> int:
     audit_landing_site()
     audit_portal_wiring()
     audit_a2_sandbox_chain()
+    audit_opportunity_brief()
 
     matrix = completeness_matrix(store_counts, dispatch)
     DOCS.mkdir(exist_ok=True)

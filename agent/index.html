@@ -317,10 +317,21 @@ function renderOpportunityRows(list){
     const fit=Math.round(o.fit_score??0);
     const intent=Math.round(o.intent_score??0);
     const status=o.stage||o.status||'—';
-    return '<div class="tr"><input type="checkbox"><div class="buyer"><b>'+escapeHtml(market+' · '+buyer)+'</b><small>采购买家</small></div><div class="demand"><b>'+escapeHtml(title)+'</b><small>'+escapeHtml(why)+'</small></div><div class="platform"><i class="dot"></i>'+source+'</div><div class="score2">'+fit+'%</div><div class="intent">'+intent+'%</div><div class="conversation">'+escapeHtml(status)+'<small>'+escapeHtml(o.decision||'')+'</small></div><div><span class="tag '+tag[1]+'">'+tag[0]+'</span></div><button class="action compact" onclick="openAction(\''+String(o.id).replace(/'/g,"\\'")+'\')">处理　→</button></div>';
+    return '<div class="tr"><input type="checkbox"><div class="buyer"><b>'+escapeHtml(market+' · '+buyer)+'</b><small>采购买家</small></div><div class="demand"><b>'+escapeHtml(title)+'</b><small>'+escapeHtml(why)+'</small></div><div class="platform"><i class="dot"></i>'+source+'</div><div class="score2">'+fit+'%</div><div class="intent">'+intent+'%</div><div class="conversation">'+escapeHtml(status)+'<small>'+escapeHtml(o.decision||'')+'</small></div><div><span class="tag '+tag[1]+'">'+tag[0]+'</span></div><button class="action compact" onclick="openAction(\''+String(o.id).replace(/'/g,"\\'")+'\')">处理　→</button>'+briefButton(o)+'</div>';
   }).join('');
   count.textContent=sorted.length+' 条';
 }
+// 《全球采购商机简报》PDF —— 只有来自 A1 决策库的机会才有简报；
+// A2 新发现的商机尚未进入决策库，不显示按钮（避免 404）。
+const BRIEF_API=(window.QIANPULSE_DECISION_API||'http://127.0.0.1:8000')+'/api/v1/opportunities';
+function briefButton(o){
+  const id=String(o.id||'');
+  if(!id.startsWith('opp-'))return '';
+  const url=BRIEF_API+'/'+encodeURIComponent(id)+'/brief.pdf?member=1';
+  return '<a class="action" style="text-decoration:none" target="_blank" rel="noreferrer" '+
+         'title="下载《全球采购商机简报》PDF" href="'+url+'">简报 PDF</a>';
+}
+
 async function refreshResults(){
   if(!authToken())return;
   const {response,data}=await collectionFetch('/api/v1/opportunities');
