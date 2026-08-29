@@ -59,12 +59,39 @@ test('Smartlead reply uses documented endpoint, api_key query and thread payload
   assert.deepEqual(JSON.parse(calls[0].options.body), { lead_id: 34, email_body: '<p>Hello</p>', reply_message_id: 'msg-1', reply_email_time: '2026-08-29T00:00:00.000Z' });
 });
 
-test('Smartlead add leads keeps global unsubscribe/block protections enabled by default', async () => {
+test('Smartlead add leads keeps global unsubscribe/block protections enabled and requests returned lead IDs only when explicitly asked', async () => {
   const calls = [];
-  const provider = createSmartleadProvider({ apiKey: 'smart-key', fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ upload_count: 1 }); } });
-  await provider.addLeadsToCampaign({ campaignId: 12, leads: [{ email: 'buyer@example.com' }] });
+  const provider = createSmartleadProvider({ apiKey: 'smart-key', fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ success: true, added_count: 1, lead_ids: [789] }); } });
+  await provider.addLeadsToCampaign({
+    campaignId: 12,
+    leads: [{ email: 'buyer@example.com' }],
+    settings: { ignore_duplicate_leads_in_other_campaign: false, return_lead_ids: true }
+  });
   const body = JSON.parse(calls[0].options.body);
   assert.deepEqual(body.lead_list, [{ email: 'buyer@example.com' }]);
-  assert.equal(body.ignore_global_block_list, undefined);
-  assert.equal(body.ignore_unsubscribe_list, undefined);
+  assert.equal(body.settings.return_lead_ids, true);
+  assert.equal(body.settings.ignore_duplicate_leads_in_other_campaign, false);
+  assert.equal(body.settings.ignore_global_block_list, undefined);
+  assert.equal(body.settings.ignore_unsubscribe_list, undefined);
+});
+
+test('Smartlead campaign sequence lookup uses documented endpoint', async () => {
+  const calls = [];
+  const provider = createSmartleadProvider({ apiKey: 'smart-key', fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ success: true, data: [{ seq_number: 1, subject: '{{qianpulse_subject}}', email_body: '{{qianpulse_body}}' }] }); } });
+  await provider.getCampaignSequences({ campaignId: 12 });
+  const url = new URL(calls[0].url);
+  assert.equal(url.pathname, '/api/v1/campaigns/12/sequences');
+  assert.equal(url.searchParams.get('api_key'), 'smart-key');
+  assert.equal(calls[0].options.method, 'GET');
+});
+
+test('Smartlead lead lookup by email uses documented endpoint', async () => {
+  const calls = [];
+  const provider = createSmartleadProvider({ apiKey: 'smart-key', fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ id: 789, email: 'buyer@example.com' }); } });
+  const lead = await provider.getLeadByEmail({ email: 'buyer@example.com' });
+  const url = new URL(calls[0].url);
+  assert.equal(url.pathname, '/api/v1/leads/');
+  assert.equal(url.searchParams.get('api_key'), 'smart-key');
+  assert.equal(url.searchParams.get('email'), 'buyer@example.com');
+  assert.equal(lead.id, 789);
 });
