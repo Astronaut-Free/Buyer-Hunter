@@ -358,4 +358,98 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
   const input=document.querySelector('#input');
   if(input&&!input.dataset.enterBound){input.dataset.enterBound='1';input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.send();}});}
 })();
+</script><script>
+// Seller intake state machine: keep one pending field and never duplicate ambiguous values.
+(function installSellerIntakeState(){
+  const state={profile:{product:'',specification:'',capacity:'',moq:'',markets:'',buyer_type:'',certifications:''},history:[],pendingField:null};
+  const ask=(url,opts)=>Promise.race([fetch(url,opts),new Promise((_,reject)=>setTimeout(()=>reject(new Error('DeepSeek 请求超时')),20000))]);
+  const inferField=answer=>{if(/月产能|产能/.test(answer))return 'capacity';if(/MOQ|起订量/.test(answer))return 'moq';if(/认证|证书|检测/.test(answer))return 'certifications';if(/市场|国家|地区/.test(answer))return 'markets';if(/买家类型|品牌方|工厂|贸易商/.test(answer))return 'buyer_type';if(/规格|等级|目数|包装/.test(answer))return 'specification';if(/产品/.test(answer))return 'product';return null;};
+  const fieldFromText=(text,pending)=>{if(pending)return pending;if(/MOQ|起订量/.test(text))return 'moq';if(/产能|每月|月产/.test(text))return 'capacity';if(/认证|证书|HACCP|FDA|有机|ISO/.test(text))return 'certifications';if(/美国|日本|德国|英国|欧盟|韩国|市场|国家/.test(text))return 'markets';if(/品牌方|食品工厂|工厂|贸易商|零售商/.test(text))return 'buyer_type';if(/抹茶|蓝莓|咖啡|茶叶|辣椒|蜂蜜/.test(text))return 'product';return null;};
+  window.send=async function(){const input=document.querySelector('#input'),text=input?.value.trim();if(!text)return;line(text,'user');input.value='';const field=fieldFromText(text,state.pendingField);if(field){state.profile[field]=state.profile[field]?state.profile[field]+'；'+text:text;}state.history.push({role:'user',content:text,pending_field:state.pendingField});document.querySelector('#status').textContent='DeepSeek 正在理解';try{const response=await ask('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({message:text,profile:state.profile,history:state.history})});const data=await response.json();if(!response.ok||!data.answer)throw new Error(data.error||'DeepSeek 没有返回');line(data.answer);state.history.push({role:'assistant',content:data.answer});state.pendingField=inferField(data.answer);document.querySelector('#status').textContent='等待你的回答';}catch(error){line('DeepSeek 暂时无法回复：'+error.message);document.querySelector('#status').textContent='等待服务恢复';}};
+})();
+</script><script>
+// Unified seller intake flow: structured facts drive questions and matching.
+(function installUnifiedSellerFlow(){
+  const input=document.querySelector('#input'), messagesEl=document.querySelector('#messages'), statusEl=document.querySelector('#status');
+  if(!input||!messagesEl)return;
+  const labels={product:'产品',specification:'规格 / 等级',capacity:'月产能',moq:'MOQ',markets:'目标市场',buyer_type:'目标买家类型',certifications:'已有认证'};
+  const required=Object.keys(labels);
+  const flow=window.__sellerFlow||{profile:Object.fromEntries(required.map(k=>[k,{value:'',status:'missing'}])),history:[],pending:null,busy:false,matched:false};
+  window.__sellerFlow=flow;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function ensureTable(){
+    let box=document.querySelector('#seller-fact-table');
+    if(!box){box=document.createElement('div');box.id='seller-fact-table';box.className='bubble agent';box.style.cssText='margin:0 20px 10px;max-width:none;padding:10px 12px';messagesEl.parentNode.insertBefore(box,messagesEl);}
+    box.innerHTML='<div class="agent-title">卖家供给信息</div><div class="parse">'+required.map(k=>{const f=flow.profile[k];const state=f.status==='confirmed'?'已确认':f.status==='ambiguous'?'待澄清':'待补充';const color=f.status==='confirmed'?'#23734d':f.status==='ambiguous'?'#a46b15':'#718078';return '<div><small>'+labels[k]+' <span style="float:right;color:'+color+'">'+state+'</span></small><b>'+esc(f.value||'未填写')+'</b></div>';}).join('')+'</div>';
+  }
+  function setFact(field,value,status='confirmed'){if(!field||!value)return;flow.profile[field]={value:String(value).trim(),status};ensureTable();}
+  function textField(text){
+    if(/MOQ|起订量|最小起订量/i.test(text))return 'moq';
+    if(/月产能|产能|每月生产|每月可供/i.test(text))return 'capacity';
+    if(/认证|证书|检测|HACCP|FDA|JAS|ISO|有机|Organic/i.test(text))return 'certifications';
+    if(/目标市场|出口到|销往|美国|日本|韩国|德国|英国|欧盟|加拿大|澳大利亚|澳洲/i.test(text))return 'markets';
+    if(/品牌方|食品工厂|饮料厂|贸易商|零售商|餐饮|买家类型/i.test(text))return 'buyer_type';
+    if(/规格|等级|目数|包装|粒径|粉末|饮品级|烘焙级/i.test(text))return 'specification';
+    if(/抹茶|蓝莓|咖啡|茶叶|辣椒|蜂蜜|产品|SKU/i.test(text))return 'product';
+    return null;
+  }
+  function extract(text,pending){
+    const t=String(text||'').trim();
+    if(pending && /^(?:\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)(?:\s*(?:\/|每)?\s*(?:月|季|年))?)$/i.test(t))return {field:pending,value:t,ambiguous:false};
+    const explicit=(rx,field)=>{const m=t.match(rx);return m?{field,value:m[1].trim(),ambiguous:false}:null;};
+    const quantity=t.match(/(\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)(?:\s*(?:\/|每)?\s*(?:月|季|年))?)/i)?.[1];
+    if(/MOQ|起订量|最小起订量/i.test(t)&&quantity)return {field:'moq',value:quantity,ambiguous:false};
+    if(/月产能|产能|每月可供/i.test(t)&&quantity)return {field:'capacity',value:quantity,ambiguous:false};
+    const product=t.match(/(抹茶(?:粉)?|蓝莓|咖啡|茶叶|辣椒|蜂蜜)/i)?.[1];
+    if(product)return {field:'product',value:product,ambiguous:false};
+    const market=t.match(/(美国|日本|韩国|德国|英国|欧盟|加拿大|澳大利亚|澳洲|东南亚|欧洲|北美)/)?.[1];
+    if(market)return {field:'markets',value:market,ambiguous:false};
+    const buyer=t.match(/(品牌方|食品工厂|饮料厂|贸易商|零售商|餐饮)/)?.[1];
+    if(buyer)return {field:'buyer_type',value:buyer,ambiguous:false};
+    const cert=t.match(/(HACCP|FDA|JAS|ISO\s*22000|有机|Organic)/i)?.[1];
+    if(cert)return {field:'certifications',value:cert,ambiguous:false};
+    return (pending&&textField(t)===pending)?{field:pending,value:t,ambiguous:false}:null;
+  }
+  function extractMany(text,pending){
+    const t=String(text||''), out=[];
+    const add=(field,value)=>{if(value&&!out.some(x=>x.field===field))out.push({field,value:value.trim(),ambiguous:false});};
+    const qty=t.match(/(\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)(?:\s*(?:\/|每)?\s*(?:月|季|年))?)/i)?.[1];
+    if(/MOQ|起订量|最小起订量/i.test(t)&&qty)add('moq',qty);
+    if(/月产能|产能|每月可供/i.test(t)&&qty)add('capacity',qty);
+    const product=t.match(/(抹茶(?:粉)?|蓝莓|咖啡|茶叶|辣椒|蜂蜜)/i)?.[1];if(product)add('product',product);
+    const spec=t.match(/(\d+\s*目|饮品级|烘焙级|食品级|整果\s*\d+[-至]\d+mm|\d+\s*kg\s*\/\s*(?:袋|箱))/i)?.[1];if(spec)add('specification',spec);
+    const market=t.match(/(美国|日本|韩国|德国|英国|欧盟|加拿大|澳大利亚|澳洲|东南亚|欧洲|北美)/)?.[1];if(market)add('markets',market);
+    const buyer=t.match(/(品牌方|食品工厂|饮料厂|贸易商|零售商|餐饮)/)?.[1];if(buyer)add('buyer_type',buyer);
+    const cert=t.match(/(HACCP|FDA|JAS|ISO\s*22000|有机|Organic)/i)?.[1];if(cert)add('certifications',cert);
+    if(!out.length){const one=extract(t,pending);if(one)out.push(one);}return out;
+  }
+  function questionField(answer){const t=String(answer||'');if(/MOQ|起订量|最小起订量/.test(t))return 'moq';if(/月产能|产能/.test(t))return 'capacity';if(/认证|证书|检测/.test(t))return 'certifications';if(/目标市场|国家|地区|出口/.test(t))return 'markets';if(/买家类型|品牌方|工厂|贸易商|零售商/.test(t))return 'buyer_type';if(/规格|等级|目数|包装/.test(t))return 'specification';if(/产品|SKU/.test(t))return 'product';return null;}
+  function complete(){return required.every(k=>flow.profile[k].status==='confirmed');}
+  function profilePayload(){return Object.fromEntries(required.map(k=>[k,flow.profile[k].value]));}
+  async function safeJson(response){const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{}if(!response.ok)throw new Error(data.error||'服务暂时不可用');if(!data.answer)throw new Error(data.error||'AI 暂时没有返回完整回复');return data;}
+  async function askAI(text){
+    const response=await fetch('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+(typeof authToken==='function'?authToken():'')},body:JSON.stringify({message:text,profile:profilePayload(),history:flow.history})});
+    return safeJson(response);
+  }
+  function showFriendlyError(error){line('AI 暂时没有收到完整回复，请稍后重试。你的信息已保留。','agent');statusEl.textContent='等待服务恢复';}
+  async function unifiedSend(){
+    const text=input.value.trim();if(!text||flow.busy)return;flow.busy=true;line(text,'user');input.value='';
+    const extracted=extractMany(text,flow.pending);
+    if(extracted.length){extracted.forEach(f=>setFact(f.field,f.value,'confirmed'));flow.pending=null;}
+    else if(/^\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)$/i.test(text)){setFact('capacity',text,'ambiguous');setFact('moq',text,'ambiguous');flow.pending=null;}
+    flow.history.push({role:'user',content:text,field:extracted.map(f=>f.field)});ensureTable();statusEl.textContent='DeepSeek 正在理解';
+    try{const data=await askAI(text);line(data.answer,'agent');flow.history.push({role:'assistant',content:data.answer});flow.pending=questionField(data.answer);if(complete()){statusEl.textContent='信息已完整，正在匹配';await unifiedStartScan();}else statusEl.textContent=flow.pending?'等待你的回答':'继续补充信息';}
+    catch(error){showFriendlyError(error);}finally{flow.busy=false;}
+  }
+  async function unifiedStartScan(){
+    if(flow.matched||flow.busy&&flow.matched)return;flow.matched=true;
+    const p=profilePayload();window.pendingDemand={raw:flow.history.map(x=>x.content).join('；'),product:p.product||'未指定产品',capacity:p.capacity||'未指定',quantity:p.capacity||'未指定',moq:p.moq||'未指定',market:p.markets||'全球买家',buyer:p.buyer_type||'未指定',certification:p.certifications||'未指定'};
+    line('<div class="step live"><i>…</i>信息已确认，正在匹配公开买家需求</div>');
+    try{const data=await runAgent({event_type:'SYSTEM_NEW_SIGNAL',opportunity_id:'opp_demo_001',message:window.pendingDemand.raw,idempotency_key:'scan-'+Date.now()});if(typeof renderRunTimeline==='function')renderRunTimeline(data.run,data);const response=await fetch('/api/public/opportunities');const items=await response.json();if(typeof renderWorkspaceRows==='function')renderWorkspaceRows(items);line('匹配完成。右侧已展示与你供给能力相关的买家需求。');statusEl.textContent='已展示买家商机';}
+    catch(error){flow.matched=false;line('匹配暂时失败，请稍后重试。你的供给信息已保存。');statusEl.textContent='等待重试';}
+  }
+  window.send=unifiedSend;window.startScan=unifiedStartScan;
+  window.resetTask=function(){flow.profile=Object.fromEntries(required.map(k=>[k,{value:'',status:'missing'}]));flow.history=[];flow.pending=null;flow.matched=false;flow.busy=false;messagesEl.innerHTML='<div class="bubble agent"><div class="agent-title">黔脉智能体</div>请告诉我你的产品和供给能力，我会逐项确认后匹配买家。</div>';document.querySelector('#seller-fact-table')?.remove();if(typeof rows!=='undefined')rows.innerHTML='<div class="empty">输入供给信息后，匹配结果会显示在这里。</div>';if(document.querySelector('#count'))document.querySelector('#count').textContent='0 条';statusEl.textContent='等待卖家输入';ensureTable();input.focus();};
+  ensureTable();
+})();
 </script></body></html>

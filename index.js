@@ -52,7 +52,7 @@ async function askDeepSeek(message, opportunity) {
   if (!process.env.DEEPSEEK_API_KEY) return { answer: null, provider: 'rules-fallback', reason: '未配置 DEEPSEEK_API_KEY' };
   const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 18000);
   const context = { buyer: opportunity.buyer, demand: opportunity.fields, scores: { fit: opportunity.fit_score, intent: opportunity.intent_score }, evidence: opportunity.evidence || opportunity.evidence_ids || [], risk: opportunity.risk_topics || [] };
-  const intakeMode=String(message).startsWith('卖家信息收集'); const system = intakeMode ? '你是黔脉 QianPulse 的卖家入驻顾问。通过自然对话收集卖家的产品规格、MOQ、月产能、目标市场、目标买家类型和已有认证。读取对话中已经提供的信息，不要重复询问已经回答过的字段；每次只问一个最关键的缺口，直接用人话提问，不要输出技术术语、JSON 或固定模板。' : '你是黔脉 QianPulse 的 B2B 出口商机顾问。只基于提供的买家上下文回答，不得编造未提供的数量、法规或认证结论。回答用简洁中文，结构为：结论、依据、不确定性、建议下一步。涉及法律、出口合规、食品安全时必须明确“需要人工/专业机构复核”，不能给出保证。';
+  const intakeMode=String(message).includes('卖家当前供给档案'); const system = intakeMode ? '你是黔脉 QianPulse 的卖家入驻顾问。通过自然对话收集卖家的产品、规格、MOQ、月产能、目标市场、目标买家类型和已有认证。严格读取提供的供给档案和历史对话，不要重复询问已经明确回答过的字段。一个回答只能填入一个字段；如果用户只说数字、单位或“都有”等模糊内容，必须先追问确认其对应字段，禁止猜测或复制到多个字段。每次只问一个最关键的缺口，直接用自然中文提问，不要输出 JSON、字段名、技术状态或固定模板。' : '你是黔脉 QianPulse 的 B2B 出口商机顾问。只基于提供的买家上下文回答，不得编造未提供的数量、法规或认证结论。回答用简洁中文，结构为：结论、依据、不确定性、建议下一步。涉及法律、出口合规、食品安全时必须明确“需要人工/专业机构复核”，不能给出保证。';
   try {
     const response = await fetch(`${DEEPSEEK_BASE_URL.replace(/\/$/, '')}/chat/completions`, { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: DEEPSEEK_MODEL, temperature: 0.2, messages: [{ role: 'system', content: system }, { role: 'user', content: `买家上下文：${JSON.stringify(context)}\n卖家问题：${message}` }] }) });
     if (!response.ok) throw new Error(`DeepSeek HTTP ${response.status}`);
@@ -84,7 +84,7 @@ const controlHandler = handleV1;
 handleV1 = async function(req, res, path) {
   if (req.method === 'POST' && path === '/api/v1/agent/intake') {
     const user = userFromRequest(req); if (!user) return sendJson(res, 401, { error: '请先登录后使用 AI 对话' });
-    const body = await readBody(req); const result = await askDeepSeek(String(body.message || ''), state.opportunities.opp_demo_001);
+    const body = await readBody(req); const sellerContext = { buyer: { role: 'SELLER' }, fields: body.profile || {}, conversation: body.history || [] }; const result = await askDeepSeek(`卖家当前供给档案：${JSON.stringify(body.profile || {})}\n历史对话：${JSON.stringify(body.history || [])}\n本轮消息：${String(body.message || '')}`, sellerContext);
     if (!result.answer) return sendJson(res, 503, { error: 'DeepSeek 暂时没有返回，请检查 API Key、网络和服务日志。', provider: result.provider, fallback_reason: result.reason });
     return sendJson(res, 200, { answer: result.answer, provider: 'deepseek', model: result.model });
   }
