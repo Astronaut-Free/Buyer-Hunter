@@ -261,6 +261,64 @@ def audit_skill_dispatch() -> dict[str, Any]:
     return payload
 
 
+def audit_landing_site() -> None:
+    site = ROOT / "site"
+    pages = ["index.html", "opportunities.html"]
+    required = pages + ["nav-bridge.js", "PROVENANCE.md"]
+    missing = [f for f in required if not (site / f).exists()]
+
+    broken_assets: list[str] = []
+    unbridged: list[str] = []
+    for page in pages:
+        p = site / page
+        if not p.exists():
+            continue
+        html = p.read_text(encoding="utf-8", errors="replace")
+        if 'src="nav-bridge.js"' not in html:
+            unbridged.append(page)
+        for ref in re.findall(r'(?:src|href)="(assets/[^"?#]+)"', html):
+            if not (site / ref).exists():
+                broken_assets.append(f"{page} -> {ref}")
+
+    served = None
+    if not missing:
+        port = free_port()
+        server = subprocess.Popen(
+            [PY, "-m", "http.server", str(port), "--bind", "127.0.0.1", "--directory", str(site)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        try:
+            base = f"http://127.0.0.1:{port}"
+            if wait_http(f"{base}/index.html"):
+                codes = []
+                for path in ("/index.html", "/opportunities.html", "/nav-bridge.js"):
+                    try:
+                        with urllib.request.urlopen(f"{base}{path}", timeout=3) as r:
+                            codes.append(r.status)
+                    except urllib.error.HTTPError as e:  # noqa: PERF203
+                        codes.append(e.code)
+                served = all(c == 200 for c in codes)
+        finally:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server.kill()
+
+    ok = not missing and not broken_assets and not unbridged and served is not False
+    detail = (
+        f"{len(pages)} pages, assets ok={not broken_assets}, "
+        f"nav-bridge wired={not unbridged}, http 200={served}"
+    )
+    if missing:
+        detail = f"missing {missing}"
+    elif broken_assets:
+        detail = f"broken asset refs: {broken_assets}"
+    elif unbridged:
+        detail = f"nav-bridge.js not included in {unbridged}"
+    check("landing site (site/ <- origin/ui)").record(ok, detail)
+
+
 def audit_orchestrator_skills() -> None:
     skills_dir = ROOT / ".agents" / "skills"
     conflict = (ROOT / "docs" / "04_参考稿冲突矩阵与统一方案_v2.md").read_text(encoding="utf-8")
@@ -341,6 +399,14 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
             "state": "就绪",
             "evidence": "权重 30/30/20/10/10，truth 门槛 60，ruleset_version + input_snapshot_sha256；FastAPI 4 端点；demo 可构建",
             "gap": "会员/Lead Access 为 demo 模拟；未接支付",
+        },
+        {
+            "module": "门户站点 (landing)",
+            "runtime": "静态 — site/(index.html + opportunities.html)，vendored 自 origin/ui",
+            "state": "就绪(前门)",
+            "evidence": "WebGL/canvas 首页 + 全球商机展示页；离线地图数据自带；nav-bridge.js 把登录/CTA 指向 demo；"
+            "run.ps1 -Up / make up 起在 4180",
+            "gap": "样例订单为设计稿静态内容，未接实时 API（可选增强）；作者 yayaw2826-oss 仍在 origin/ui 迭代",
         },
         {
             "module": "Agent 控制面",
@@ -433,10 +499,13 @@ def write_markdown(path: Path, matrix: list[dict[str, str]], dispatch: dict[str,
         "## 5. 不在整合范围（后续）",
         "",
         "- 单语言统一（Node ↔ Python 移植）",
+        "- 统一 Opportunity 主键（Phase 4，设计见 `contracts/opportunity-v2.md`）",
         "- A2 自然语言入口接线",
         "- A2↔A1 双向汇合（被开发公司之后发 RFQ 自动升进）",
         "- 实网 provider smoke（Smartlead / Apollo / Trademo 凭据）",
         "- INTERNAL 用户种子 / 控制面反向写回",
+        "- `brand2` 前端增量 cherry-pick（联系方式解锁双态 UX）",
+        "- 门户站点接实时 API（把 site/opportunities.html 的样例订单换成 /api/v1 数据）",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -513,6 +582,7 @@ def main() -> int:
     audit_agent_boot()
     dispatch = audit_skill_dispatch()
     audit_orchestrator_skills()
+    audit_landing_site()
 
     matrix = completeness_matrix(store_counts, dispatch)
     DOCS.mkdir(exist_ok=True)

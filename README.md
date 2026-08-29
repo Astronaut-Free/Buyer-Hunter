@@ -6,17 +6,20 @@
 
 ---
 
-## 架构：一个仓库，两个运行时
+## 架构：一个仓库，两个运行时 + 一个静态前门
 
 | 运行时 | 语言 | 覆盖模块 | 目录 | 测试 |
 |---|---|---|---|---|
-| **pipeline + api** | Python 3.12 / FastAPI / SQLite | A1 采集 · A3 时机 · A4 供需匹配 · A5 准入风控 · 机会决策引擎 · 读接口 | `pipeline/` `api/` `db/` | `pytest` — 100 |
-| **agent** | Node.js（零依赖） | A2 主动商机拓展 · A6 成交自动推进 · A3/A4/A5 会话内刷新 · Agent 控制面 | `agent/` | `npm test` — 109 |
+| **pipeline + api** | Python 3.12 / FastAPI / SQLite | A1 采集 · A3 时机 · A4 供需匹配 · A5 准入风控 · 机会决策引擎 · 读接口 | `pipeline/` `api/` `db/` | `pytest` — 108 |
+| **agent** | Node.js（零依赖） | A2 主动商机拓展 · A6 成交自动推进 · A3/A4/A5 会话内刷新 · Agent 控制面 | `agent/` | `npm test` — 121 |
 | demo | React / Vite | 卖家决策台（5 屏） | `demo/` | `npm run build` |
+| site | 静态 HTML（无构建） | 门户前门：首页 + 全球商机展示页（vendored 自 `ui` 分支） | `site/` | 审计静态校验 |
 
-两个运行时通过 **数据桥** 连接：Python 流水线产出 `runtime/buyer_hunter.db`，`scripts/export_opportunities_for_agent.py` 导出为 `agent/db/opportunities.json`，agent 启动时读入。契约见 [`contracts/opportunity-bridge-v1.md`](contracts/opportunity-bridge-v1.md)。
+两个运行时通过 **数据桥** 连接：Python 流水线产出 `runtime/buyer_hunter.db`，`scripts/export_opportunities_for_agent.py` 导出为 `agent/db/opportunities.json`，agent 启动时读入。契约见 [`contracts/opportunity-bridge-v1.md`](contracts/opportunity-bridge-v1.md)。A6 会话内刷新 A3/A4/A5 时经 capability CLI 调 Python 权威实现（`contracts/capability-result-envelope.schema.json`），失败自动回退 Node。前门 `site/` 通过 `site/nav-bridge.js` 把登录/CTA 指向 demo。
 
 ```
+site:4180 前门 ──「立即寻找商机 / 登录」──→ demo:4173 工作台 ──VITE_BUYER_HUNTER_API──→ api:8000
+
 A1 采集 ─┐
          ├─→ 清洗/验真/去重 ─→ A3 时机 ─→ A4 供需 ─→ A5 风控 ─→ 机会决策 ─→ runtime/buyer_hunter.db
          │                                                                        │
@@ -34,7 +37,7 @@ A2 目标市场 ─→ 发现买家 ─→ Fit ─→ 联系人 ─→ 首封邮
 .\run.ps1 -Setup      # pip install + npm ci
 .\run.ps1 -Build      # 从 committed fixture 重建决策 store
 .\run.ps1 -Export     # 桥：store -> agent feed
-.\run.ps1 -Up         # 起 api(:8000) + agent(:3317) + demo(:4173)
+.\run.ps1 -Up         # 起 site(:4180) + demo(:4173) + api(:8000) + agent(:3317)
 .\run.ps1 -Down       # 停
 .\run.ps1 -Test       # pytest + npm test
 .\run.ps1 -Audit      # 跨运行时审计 -> docs/AUDIT_<date>.md
@@ -47,7 +50,8 @@ make test
 make audit
 ```
 
-端口：FastAPI `8000` · agent `3317` · demo `4173`。
+起来后打开 **http://127.0.0.1:4180**（前门）或 **http://127.0.0.1:4173**（工作台）。
+端口：site `4180` · demo `4173` · FastAPI `8000` · agent `3317`。
 
 实网（真实外联）需要 `QIANPULSE_EXTERNAL_MODE=live` + `SMARTLEAD_API_KEY` `SMARTLEAD_CAMPAIGN_ID` `SMARTLEAD_WEBHOOK_SECRET` `APOLLO_API_KEY` `TRADEMO_BUYER_LIST_URL`。未配置时以 sandbox 模式运行。详见 [`docs/18_整合架构与运行.md`](docs/18_整合架构与运行.md)。
 
