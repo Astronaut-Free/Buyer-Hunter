@@ -91,7 +91,7 @@ handleV1 = async function(req, res, path) {
     const incoming = body.profile && typeof body.profile === 'object' ? body.profile : body;
     const allowed = ['product', 'specification', 'capacity', 'moq', 'markets', 'buyer_type', 'certifications', 'company_name', 'contact_name', 'sample_cycle'];
     const supply = { ...(user.profile?.supply_profile || {}) };
-    allowed.forEach(key => { if (incoming[key] !== undefined && incoming[key] !== null) supply[key] = String(incoming[key]).trim(); });
+    allowed.forEach(key => { if (incoming[key] === undefined || incoming[key] === null) return; const value = String(incoming[key]).trim(); if (key === 'specification' && /^\d+(?:\.\d+)?\s*(?:吨|t|kg|公斤|千克|件|箱)$/i.test(value)) { delete supply[key]; return; } supply[key] = value; });
     const filled = ['product', 'specification', 'capacity', 'moq', 'markets', 'buyer_type', 'certifications'].filter(key => supply[key]);
     user.profile = { ...(user.profile || {}), supply_profile: supply, supply_profile_completion: Math.round(filled.length / 7 * 100), supply_profile_updated_at: now() };
     persistSoon();

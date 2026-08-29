@@ -445,7 +445,7 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
     try{const token=typeof authToken==='function'?authToken():'';if(!token)return;await fetch('/api/v1/seller/profile',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({profile:profilePayload()})});}catch(error){console.warn('卖家档案保存失败',error);}
   }
   async function loadProfile(){
-    try{const token=typeof authToken==='function'?authToken():'';if(!token)return;const response=await fetch('/api/v1/seller/profile',{headers:{Authorization:'Bearer '+token}});if(!response.ok)return;const raw=await response.text();const data=raw?JSON.parse(raw):{};Object.entries(data.profile||{}).forEach(([key,value])=>{if(required.includes(key)&&value)setFact(key,value,'confirmed');});ensureTable();}catch(error){console.warn('卖家档案读取失败',error);}
+    try{const token=typeof authToken==='function'?authToken():'';if(!token)return;const response=await fetch('/api/v1/seller/profile',{headers:{Authorization:'Bearer '+token}});if(!response.ok)return;const raw=await response.text();const data=raw?JSON.parse(raw):{};Object.entries(data.profile||{}).forEach(([key,value])=>{if(!required.includes(key)||!value)return;const invalidSpec=key==='specification'&&/^\d+(?:\.\d+)?\s*(?:吨|t|kg|公斤|千克|件|箱)$/i.test(String(value).trim());setFact(key,invalidSpec?'':value,invalidSpec?'ambiguous':'confirmed');});ensureTable();}catch(error){console.warn('卖家档案读取失败',error);}
   }
   async function safeJson(response){const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{}if(!response.ok)throw new Error(data.error||'服务暂时不可用');if(!data.answer)throw new Error(data.error||'AI 暂时没有返回完整回复');return data;}
   async function askAI(text){
@@ -453,13 +453,15 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
     return safeJson(response);
   }
   function showFriendlyError(error){line('AI 暂时没有收到完整回复，请稍后重试。你的信息已保留。','agent');statusEl.textContent='等待服务恢复';}
+  const questionFor={product:'请告诉我你具体供应哪一种产品。',specification:'请告诉我产品的规格或等级，例如目数、饮品级或烘焙级。',capacity:'请告诉我稳定的月产能是多少？',moq:'请告诉我最小起订量 MOQ 是多少？',markets:'你希望优先开发哪些国家或地区？',buyer_type:'你更希望对接品牌方、食品工厂、贸易商还是零售商？',certifications:'请列出已有认证；如果暂时没有，请直接说“暂无”。'};
   async function unifiedSend(){
     const text=input.value.trim();if(!text||flow.busy)return;flow.busy=true;line(text,'user');input.value='';
+    if(/^(好|好的|嗯|嗯嗯|行|知道了|收到)$/i.test(text)&&flow.pending){line(questionFor[flow.pending],'agent');statusEl.textContent='等待你的回答';flow.busy=false;return;}
     const extracted=extractMany(text,flow.pending);
     if(extracted.length){extracted.forEach(f=>{const status=f.field==='certifications'&&/暂无|没有|无证书/.test(f.value)?'none':f.field==='certifications'&&/待核验|申请中/.test(f.value)?'unverified':'confirmed';setFact(f.field,f.value,status);});flow.pending=null;await saveProfile();}
-    else if(/^\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)$/i.test(text)){setFact('capacity',text,'ambiguous');setFact('moq',text,'ambiguous');flow.pending=null;}
+    else if(/^\d+(?:\.\d+)?\s*(?:kg|公斤|千克|吨|t|件|箱)$/i.test(text)){setFact('capacity',text,'ambiguous');setFact('moq',text,'ambiguous');flow.pending=null;}
     flow.history.push({role:'user',content:text,field:extracted.map(f=>f.field)});ensureTable();statusEl.textContent='DeepSeek 正在理解';
-    try{const data=await askAI(text);const repeated=flow.history.some(x=>x.role==='assistant'&&x.content===data.answer);if(repeated){line('我已经记录了这项信息。我们继续确认下一项，不再重复询问。','agent');}else line(data.answer,'agent');const aiFacts=extractAssistantFacts(data.answer);if(aiFacts.length){aiFacts.forEach(f=>{const invalidSpec=f.field==='specification'&&/^\d+(?:\.\d+)?\s*(?:吨|t|kg|公斤|千克|件|箱)$/i.test(f.value);setFact(f.field,f.value,invalidSpec?'ambiguous':f.status);});await saveProfile();}flow.history.push({role:'assistant',content:data.answer,field_updates:aiFacts.map(f=>f.field)});const inferred=questionField(data.answer);flow.pending=nextMissing()||inferred;if(complete()){statusEl.textContent='信息已完整，正在匹配';await unifiedStartScan();}else statusEl.textContent=flow.pending?'等待你的回答':'继续补充信息';}
+    try{const data=await askAI(text);const repeated=flow.history.some(x=>x.role==='assistant'&&x.content===data.answer);if(repeated){line('我已经记录了这项信息。','agent');}else line(data.answer,'agent');const aiFacts=extractAssistantFacts(data.answer);if(aiFacts.length){aiFacts.forEach(f=>{const invalidSpec=f.field==='specification'&&/^\d+(?:\.\d+)?\s*(?:吨|t|kg|公斤|千克|件|箱)$/i.test(f.value);setFact(f.field,f.value,invalidSpec?'ambiguous':f.status);});await saveProfile();}flow.history.push({role:'assistant',content:data.answer,field_updates:aiFacts.map(f=>f.field)});const inferred=questionField(data.answer);flow.pending=nextMissing()||inferred;if(complete()){statusEl.textContent='信息已完整，正在匹配';await unifiedStartScan();}else{if(flow.pending&&!inferred)line(questionFor[flow.pending],'agent');statusEl.textContent=flow.pending?'等待你的回答':'继续补充信息';}}
     catch(error){showFriendlyError(error);}finally{flow.busy=false;}
   }
   async function unifiedStartScan(){
@@ -475,5 +477,7 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
 })();
 </script><script>
 // The visual homepage now lives at index.html; keep workspace navigation on the same site.
+document.head.insertAdjacentHTML('beforeend','<style>#home{display:none!important}</style>');
 window.showHome=function(){location.href='index.html';};
+if(location.hash==='#home'||!location.hash)location.replace('index.html');
 </script></body></html>
