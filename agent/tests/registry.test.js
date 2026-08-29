@@ -6,6 +6,7 @@ import {
   A4_CAPABILITY_ID,
   A5_CAPABILITY_ID,
   A6_CAPABILITY_ID,
+  A8_CAPABILITY_ID,
   runA2Skill,
   runA6Skill
 } from '../skill-runtime/index.js';
@@ -13,9 +14,9 @@ import { getQianPulseSkillMetadata, QIANPULSE_SKILL_REGISTRY } from '../skill-ru
 import { resolveQianPulseSkillCapabilities } from '../skill-runtime/routing-policy.js';
 import { validateA2Envelope, validateA6Envelope } from '../skill-runtime/validators.js';
 
-test('skill registry exposes enabled A2 through A6 runtime metadata', () => {
-  const ids = [A2_CAPABILITY_ID, A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID, A6_CAPABILITY_ID];
-  assert.equal(QIANPULSE_SKILL_REGISTRY.length, 5);
+test('skill registry exposes enabled A2 through A8 runtime metadata', () => {
+  const ids = [A2_CAPABILITY_ID, A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID, A6_CAPABILITY_ID, A8_CAPABILITY_ID];
+  assert.equal(QIANPULSE_SKILL_REGISTRY.length, 6);
   for (const capabilityId of ids) {
     const metadata = getQianPulseSkillMetadata(capabilityId);
     assert.ok(metadata, `missing metadata for ${capabilityId}`);

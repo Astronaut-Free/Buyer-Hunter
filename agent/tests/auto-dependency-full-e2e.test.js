@@ -131,9 +131,10 @@ test('A2 → Smartlead → delivery reply → automatic A3/A4 refresh → A6 app
   assert.deepEqual(progressed.a6.dependency_refresh.required, []);
   assert.deepEqual(progressed.a6.dependency_refresh.attempted.sort(), [
     'qianpulse.a3.purchase_timing',
-    'qianpulse.a4.supply_match'
+    'qianpulse.a4.supply_match',
+    'qianpulse.a8.deal_action'
   ].sort());
-  assert.equal(progressed.a6.dependency_refresh.executions.every(item => item.run_status === 'DONE'), true);
+  assert.equal(progressed.a6.dependency_refresh.executions.every(item => ['DONE', 'NOT_APPLICABLE'].includes(item.run_status)), true);
 
   const replied = await approve({ approvalId: inbound.body.approval.approval_id, user: internal, status: 'APPROVED' });
   assert.equal(replied.status, 200);

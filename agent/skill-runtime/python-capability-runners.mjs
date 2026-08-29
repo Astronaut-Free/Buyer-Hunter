@@ -1,7 +1,7 @@
 /**
  * Python-delegating dependency runners.
  *
- * A6's buyer-reply cycle refreshes invalidated A3/A4/A5 through synchronous
+ * A6's buyer-reply cycle refreshes invalidated A3/A4/A5/A8 through synchronous
  * "runners" (skill-runtime/dependency-refresh.js). These runners shell out to
  * Free's authoritative Python implementation (scripts/capability_cli.py) and
  * fall back to the bundled Node runner on any failure — so the agent behaves
@@ -15,6 +15,7 @@ import { DEFAULT_DEPENDENCY_RUNNERS } from './dependency-refresh.js';
 import { A3_CAPABILITY_ID } from './a3.js';
 import { A4_CAPABILITY_ID } from './a4.js';
 import { A5_CAPABILITY_ID } from './a5.js';
+import { A8_CAPABILITY_ID } from './a8.js';
 
 const DEFAULT_CLI = fileURLToPath(new URL('../../scripts/capability_cli.py', import.meta.url));
 
@@ -79,6 +80,7 @@ export function createPythonDependencyRunners({
     [A3_CAPABILITY_ID]: (context) => delegate(A3_CAPABILITY_ID, context),
     [A4_CAPABILITY_ID]: (context) => delegate(A4_CAPABILITY_ID, context),
     [A5_CAPABILITY_ID]: (context) => delegate(A5_CAPABILITY_ID, context),
+    [A8_CAPABILITY_ID]: (context) => delegate(A8_CAPABILITY_ID, context),
   };
 }
 

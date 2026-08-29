@@ -9,7 +9,7 @@
  *   3. envelope      each capability runs on a fixture and returns a valid envelope
  *   4. e2e           A2 -> Opportunity -> buyer reply -> A6 dispatches through the
  *                    live runtime and records one AgentStep per dispatched capability
- *   5. python        A3/A4/A5 delegate to Free's Python capability CLI (or fall back)
+ *   5. python        A3/A4/A5/A8 delegate to Free's Python capability CLI (or fall back)
  *
  * Exits non-zero if any check fails. `--json` prints the machine-readable report.
  */
@@ -22,6 +22,7 @@ import {
   runA4SupplyMatch,
   runA5TradeRisk,
   runA6Skill,
+  runA8DealAction,
   validateCapabilityEnvelope,
   validateA2Envelope,
   validateA6Envelope,
@@ -82,6 +83,13 @@ const cases = [
   ['qianpulse.a4.supply_match', () => runA4SupplyMatch(DEP_INPUT), validateCapabilityEnvelope],
   ['qianpulse.a5.trade_risk', () => runA5TradeRisk(DEP_INPUT), validateCapabilityEnvelope],
   ['qianpulse.a6.opportunity_progression', () => runA6Skill(DEP_INPUT), validateA6Envelope],
+  ['qianpulse.a8.deal_action', () => runA8DealAction({
+    opportunity_id: 'opp-audit',
+    decision: { decision_status: 'VERIFY_FIRST', opportunity_score: 68.4, component_scores: { timing: 70, seller_fit: 80 }, gaps: ['规格待确认'] },
+    risks: [{ code: 'IDENTITY_UNKNOWN', severity: 'MEDIUM' }],
+    access_status: 'CONDITIONAL',
+    stage: 'QUALIFYING',
+  }), validateCapabilityEnvelope],
 ];
 for (const [id, run, validate] of cases) {
   const record = { capability_id: id, dispatched: false, envelope_valid: false, run_status: null, step_recorded: false };
@@ -163,7 +171,7 @@ try {
 }
 
 // ---- 5. python capability delegation --------------------------------
-if (!jsonOnly) console.log('\n[5] python capability delegation (A3/A4/A5 -> Free)');
+if (!jsonOnly) console.log('\n[5] python capability delegation (A3/A4/A5/A8 -> Free)');
 const pyForcedOff = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() === 'off';
 const pyAvailable = !pyForcedOff && pythonCapabilitiesAvailable();
 report.python = { available: pyAvailable, capabilities: {} };
@@ -179,7 +187,7 @@ try {
     ? createPythonDependencyRunners()
     : createPythonDependencyRunners({ pythonBin: 'python-disabled-for-audit' });
   const expected = pyAvailable ? 'python' : 'node-fallback';
-  for (const id of ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk']) {
+  for (const id of ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk', 'qianpulse.a8.deal_action']) {
     const env = runners[id](pyCtx);
     const src = env.domain_result?.source;
     report.python.capabilities[id] = { source: src, run_status: env.run_status };

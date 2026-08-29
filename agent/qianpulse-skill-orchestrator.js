@@ -96,7 +96,8 @@ export function createQianPulseSkillOrchestrator({
         seller_context: sellerContext,
         a3_result: results.a3 || null,
         a4_result: results.a4 || null,
-        a5_result: results.a5 || null
+        a5_result: results.a5 || null,
+        a8_result: results.a8 || null
       });
     }
 

@@ -6,6 +6,7 @@ export * from './a2-batch.js';
 export * from './a3.js';
 export * from './a4.js';
 export * from './a5.js';
+export * from './a8.js';
 export * from './dependency-refresh.js';
 export * from './a6-field-extractor.js';
 export * from './a6.js';

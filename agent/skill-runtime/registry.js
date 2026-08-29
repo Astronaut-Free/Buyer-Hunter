@@ -3,6 +3,7 @@ import { A3_CAPABILITY_ID, A3_VERSION } from './a3.js';
 import { A4_CAPABILITY_ID, A4_VERSION } from './a4.js';
 import { A5_CAPABILITY_ID, A5_VERSION } from './a5.js';
 import { A6_CAPABILITY_ID, A6_VERSION } from './a6.js';
+import { A8_CAPABILITY_ID, A8_VERSION } from './a8.js';
 
 export const QIANPULSE_SKILL_REGISTRY = Object.freeze([
   {
@@ -53,6 +54,16 @@ export const QIANPULSE_SKILL_REGISTRY = Object.freeze([
     produced_outputs: ['buyer_reply', 'stage', 'changed_business_fields', 'next_action', 'execution_mode', 'outcome'],
     status_contract: ['DONE', 'MORE_EVIDENCE', 'BLOCKED', 'NOT_APPLICABLE', 'ERROR'],
     timeout_seconds: 90,
+    enabled: true
+  },
+  {
+    capability_id: A8_CAPABILITY_ID,
+    version: A8_VERSION,
+    description: 'Phase 8：Free 的商业判断（决策快照 + 风险 + 门禁）作为 deal-action 快照喂给 A6；A6 保有 next_action 唯一所有权。',
+    required_inputs: ['opportunity_id', 'decision', 'risks', 'access_status'],
+    produced_outputs: ['primary_action', 'secondary_action', 'action_reasoning', 'contact_strategy', 'follow_up', 'required_assets', 'human_approval_required'],
+    status_contract: ['DONE', 'MORE_EVIDENCE', 'BLOCKED', 'NOT_APPLICABLE', 'ERROR'],
+    timeout_seconds: 30,
     enabled: true
   }
 ]);

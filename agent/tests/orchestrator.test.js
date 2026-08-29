@@ -92,7 +92,8 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
   assert.equal(result.run_status, 'DONE');
   assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
     'qianpulse.a3.purchase_timing',
-    'qianpulse.a4.supply_match'
+    'qianpulse.a4.supply_match',
+    'qianpulse.a8.deal_action'
   ].sort());
   assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
   assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
@@ -131,7 +132,8 @@ test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportu
   assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
     'qianpulse.a3.purchase_timing',
     'qianpulse.a4.supply_match',
-    'qianpulse.a5.trade_risk'
+    'qianpulse.a5.trade_risk',
+    'qianpulse.a8.deal_action'
   ].sort());
   assert.equal(result.opportunity.fields.quantity, '20 tons');
   assert.equal(result.opportunity.fields.destination, 'Germany');

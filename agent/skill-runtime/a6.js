@@ -76,7 +76,10 @@ export function routeA6ChangedFields(changedFields = []) {
     buyer_company: ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk'],
     sample_request: []
   };
-  return [...new Set(changedFields.flatMap(item => mapping[item.field] || []))];
+  const routed = [...new Set(changedFields.flatMap(item => mapping[item.field] || []))];
+  // any business change also invalidates the commercial judgment (Phase 8)
+  if (routed.length) routed.push('qianpulse.a8.deal_action');
+  return routed;
 }
 
 export function deriveA6Stage({ currentStage = 'CONTACTED', intent, a5Result } = {}) {
@@ -92,9 +95,18 @@ export function deriveA6Stage({ currentStage = 'CONTACTED', intent, a5Result } =
   return currentStage;
 }
 
-export function selectA6NextAction({ intent, a5Result, sellerContext = {}, acknowledgement = false } = {}) {
+export function selectA6NextAction({ intent, a5Result, a8Result = null, sellerContext = {}, acknowledgement = false } = {}) {
   const primary = intent?.primary || intent || 'UNKNOWN';
   const secondary = intent?.secondary || [];
+  // Phase 8: Free's commercial judgment may HALT or defer the cycle, but A6
+  // keeps ownership of next_action — the a8 snapshot is an input, not a driver.
+  const a8Action = a8Result?.domain_result?.primary_action || a8Result?.primary_action || null;
+  if (a8Action?.type === 'HALT') {
+    return { action: 'WAIT', reason: `A8 商业判断 HALT：${a8Action.reason}`, execution_mode: 'HUMAN', human_review_required: true };
+  }
+  if (a8Action?.type === 'SCHEDULE_REVIEW') {
+    return { action: 'WAIT', reason: `A8 时机判断 SCHEDULE_REVIEW：${a8Action.reason}`, execution_mode: 'AUTO', human_review_required: false };
+  }
   if (isA5Blocked(a5Result)) return { action: 'WAIT', reason: 'A5 返回 BLOCKED，停止对外推进', execution_mode: 'HUMAN', human_review_required: true };
   if (primary === 'UNSUBSCRIBE') return { action: 'STOP_CONTACT', reason: '买家明确退订', execution_mode: 'AUTO', human_review_required: false };
   if (primary === 'COMPLAINT') return { action: 'HUMAN_TAKEOVER', reason: '投诉属于高风险场景', execution_mode: 'HUMAN', human_review_required: true };
@@ -143,6 +155,7 @@ export function runA6Skill(context = {}) {
   const next = selectA6NextAction({
     intent,
     a5Result: input.a5_result || context.a5_result,
+    a8Result: input.a8_result || context.a8_result,
     sellerContext: input.seller_context || context.seller_context || {},
     acknowledgement: intent.acknowledgement
   });

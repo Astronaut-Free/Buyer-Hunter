@@ -35,6 +35,7 @@ from risk_items_v1 import classify_risk_items_from_context  # noqa: E402
 A3 = "qianpulse.a3.purchase_timing"
 A4 = "qianpulse.a4.supply_match"
 A5 = "qianpulse.a5.trade_risk"
+A8 = "qianpulse.a8.deal_action"
 VERSION = "1.0.0-python"
 
 _TARGET_MARKETS = {"US", "JP", "GB", "AU", "DE", "NL", "FR", "IT", "ES", "PL", "BE", "FI", "HU"}
@@ -282,7 +283,104 @@ def run_a5(context: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-DISPATCH = {A3: run_a3, A4: run_a4, A5: run_a5}
+# --------------------------------------------------------------------------- #
+# A8 — deal action (Phase 8: Free's commercial judgment fed to A6)
+# --------------------------------------------------------------------------- #
+def run_a8(context: dict[str, Any]) -> dict[str, Any]:
+    if not context.get("opportunity_id"):
+        return envelope(A8, "BLOCKED", missing_evidence=["opportunity_id"],
+                        human_review_required=True, domain_result={"code": "NEEDS_CONTEXT", "status": "BLOCKED"})
+    decision = context.get("decision") or {}
+    decision_status = str(decision.get("decision_status") or "")
+    gaps = [str(g) for g in (decision.get("gaps") or []) if str(g).strip()]
+    risks = context.get("risks") or []
+    access_status = str(context.get("access_status") or decision.get("access_status") or "")
+    refs = _evidence_refs(context)
+
+    # never bypass the risk gate — deal action cannot override BLOCK
+    if access_status.upper() == "BLOCK" or decision_status == "BLOCKED":
+        return envelope(
+            A8, "BLOCKED", evidence_refs=refs, human_review_required=True,
+            domain_result={
+                "status": "BLOCKED", "decision": "HALT",
+                "primary_action": {"type": "HALT", "reason": "市场准入或风险门禁为 BLOCK，停止对外推进"},
+                "secondary_action": None,
+                "action_reasoning": "A5 门禁 BLOCK，deal action 不得绕过",
+                "contact_strategy": None,
+                "follow_up": {"owner": "INTERNAL", "stop_condition": "BLOCK 解除并经人工复核"},
+                "required_assets": [], "human_approval_required": True,
+            },
+        )
+    if decision_status not in {"PURSUE_NOW", "VERIFY_FIRST", "WATCH", "PASS"}:
+        if not decision_status:
+            # A2-only opportunity: no Free snapshot to judge — must not stall A6.
+            return envelope(
+                A8, "NOT_APPLICABLE", evidence_refs=refs,
+                domain_result={"status": "NOT_APPLICABLE", "decision": "NO_SNAPSHOT"},
+            )
+        return envelope(
+            A8, "MORE_EVIDENCE", evidence_refs=refs, missing_evidence=["decision_snapshot"],
+            human_review_required=True, domain_result={"status": "NEEDS_EVIDENCE", "decision": "REVIEW_REQUIRED"},
+        )
+
+    mapping = {
+        "PURSUE_NOW": {
+            "primary_action": {"type": "OUTREACH", "reason": "机会分与门禁支持立即推进，按决策简报触达"},
+            "secondary_action": None,
+            "action_reasoning": "PURSUE_NOW：最高优先级机会，公开渠道触达并进入 A6 推进链",
+            "contact_strategy": {"preferred": "public_channel_first", "note": "仅使用公开渠道；私联需人工授权"},
+            "follow_up": {"owner": "A6", "success_condition": "买家首次回复", "stop_condition": "买家明确拒绝或门禁升级"},
+            "required_assets": ["决策简报", "证据链接"],
+            "human_approval_required": True,
+        },
+        "VERIFY_FIRST": {
+            "primary_action": {"type": "VERIFY_GAPS",
+                               "reason": f"先补齐缺口：{'；'.join(gaps[:3])}" if gaps else "决策要求先核验再推进"},
+            "secondary_action": {"type": "PREPARE_OUTREACH", "reason": "核验通过后即可触达"},
+            "action_reasoning": "VERIFY_FIRST：证据门槛未满，先核验后推进",
+            "contact_strategy": {"preferred": "public_channel_first", "note": "核验完成前不触达"},
+            "follow_up": {"owner": "INTERNAL", "success_condition": "缺口补齐并复核", "stop_condition": "核验失败或门禁升级"},
+            "required_assets": ["待核验清单", "证据链接"],
+            "human_approval_required": True,
+        },
+        "WATCH": {
+            "primary_action": {"type": "SCHEDULE_REVIEW", "reason": "时机未到，安排复查而非推进"},
+            "secondary_action": None,
+            "action_reasoning": "WATCH：当前不追，按购买窗口安排复查",
+            "contact_strategy": None,
+            "follow_up": {"owner": "A6", "success_condition": "窗口信号更新", "stop_condition": "决策降级为 PASS"},
+            "required_assets": [],
+            "human_approval_required": False,
+        },
+        "PASS": {
+            "primary_action": {"type": "NO_ACTION", "reason": "决策判定为 PASS，不投入销售时间"},
+            "secondary_action": None,
+            "action_reasoning": "PASS：不追",
+            "contact_strategy": None,
+            "follow_up": None,
+            "required_assets": [],
+            "human_approval_required": False,
+        },
+    }
+    action = mapping[decision_status]
+    result = {
+        "status": "DONE",
+        "decision": action["primary_action"]["type"],
+        "decision_snapshot": {
+            "decision_status": decision_status,
+            "opportunity_score": decision.get("opportunity_score"),
+            "component_scores": decision.get("component_scores"),
+        },
+        "risk_count": len(risks),
+        "stage": context.get("stage"),
+    }
+    result.update(action)
+    return envelope(A8, "DONE", evidence_refs=refs,
+                    human_review_required=action["human_approval_required"],
+                    domain_result=result)
+
+
+DISPATCH = {A3: run_a3, A4: run_a4, A5: run_a5, A8: run_a8}
 
 
 def run_capability(capability: str, context: dict[str, Any]) -> dict[str, Any]:

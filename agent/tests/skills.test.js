@@ -40,7 +40,7 @@ test('A6 detects changed quantity and destination and invalidates only related s
   });
   const fields = result.domain_result.changed_business_fields.map(item => item.field);
   assert.deepEqual(fields.sort(), ['destination', 'quantity']);
-  assert.deepEqual(result.domain_result.invalidated_capabilities.sort(), ['qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk']);
+  assert.deepEqual(result.domain_result.invalidated_capabilities.sort(), ['qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk', 'qianpulse.a8.deal_action']);
 });
 
 test('A6 formal price and payment discussion requires HUMAN', () => {

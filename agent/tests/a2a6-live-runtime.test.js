@@ -125,6 +125,7 @@ test('buyer reply enters A6 AgentRun and waits for invalidated dependency refres
   assert.deepEqual(result.body.run.capabilities_called, [
     'qianpulse.a4.supply_match',
     'qianpulse.a3.purchase_timing',
+    'qianpulse.a8.deal_action',
     'qianpulse.a6.opportunity_progression'
   ]);
   const runSteps = Object.values(state.steps)
