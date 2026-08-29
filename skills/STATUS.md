@@ -40,14 +40,18 @@ Event routing metadata           DONE
 Deterministic validators         DONE
 Mock providers                   DONE
 Golden-path tests                DONE
-Node test suite                  82/82 PASS
+Node test suite                  90/90 PASS
 GitHub Actions workflow          PASS
 Runnable server layout           DONE
 Server health smoke test         PASS
+HTTP webhook + approval E2E      PASS
 
 Apollo provider adapter          DONE
 Trademo provider adapter         DONE
 Smartlead provider adapter       DONE
+Smartlead current reply contract DONE
+Smartlead email_stats_id resolve DONE
+Smartlead legacy explicit mode   DONE
 Provider HTTP guard              DONE
 Agent-Skill bridge               DONE
 Smartlead webhook verification   DONE
@@ -58,9 +62,12 @@ External lead → Opportunity map  DONE
 Approval API → executor          DONE
 Runtime orchestration layer      DONE
 AgentRun / Step / Checkpoint     DONE
+Runtime startup config guard     DONE
+Sandbox Smartlead base URL       DONE
 A2 → Reply → A6 E2E              PASS
 Full outreach progression E2E    PASS
 Provider integration docs        DONE
+Live runbook                     DONE
 ```
 
 ## 当前工程主链
@@ -82,6 +89,8 @@ Seller target
 → A3/A4/A5 Dependency Refresh Gate
 → Evidence-safe Draft / Human Gate
 → Approval API
+→ Smartlead Lead Activities
+→ email_stats_id Resolution
 → Smartlead Thread Reply
 → Opportunity State / Outcome
 ```
@@ -89,9 +98,9 @@ Seller target
 ## 当前验证基线
 
 ```text
-GitHub Actions Run #42
-82 tests
-82 passed
+GitHub Actions Run #51
+90 tests
+90 passed
 0 failed
 
 覆盖：
@@ -102,22 +111,23 @@ GitHub Actions Run #42
 - A6 Intent / Stage / Changed Fields / Dependency Gate
 - A6 evidence-safe reply / Human Gate / approved Smartlead reply
 - Smartlead Webhook / raw-body Signature / Mapping / fail-closed routing
+- Smartlead current email_stats_id reply API / activity resolution / explicit legacy mode
 - Shared Approval Executor
+- Runtime startup production config fail-fast
 - A2 → first approval → Smartlead → signed reply → A6 → second approval → Smartlead reply
+- HTTP POST webhook → A6 Approval → HTTP Approval API → Smartlead stats-id reply
 - Server bootstrap / health smoke
 ```
 
 ## 下一工程层
 
 ```text
-P0-1 provider production credentials / sandbox smoke test
+P0-1 provider production credentials / real sandbox smoke
 P0-2 真实 Smartlead webhook sample payload 固化与回放
-P0-3 server HTTP 级 webhook + approval 黑盒 E2E
-P0-4 A3 / A4 / A5 live provider refresh 接入
-P0-5 Opportunity Workspace 展示 A2 / A6 / Approval / Trace 状态
-P0-6 production config / secret validation / startup fail-fast
-P0-7 可演示真实商机全链路：找客 → 首触达 → 回复 → 推进
-P0-8 metrics / audit / provider failure observability
+P0-3 A3 / A4 / A5 live provider refresh 接入
+P0-4 Opportunity Workspace 展示 A2 / A6 / Approval / Trace 状态
+P0-5 metrics / audit / provider failure observability
+P0-6 可演示真实商机全链路：找客 → 首触达 → 回复 → 推进
 ```
 
 继续复用现有 QianPulse Agent / Capability Adapter / Decision Engine / Repository；保持单 Runtime，专业业务判断继续留在独立 SKILL。
