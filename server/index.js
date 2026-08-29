@@ -15,6 +15,7 @@ import { createLiveA2A6Runtime } from './a2a6-live-runtime.js';
 import { createSmartleadLiveWebhookHandler } from './smartlead-live-webhook.js';
 import { createApprovalLiveExecutor } from './approval-live-executor.js';
 import { createA2FirstOutreachExecutor } from './a2-first-outreach-executor.js';
+import { createOpportunityWorkspaceHandler } from './opportunity-workspace-handler.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -534,6 +535,7 @@ function respond(res, result) {
 let liveA2A6;
 let approvalLiveExecutor;
 let smartleadWebhookHandler;
+let opportunityWorkspaceHandler;
 
 async function handleV1(req, res, path) {
   const payload = await readBody(req);
@@ -545,6 +547,11 @@ async function handleV1(req, res, path) {
     if (!user) return sendJson(res, 401, { error: '请先登录' });
     const rows = Object.values(state.opportunities).filter(opportunity => canAccess(user, opportunity));
     return sendJson(res, 200, rows.map(opportunity => projectOpportunity(opportunity, user.role)));
+  }
+
+  const workspaceMatch = path.match(/^\/api\/v1\/opportunities\/([^/]+)\/workspace$/);
+  if (req.method === 'GET' && workspaceMatch) {
+    return respond(res, opportunityWorkspaceHandler({ opportunityId: workspaceMatch[1], user }));
   }
 
   const runMatch = path.match(/^\/api\/v1\/agent\/runs\/([^/]+)$/);
@@ -699,6 +706,11 @@ liveA2A6 = createLiveA2A6Runtime({
   id,
   hash,
   agentVersion: AGENT_VERSION
+});
+
+opportunityWorkspaceHandler = createOpportunityWorkspaceHandler({
+  getState: () => state,
+  canAccess
 });
 
 const smartlead = createSmartleadProvider();
