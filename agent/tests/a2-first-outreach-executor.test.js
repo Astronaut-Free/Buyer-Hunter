@@ -105,9 +105,12 @@ test('A2 first outreach falls back to lead lookup and replays idempotently', asy
   assert.equal(calls.filter(call => call.type === 'lookup').length, 1);
 });
 
-test('A2 first outreach requires INTERNAL approval', async () => {
+test('A2 first outreach allows the seller owner and rejects unrelated sellers', async () => {
   const { executor } = fixture();
   const result = await executor({ approvalId: 'ap1', user: { id: 'seller1', role: 'SELLER' }, status: 'APPROVED' });
-  assert.equal(result.status, 403);
-  assert.equal(result.body.code, 'INTERNAL_REQUIRED');
+  assert.equal(result.status, 200);
+  const other = fixture();
+  const denied = await other.executor({ approvalId: 'ap1', user: { id: 'seller2', role: 'SELLER' }, status: 'APPROVED' });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body.code, 'APPROVAL_FORBIDDEN');
 });

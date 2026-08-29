@@ -59,7 +59,7 @@ test('authenticated seller runs A2 through AgentRun and creates an accessible Op
   assert.equal(result.body.generated_opportunity_ids.length, 1);
   const opportunity = result.body.opportunities[0];
   assert.equal(opportunity.seller.id, user.id);
-  assert.equal(opportunity.status, 'READY_FOR_OUTREACH_APPROVAL');
+  assert.equal(opportunity.status, 'READY_FOR_DRAFT');
   assert.equal(Object.values(state.runs).length, 1);
   assert.equal(Object.values(state.steps)[0].capability_id, 'qianpulse.a2.proactive_buyer_development');
   assert.equal(Object.values(state.checkpoints).length, 1);

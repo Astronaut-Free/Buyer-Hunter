@@ -21,8 +21,12 @@ test('A2 requires buyer evidence before READY', () => {
 test('A2 READY only after company, fit evidence and bound contact', () => {
   const readiness = evaluateOutreachReadiness({
     buyerCompany: { buyer_company_id: 'b1' },
-    buyerFit: { product_relevance: 'yes', evidence_refs: ['ev1'] },
-    contact: { buyer_company_id: 'b1', work_email: 'buyer@example.com' }
+    buyerFit: { decision: 'FIT_QUALIFIED', evidence_refs: ['ev1'] },
+    contact: { buyer_company_id: 'b1', work_email: 'buyer@example.com' },
+    contactFit: { status: 'READY' },
+    a4Result: { run_status: 'DONE' }, a5Result: { run_status: 'DONE' },
+    seller: { company_name: 'Guizhou Tea', product_id: 'p1' },
+    execution: { human_gate: true, campaign_id: 12 }
   });
   assert.equal(readiness.status, 'READY');
 });

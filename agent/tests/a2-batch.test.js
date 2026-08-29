@@ -8,7 +8,8 @@ const input = {
   target: { countries: ['US'], product_keywords: ['matcha'] },
   buyer_profile: { company_types: ['importer'], buyer_roles: ['Procurement Manager'] },
   constraints: { max_candidates: 10, language: 'en', contact_limit_per_company: 1 },
-  execution: { channel: 'email', human_gate: true }
+  execution: { channel: 'email', human_gate: true, campaign_id: 12 },
+  dependencies: { a4: { run_status: 'DONE' }, a5: { run_status: 'DONE' } }
 };
 
 function company(id, shipments) {

@@ -13,6 +13,8 @@ test('capability adapter dispatches A2', async () => {
     seller: { seller_id: 's1', company_id: 'c1', product_id: 'p1' }
   });
   assert.equal(result.capability_id, A2_CAPABILITY_ID);
+  assert.ok(Array.isArray(result.domain_result.candidates));
+  assert.ok(result.domain_result.summary);
 });
 
 test('capability adapter dispatches A6', async () => {
