@@ -669,6 +669,44 @@ code{{background:#8882;padding:1px 4px;border-radius:3px;font-size:12px}}
 
 
 # --------------------------------------------------------------------------- #
+def audit_a2_sandbox_chain() -> None:
+    """A2 must produce evidence-backed opportunities + outreach drafts with no
+    external credentials, so the proactive chain is demoable on a clean machine."""
+    c = check("A2 sandbox discovery -> outreach draft")
+    script = """
+      import { createSandboxTradeProvider, createSandboxContactProvider } from './providers/sandbox.js';
+      import { createA2BatchPipeline } from './skill-runtime/a2-batch.js';
+      const out = await createA2BatchPipeline()({
+        input: {
+          seller: { seller_id: 's1', company_id: 'c1', product_id: 'p1', product_name: 'Guizhou matcha' },
+          target: { countries: ['US'], product_keywords: ['matcha'] },
+          buyer_profile: { company_types: ['importer'], buyer_roles: ['Procurement Manager'] },
+          constraints: { max_candidates: 10, language: 'en', contact_limit_per_company: 1 }
+        },
+        providers: { trade_data: createSandboxTradeProvider(), contact_data: createSandboxContactProvider() },
+        maxReady: 3
+      });
+      const ready = out.opportunity_candidates.filter(x => x.readiness === 'READY');
+      const d = ready[0]?.envelope?.domain_result?.outreach || null;
+      console.log(JSON.stringify({
+        status: out.status, discovered: out.summary.discovered, ready: out.summary.ready,
+        draft: Boolean(d && d.subject && d.content), evidence: d ? d.evidence_refs.length : 0,
+        sandbox_tagged: out.opportunity_candidates.every(x =>
+          x.envelope?.domain_result?.buyer_company?.data_mode === 'SANDBOX')
+      }));
+    """
+    proc = run([NODE, "--input-type=module", "-e", script], cwd=AGENT)
+    try:
+        r = json.loads(proc.stdout.strip().splitlines()[-1])
+    except Exception:
+        c.record(False, f"sandbox A2 run failed: {(proc.stderr or proc.stdout)[:300]}")
+        return
+    ok = (r["status"] == "DONE" and r["discovered"] >= 5 and r["ready"] >= 1
+          and r["draft"] and r["evidence"] >= 2 and r["sandbox_tagged"])
+    c.record(ok, (f"discovered={r['discovered']} ready={r['ready']} draft={r['draft']} "
+                  f"evidence_refs={r['evidence']} all rows SANDBOX-tagged={r['sandbox_tagged']}"))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-tests", action="store_true", help="skip pytest + npm test (fast)")
@@ -688,6 +726,7 @@ def main() -> int:
     audit_orchestrator_skills()
     audit_landing_site()
     audit_portal_wiring()
+    audit_a2_sandbox_chain()
 
     matrix = completeness_matrix(store_counts, dispatch)
     DOCS.mkdir(exist_ok=True)
