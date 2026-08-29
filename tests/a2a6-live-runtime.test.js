@@ -65,6 +65,30 @@ test('authenticated seller runs A2 through AgentRun and creates an accessible Op
   assert.equal(Object.values(state.checkpoints).length, 1);
 });
 
+test('A2 live runtime creates a Human Gate first-outreach approval when campaign is configured', async () => {
+  const { state, runtime, user } = runtimeFixture();
+  const result = await runtime.runProactive({
+    event_type: 'SELLER_PROACTIVE_DEVELOPMENT',
+    idempotency_key: 'a2-live-approval',
+    input: targetInput,
+    max_ready: 1,
+    campaign_id: 12
+  }, user);
+
+  assert.equal(result.status, 201);
+  assert.equal(result.body.outreach_approval_required, true);
+  assert.equal(result.body.outreach_approvals.length, 1);
+  const approval = result.body.outreach_approvals[0];
+  assert.equal(approval.action_type, 'A2_OUTREACH_DRAFT');
+  assert.equal(approval.status, 'PENDING');
+  assert.equal(approval.payload.transport.provider, 'smartlead');
+  assert.equal(approval.payload.transport.campaign_id, 12);
+  assert.equal(approval.payload.transport.lead.email, 'alex@buyer.example');
+  const opportunity = result.body.opportunities[0];
+  assert.equal(opportunity.outreach_approval_id, approval.approval_id);
+  assert.equal(state.approvals[approval.approval_id].opportunity_id, opportunity.id);
+});
+
 test('A2 live runtime is idempotent and does not create duplicate Opportunities', async () => {
   const { state, runtime, user } = runtimeFixture();
   const payload = { event_type: 'SELLER_PROACTIVE_DEVELOPMENT', idempotency_key: 'a2-live-replay', input: targetInput, max_ready: 1 };
