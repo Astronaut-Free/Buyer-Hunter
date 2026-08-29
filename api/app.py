@@ -20,7 +20,10 @@ DEFAULT_DB = ROOT / "runtime/buyer_hunter.db"
 app = FastAPI(title="Buyer Hunter Opportunity Decision API", version="1.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:4173", "http://127.0.0.1:4174", "http://localhost:4173", "http://localhost:4174"],
+    allow_origins=[
+        "http://127.0.0.1:4173", "http://127.0.0.1:4174", "http://localhost:4173", "http://localhost:4174",
+        "http://127.0.0.1:4180", "http://localhost:4180",  # static landing site (site/)
+    ],
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
 )

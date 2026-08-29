@@ -27,15 +27,20 @@ not replace it.
 
 ## What was changed after vendoring
 
-Only navigation wiring — **no content or layout changes** to the vendored pages.
+Navigation wiring plus live-data wiring — **no upstream content or layout changes**.
 
 - `site/nav-bridge.js` (new, ours) — points the "登录" control and the primary
   call-to-action at the running app (`window.QIANPULSE_APP_URL`, default
   `http://localhost:4173`). Loaded by one added `<script>` line in each page.
+- `site/opportunities-live.js` (new, ours) — renders the decision API's real
+  data into the sample cards/rows/KPIs on `opportunities.html` (API 优先，失败
+  回退 to the static sample content, FALLBACK badge; see
+  `docs/16_真实数据到机会决策API闭环.md` for the integrity rules). Loaded by
+  one added `<script>` line in `opportunities.html`.
 - `site/PROVENANCE.md`, this file.
 
-The pages still open and render identically when `nav-bridge.js` is absent or the
-app is not running.
+The pages still open and render identically when either script is absent or the
+app/API is not running.
 
 ## Serving locally
 
@@ -54,8 +59,9 @@ python -m http.server 4180 --directory site
 git fetch origin
 git rm -r site/           # drop the old snapshot (keeps PROVENANCE.md + nav-bridge.js if staged elsewhere)
 git read-tree --prefix=site/ -u origin/ui
-git checkout -- site/PROVENANCE.md site/nav-bridge.js
+git checkout -- site/PROVENANCE.md site/nav-bridge.js site/opportunities-live.js
 ```
 
-Re-apply the one `<script src="nav-bridge.js">` line per page if upstream rewrote
-the `</body>` area.
+Re-apply the `<script src="nav-bridge.js">` line per page (and
+`<script src="opportunities-live.js">` in `opportunities.html`) if upstream
+rewrote the `</body>` area.
