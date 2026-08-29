@@ -1,0 +1,44 @@
+capability_id: qianpulse.a6.opportunity_progression
+version: 1.0.0
+description: Event-driven opportunity progression after buyer interaction.
+required_inputs:
+  - opportunity_id
+  - trigger_event
+  - conversation_context
+  - opportunity_state
+  - seller_context
+produced_outputs:
+  - buyer_reply
+  - stage
+  - changed_business_fields
+  - key_question
+  - next_action
+  - execution_mode
+  - reply_draft
+  - followup
+  - outcome
+status_contract:
+  - DONE
+  - MORE_EVIDENCE
+  - BLOCKED
+  - NOT_APPLICABLE
+  - ERROR
+allowed_tools:
+  - opportunity_store.read
+  - opportunity_store.write
+  - conversation_store.read
+  - conversation_store.append
+  - evidence_store.read
+  - seller_knowledge.read
+  - capability_result.read
+  - approval.create
+  - email_transport.reply
+  - followup_engine.calculate
+  - outcome_store.append
+timeout_seconds: 90
+enabled: true
+human_gate:
+  default_mode: APPROVAL
+  high_risk_mode: HUMAN
+idempotency:
+  external_action_required: true

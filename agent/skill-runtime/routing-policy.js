@@ -1,0 +1,19 @@
+import { A2_CAPABILITY_ID } from './a2.js';
+import { A6_CAPABILITY_ID } from './a6.js';
+
+export const QIANPULSE_EVENT_ROUTING = Object.freeze({
+  SELLER_PROACTIVE_DEVELOPMENT: [A2_CAPABILITY_ID],
+  SYSTEM_NEW_PROSPECT_SIGNAL: [A2_CAPABILITY_ID],
+  PRE_REPLY_FOLLOWUP_DUE: [A2_CAPABILITY_ID],
+  BUYER_MESSAGE: [A6_CAPABILITY_ID],
+  QUOTE_UPDATED: [A6_CAPABILITY_ID],
+  SAMPLE_UPDATED: [A6_CAPABILITY_ID],
+  APPROVAL_RESULT: [A6_CAPABILITY_ID],
+  EVIDENCE_ADDED: [A6_CAPABILITY_ID],
+  MANUAL_RESUME: [A6_CAPABILITY_ID]
+});
+
+export function resolveQianPulseSkillCapabilities(eventType, { hasBuyerReply = false } = {}) {
+  if (eventType === 'PRE_REPLY_FOLLOWUP_DUE' && hasBuyerReply) return [A6_CAPABILITY_ID];
+  return QIANPULSE_EVENT_ROUTING[eventType] ? [...QIANPULSE_EVENT_ROUTING[eventType]] : [];
+}
