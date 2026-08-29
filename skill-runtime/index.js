@@ -7,6 +7,7 @@ export * from './a3.js';
 export * from './a4.js';
 export * from './a5.js';
 export * from './dependency-refresh.js';
+export * from './a6-field-extractor.js';
 export * from './a6.js';
 export * from './a6-enrichment.js';
 export * from './a6-dependency-gate.js';
