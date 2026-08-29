@@ -43,8 +43,11 @@ NODE = shutil.which("node") or "node"
 # helpers
 # --------------------------------------------------------------------------- #
 def run(cmd: list[str], cwd: Path = ROOT, timeout: int = 900) -> subprocess.CompletedProcess:
+    # pytest / node both emit UTF-8; force it so a stray em-dash in test output
+    # doesn't crash the reader thread on a non-UTF-8 system locale (e.g. GBK).
     return subprocess.run(
         cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout,
+        encoding="utf-8", errors="replace",
         shell=(os.name == "nt" and Path(cmd[0]).name.startswith("npm")),
     )
 

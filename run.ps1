@@ -64,13 +64,25 @@ if ($Audit) {
 }
 
 if ($Down) {
+    # taskkill /T because the demo runs under cmd.exe -> npm -> vite; Stop-Process
+    # would kill only the wrapper and orphan the vite server on $DemoPort.
     if (Test-Path $PidFile) {
         (Get-Content $PidFile -Raw | ConvertFrom-Json) | ForEach-Object {
-            try { Stop-Process -Id $_ -Force -ErrorAction Stop; Write-Host "stopped pid $_" }
-            catch { Write-Host "pid $_ already gone" }
+            if (Get-Process -Id $_ -ErrorAction SilentlyContinue) {
+                & taskkill.exe /F /T /PID $_ *> $null
+                Write-Host "stopped pid $_ (+ children)"
+            } else { Write-Host "pid $_ already gone" }
         }
         Remove-Item $PidFile
-    } else { Write-Host 'no .run-pids.json; nothing to stop' }
+    } else { Write-Host 'no .run-pids.json' }
+    # safety net: free any of the four ports still held (e.g. a re-parented child)
+    foreach ($port in @($SitePort, $DemoPort, $ApiPort, $AgentPort)) {
+        Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object {
+                & taskkill.exe /F /T /PID $_ *> $null
+                Write-Host "freed port $port (pid $_)"
+            }
+    }
     return
 }
 
