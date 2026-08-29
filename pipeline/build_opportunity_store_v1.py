@@ -21,6 +21,8 @@ if str(ROOT / "pipeline") not in sys.path:
 from opportunity_decision_engine_v1 import assess_opportunity  # noqa: E402
 from supply_demand_fit_v1 import evaluate as evaluate_fit  # noqa: E402
 from supply_demand_fit_v1 import load_catalog  # noqa: E402
+from supply_demand_fit_v1 import parse_demand  # noqa: E402
+from risk_items_v1 import classify_risk_items  # noqa: E402
 
 
 INPUT_BASENAME = "qualified_pending_entity_opportunities.csv"
@@ -107,6 +109,7 @@ def normalize_input_row(raw: dict[str, str]) -> dict[str, str]:
     row.setdefault("registration_id", "")
     row.setdefault("public_business_emails", "")
     row.setdefault("public_business_phones", "")
+    row.setdefault("buyer_identity_status", "UNRESOLVED")
     row.setdefault("age_days", str(age_days))
     row.setdefault("time_precision", "DATE" if published else "UNKNOWN")
     row.setdefault("evidence_url", source_url)
@@ -139,14 +142,6 @@ def buyer_display_name(row: dict[str, str]) -> str:
 def contains_any(text: str, needles: list[str]) -> bool:
     folded = text.casefold()
     return any(needle in folded for needle in needles)
-
-
-def _fit_has_cert_gap(fit_report: Any) -> bool:
-    for evaluation in fit_report.all_evaluations:
-        for check in evaluation.get("checks", []):
-            if check.get("dimension") == "mandatory_certs" and check.get("status") in {"FAIL", "UNKNOWN"}:
-                return True
-    return False
 
 
 def commercial_execution_score(row: dict[str, str]) -> float:
@@ -351,7 +346,12 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
         conn.executescript((ROOT / "db/migrations/002_opportunity_decision.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/003_seller_sku_fit.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/004_agent_discovered_target.sql").read_text(encoding="utf-8"))
+        conn.executescript((ROOT / "db/migrations/005_buyer_identity.sql").read_text(encoding="utf-8"))
         insert_base_profile(conn, profile, now)
+        # reliable same-account grouping (domain / platform id / reg id only)
+        from buyer_profile_v1 import account_key, build_buyer_context  # local: avoids import cycle
+
+        buyer_context = build_buyer_context(rows)
         source_ids: dict[str, str] = {}
         decisions: list[tuple[dict[str, str], dict[str, Any], Any, Any]] = []
 
@@ -407,20 +407,37 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
         top_ids = {item[2].opportunity_id: rank for rank, item in enumerate(eligible[:5], 1)}
         for row, signal_input, decision, fit_report in decisions:
             opportunity_id = decision.opportunity_id
-            risk_items: list[dict[str, str]] = []
-            if not row.get("buyer_name_raw", "").strip():
-                risk_items.append({"code": "IDENTITY_UNKNOWN", "severity": "MEDIUM", "reason": "买家公司法定主体未完成独立核验"})
-            if row.get("contact_gate", "").strip():
-                risk_items.append({"code": "PLATFORM_ONLY_CONTACT", "severity": "LOW", "reason": "当前需经平台公开响应渠道联系"})
-            if row.get("specs_present") != "True":
-                risk_items.append({"code": "SPECIFICATION_GAP", "severity": "MEDIUM", "reason": "关键规格仍需买家确认"})
-            if row.get("destination_present") != "True":
-                risk_items.append({"code": "MARKET_ACCESS_UNKNOWN", "severity": "MEDIUM", "reason": "最终目的市场尚未明确"})
-            if _fit_has_cert_gap(fit_report):
-                risk_items.append({"code": "CERTIFICATION_GAP", "severity": "MEDIUM", "reason": "买方所需认证与匹配 SKU 之间存在缺口，报价前需确认适用范围"})
+            buyer_identity_status = row.get("buyer_identity_status", "UNRESOLVED")
+            risk_items, access_status = classify_risk_items(
+                parse_demand(row), fit_report, row,
+                buyer_identity_status=buyer_identity_status, catalog=catalog,
+            )
+            account = account_key(row)
+            buyer_ctx = buyer_context.get(account) if account else None
+            buying_profile_json = (
+                json.dumps(buyer_ctx["buying_profile"], ensure_ascii=False)
+                if buyer_ctx and buyer_ctx.get("buying_profile") else None
+            )
+            same_account_history_json = (
+                json.dumps(buyer_ctx["same_account_public_history"], ensure_ascii=False)
+                if buyer_ctx and buyer_ctx.get("same_account_public_history") else None
+            )
             conn.execute(
-                "INSERT INTO opportunity VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                (opportunity_id, profile["id"], decision.buyer_id, row["signal_id"], "NEW", "；".join(decision.why_now), json.dumps(decision.gaps, ensure_ascii=False), json.dumps(risk_items, ensure_ascii=False), decision.next_action["summary"], row["published_at"], now, now),
+                """INSERT INTO opportunity(
+                     id, seller_capability_profile_id, buyer_id, primary_signal_id, status,
+                     why_now, gap_json, risk_json, next_action, latest_signal_at,
+                     created_at, updated_at,
+                     buyer_identity_status, access_status, buying_profile,
+                     same_account_public_history)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    opportunity_id, profile["id"], decision.buyer_id, row["signal_id"], "NEW",
+                    "；".join(decision.why_now), json.dumps(decision.gaps, ensure_ascii=False),
+                    json.dumps(risk_items, ensure_ascii=False), decision.next_action["summary"],
+                    row["published_at"], now, now,
+                    buyer_identity_status, access_status, buying_profile_json,
+                    same_account_history_json,
+                ),
             )
             conn.execute(
                 """INSERT INTO seller_sku_fit(

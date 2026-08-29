@@ -50,3 +50,23 @@ test('A5 refresh blocks an explicitly blocked destination and dependency runner 
   assert.deepEqual(refresh.refreshed_capabilities, ['qianpulse.a5.trade_risk']);
   assert.equal(refresh.dependency_results.a5.run_status, 'BLOCKED');
 });
+
+test('A5 review carries rule-depth risk items (fraud / contract / IP)', () => {
+  const direct = runA5TradeRisk({
+    opportunity_id: 'opp1',
+    changed_fields: ['destination'],
+    field_updates: {
+      destination: 'DE',
+      payment_terms: '100% T/T in advance, no guarantee',
+      contact_email_raw: 'buyer77@qq.com',
+      buyer_identity_status: 'UNRESOLVED'
+    },
+    latest_buyer_message: { content: 'want starbucks-style matcha' },
+    seller_context: { allowed_markets: ['DE'], payment_policy: ['T/T'] }
+  });
+  assert.equal(direct.run_status, 'DONE');
+  const codes = new Set(direct.domain_result.risk_items.map(item => item.code));
+  assert.ok(codes.has('FRAUD_SIGNAL'), 'free-mail + unresolved identity');
+  assert.ok(codes.has('CONTRACT_RISK'), 'full advance without guarantee');
+  assert.ok(codes.has('IP_CONFLICT'), 'brand mention without authorization');
+});

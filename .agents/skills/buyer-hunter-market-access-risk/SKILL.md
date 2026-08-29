@@ -26,6 +26,12 @@ description: >-
 - `PAYMENT_TERM_RISK`
 - `ORIGIN_CONFLICT`
 - `DELIVERY_CONFLICT`
+- `CREDIT_UNKNOWN`　　（规则启发式：身份未解析且无信用锚点 → LOW，不阻断）
+- `FRAUD_SIGNAL`　　（规则启发式：免费邮箱 + 主体未解析 → MEDIUM；叠加数量异常升 HIGH）
+- `IP_CONFLICT`　　（规则启发式：需求提及品牌且无授权证据 → MEDIUM）
+- `CONTRACT_RISK`　　（规则启发式：全款预付且无担保条款 → MEDIUM）
+
+实现：`pipeline/risk_items_v1.py`（纯函数、确定性、无外部 Provider；接法规 Provider 后可在同一 taxonomy 内增强）。
 
 身份未知不是自动高风险或自动 `BLOCK`。若存在平台公开响应渠道，机会可继续进入 `CONDITIONAL`，但报价或承诺前必须完成必要核验。
 

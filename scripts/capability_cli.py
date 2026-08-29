@@ -29,6 +29,7 @@ from opportunity_decision_engine_v1 import market_access_score, timing_score  # 
 from build_opportunity_store_v1 import buying_window_fields  # noqa: E402
 from supply_demand_fit_v1 import evaluate as evaluate_fit  # noqa: E402
 from supply_demand_fit_v1 import load_catalog  # noqa: E402
+from risk_items_v1 import classify_risk_items_from_context  # noqa: E402
 
 
 A3 = "qianpulse.a3.purchase_timing"
@@ -248,6 +249,23 @@ def run_a5(context: dict[str, Any]) -> dict[str, Any]:
     if destination and allowed:
         destination_allowed = any(destination.lower() == a.lower() for a in allowed)
     ma_number = market_access_score([], 60.0 if dest_upper in _TARGET_MARKETS else 30.0 if dest_upper else None)
+
+    # rule-based depth (credit / fraud / IP / contract) rides along the review
+    identity = str(
+        fields.get("buyer_identity_status") or context.get("buyer_identity_status") or "UNRESOLVED"
+    )
+    message = context.get("latest_buyer_message") or {}
+    message_text = message.get("content") if isinstance(message, dict) else str(message or "")
+    risk_items, access_status = classify_risk_items_from_context(
+        category=str(fields.get("product") or ""),
+        demand_title=str(fields.get("demand_title") or ""),
+        message_text=f"{message_text} {fields.get('payment_terms') or ''}",
+        quantity=str(fields.get("quantity") or ""),
+        destination=destination or "",
+        buyer_identity_status=identity,
+        contact_gate=str(fields.get("contact_gate") or ""),
+        contact_email_raw=str(fields.get("contact_email_raw") or ""),
+    )
     return envelope(
         A5, "DONE", changed_fields=changed, evidence_refs=refs,
         domain_result={
@@ -258,6 +276,8 @@ def run_a5(context: dict[str, Any]) -> dict[str, Any]:
             "market_access": market_access or ma_number,
             "market_access_score": ma_number,
             "payment_policy": payment_policy,
+            "risk_items": risk_items,
+            "access_status": access_status,
         },
     )
 

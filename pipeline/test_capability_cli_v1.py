@@ -100,6 +100,29 @@ class CapabilityCliTest(unittest.TestCase):
         self.assertEqual(env["run_status"], "MORE_EVIDENCE")
         self.assertIn("payment_policy", env["missing_evidence"])
 
+    def test_a5_review_carries_rule_depth_risk_items(self) -> None:
+        env = cli.run_capability(A5, ctx(
+            field_updates={"destination": "DE", "payment_terms": "100% T/T in advance, no guarantee"},
+            latest_buyer_message={"content": "want starbucks-style matcha"},
+            seller_context={"allowed_markets": ["DE"], "payment_policy": ["T/T"]},
+        ))
+        self.assertEqual(env["run_status"], "DONE")
+        result = env["domain_result"]
+        codes = {item["code"] for item in result.get("risk_items", [])}
+        self.assertIn("CONTRACT_RISK", codes)
+        self.assertIn("IP_CONFLICT", codes)
+
+    def test_a5_depth_fraud_signal_on_free_mail(self) -> None:
+        env = cli.run_capability(A5, ctx(
+            field_updates={"destination": "DE", "contact_email_raw": "buyer77@qq.com",
+                           "buyer_identity_status": "UNRESOLVED"},
+            seller_context={"allowed_markets": ["DE"], "market_access": "EU-GMP-baseline"},
+        ))
+        result = env["domain_result"]
+        fraud = [i for i in result.get("risk_items", []) if i["code"] == "FRAUD_SIGNAL"]
+        self.assertEqual(len(fraud), 1)
+        self.assertEqual(fraud[0]["severity"], "MEDIUM")
+
     def test_missing_opportunity_id_blocks(self) -> None:
         for cap in (A3, A4, A5):
             env = cli.run_capability(cap, ctx(opportunity_id=None))
