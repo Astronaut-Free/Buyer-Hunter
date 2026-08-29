@@ -8,7 +8,7 @@ function requireKey(apiKey) {
 
 export function createSmartleadProvider({
   apiKey = process.env.SMARTLEAD_API_KEY,
-  baseUrl = DEFAULT_BASE_URL,
+  baseUrl = process.env.SMARTLEAD_BASE_URL || DEFAULT_BASE_URL,
   fetchImpl = globalThis.fetch,
   timeoutMs = 15000
 } = {}) {
