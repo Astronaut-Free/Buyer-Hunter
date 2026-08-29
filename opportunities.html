@@ -145,62 +145,183 @@
     .qp-quantity { display:block; color:var(--qp-ink); font-size:12.5px; font-weight:650; text-align:right; white-space:nowrap; }
     .qp-time { display:block; margin-top:4px; color:#77827D; font-size:9.5px; font-weight:500; text-align:right; white-space:nowrap; }
 
-    .qp-core-section { position:relative; isolation:isolate; width:100%; max-width:2940px; margin:0 auto; padding:70px clamp(28px,4.8vw,86px) 62px; overflow:hidden; color:#F7F4EC; background:#123B32; scroll-margin-top:58px; }
-    .qp-core-section::before { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; opacity:.24; background-image:linear-gradient(rgba(247,244,236,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(247,244,236,.055) 1px,transparent 1px); background-size:64px 64px; -webkit-mask-image:linear-gradient(180deg,transparent,black 18%,black 82%,transparent); mask-image:linear-gradient(180deg,transparent,black 18%,black 82%,transparent); }
-    .qp-core-head { position:relative; z-index:2; max-width:1120px; margin:0 auto; text-align:center; }
-    .qp-core-kicker { display:block; margin:0 0 12px; color:#D6B66E; font-size:11px; font-weight:700; letter-spacing:.2em; }
-    .qp-core-title { margin:0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,4.7vw,72px); font-weight:500; line-height:1.06; letter-spacing:-.03em; }
-    .qp-core-intro { max-width:820px; margin:18px auto 0; color:rgba(247,244,236,.68); font-size:15px; font-weight:420; line-height:1.68; letter-spacing:.025em; }
-    .qp-logic-stage { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1fr); gap:18px; margin-top:42px; }
-    .qp-logic-panel { position:relative; min-width:0; overflow:hidden; padding:26px; color:#17372F; background:#F3EFE5; border:1px solid rgba(213,163,63,.2); border-radius:16px; box-shadow:0 18px 48px rgba(4,24,19,.18); transition:transform .38s cubic-bezier(.16,1,.3,1),box-shadow .38s ease; }
-    .qp-logic-panel-expand { background:#DCE9E1; border-color:rgba(220,233,225,.28); }
-    .qp-logic-panel:hover { transform:translateY(-4px); box-shadow:0 24px 56px rgba(4,24,19,.23); }
-    .qp-logic-panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
-    .qp-logic-panel-code { display:block; color:#9B7427; font-size:10px; font-weight:750; line-height:1; letter-spacing:.16em; }
-    .qp-logic-panel-title { margin:9px 0 0; color:#17372F; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:30px; font-weight:650; line-height:1.15; letter-spacing:-.02em; }
-    .qp-logic-panel-copy { max-width:390px; margin:8px 0 0; color:#5D6F68; font-size:12px; line-height:1.58; }
-    .qp-logic-status { flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; padding:7px 10px; color:#315548; background:rgba(255,255,255,.55); border:1px solid rgba(23,55,47,.1); border-radius:999px; font-size:9px; font-weight:700; letter-spacing:.08em; }
-    .qp-logic-status::before { content:""; width:6px; height:6px; background:#5A9175; border-radius:50%; box-shadow:0 0 0 3px rgba(90,145,117,.12); }
-    .qp-logic-status-phase { color:#796024; }
-    .qp-logic-status-phase::before { background:#D5A33F; box-shadow:0 0 0 3px rgba(213,163,63,.13); }
-    .qp-logic-direction { display:inline-flex; align-items:center; gap:8px; margin-top:13px; padding:6px 9px; color:#315548; background:rgba(255,255,255,.5); border-radius:999px; font-size:10px; font-weight:700; letter-spacing:.04em; }
-    .qp-logic-direction-arrow { color:#AD7E24; font-size:14px; }
-    .qp-logic-map { position:relative; height:250px; margin-top:20px; overflow:hidden; background:rgba(255,255,255,.32); border:1px solid rgba(23,55,47,.08); border-radius:13px; }
-    .qp-logic-map::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 74% 50%,rgba(90,145,117,.12),transparent 34%); }
-    .qp-logic-links { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-    .qp-logic-link { fill:none; stroke:#74A088; stroke-width:1.2; opacity:.48; stroke-linecap:round; stroke-dasharray:4 5; }
-    .qp-logic-signal-grid { position:absolute; left:18px; top:50%; width:47%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; transform:translateY(-50%); }
-    .qp-logic-signal { min-width:0; padding:10px 9px; background:rgba(255,255,255,.72); border:1px solid rgba(23,55,47,.08); border-radius:9px; box-shadow:0 4px 12px rgba(23,55,47,.04); }
-    .qp-logic-signal-icon { display:block; color:#A77B29; font-size:14px; line-height:1; }
-    .qp-logic-signal strong { display:block; margin-top:6px; color:#28473D; font-size:10px; line-height:1.15; }
-    .qp-logic-signal small { display:block; margin-top:3px; color:#87928D; font-size:7px; letter-spacing:.08em; }
-    .qp-logic-radar { position:absolute; right:8%; top:50%; width:150px; height:150px; display:grid; place-items:center; border:1px solid rgba(90,145,117,.4); border-radius:50%; transform:translateY(-50%); box-shadow:0 0 0 18px rgba(90,145,117,.055),0 0 0 38px rgba(90,145,117,.035); }
-    .qp-logic-radar::before,.qp-logic-radar::after { content:""; position:absolute; inset:24%; border:1px solid rgba(90,145,117,.28); border-radius:50%; }
-    .qp-logic-radar::after { inset:46%; background:#D5A33F; border:0; box-shadow:0 0 0 7px rgba(213,163,63,.15),0 0 18px rgba(213,163,63,.25); }
-    .qp-logic-radar-sweep { position:absolute; inset:0; overflow:hidden; border-radius:50%; animation:qp-radar-spin 8s linear infinite; }
-    .qp-logic-radar-sweep::before { content:""; position:absolute; left:50%; top:50%; width:50%; height:50%; background:linear-gradient(25deg,rgba(90,145,117,.25),transparent 66%); transform-origin:left top; clip-path:polygon(0 0,100% 0,0 100%); }
-    .qp-logic-radar-label { position:relative; z-index:3; margin-top:94px; color:#315548; font-size:9px; font-weight:750; letter-spacing:.08em; }
-    .qp-expand-map::before { background:radial-gradient(circle at 27% 50%,rgba(213,163,63,.1),transparent 36%); }
-    .qp-logic-seller-core { position:absolute; left:8%; top:50%; width:142px; height:142px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#17372F; background:rgba(247,244,236,.72); border:1px solid rgba(213,163,63,.45); border-radius:50%; box-shadow:0 0 0 16px rgba(213,163,63,.055); transform:translateY(-50%); }
-    .qp-logic-seller-core strong { font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:18px; line-height:1.15; }
-    .qp-logic-seller-core span { margin-top:7px; color:#88702F; font-size:8px; font-weight:700; letter-spacing:.12em; }
-    .qp-logic-action-list { position:absolute; right:16px; top:50%; width:46%; display:grid; gap:7px; transform:translateY(-50%); }
-    .qp-logic-action { display:flex; align-items:center; gap:9px; padding:7px 9px; color:#315548; background:rgba(255,255,255,.64); border:1px solid rgba(23,55,47,.08); border-radius:9px; box-shadow:0 4px 12px rgba(23,55,47,.035); font-size:9px; font-weight:700; }
-    .qp-logic-action-index { flex:0 0 auto; display:grid; place-items:center; width:21px; height:21px; color:#8D6720; background:rgba(213,163,63,.14); border-radius:50%; font-size:7px; }
-    .qp-logic-hub-wrap { position:relative; display:grid; place-items:center; min-height:112px; }
-    .qp-logic-hub-line { position:absolute; left:50%; top:50%; width:86%; height:1px; background:linear-gradient(90deg,transparent,rgba(213,163,63,.65),transparent); transform:translate(-50%,-50%); }
-    .qp-logic-hub { position:relative; z-index:2; width:104px; height:104px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#17372F; background:#D5A33F; border:6px solid #123B32; border-radius:50%; box-shadow:0 0 0 1px rgba(213,163,63,.55),0 12px 28px rgba(5,27,22,.28); }
-    .qp-logic-hub::before { content:""; position:absolute; inset:-15px; border:1px solid rgba(213,163,63,.35); border-radius:50%; animation:qp-hub-pulse 3.2s ease-out infinite; }
-    .qp-logic-hub-mark { font-family:Georgia,serif; font-size:34px; line-height:.8; }
-    .qp-logic-hub-label { margin-top:7px; font-size:8px; font-weight:800; letter-spacing:.12em; }
-    .qp-logic-flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:8px; margin-top:15px; padding:10px 12px; color:#496159; background:rgba(255,255,255,.43); border-radius:10px; text-align:center; font-size:8px; font-weight:700; }
-    .qp-logic-flow-arrow { color:#AD7E24; font-size:13px; }
-    .qp-core-section.qp-core-reveal .qp-logic-panel { animation:qp-logic-enter .8s cubic-bezier(.16,1,.3,1) backwards; }
-    .qp-core-section.qp-core-reveal .qp-logic-panel-expand { animation-delay:.12s; }
-    @keyframes qp-logic-enter { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes qp-radar-spin { to{transform:rotate(360deg)} }
-    @keyframes qp-hub-pulse { 0%{opacity:.65;transform:scale(.88)} 80%,100%{opacity:0;transform:scale(1.28)} }
+    .qp-core-section { position:relative; isolation:isolate; width:100%; max-width:2940px; margin:0 auto; padding:clamp(76px,8vw,126px) clamp(34px,7.5vw,132px) clamp(88px,9vw,142px); overflow:hidden; color:var(--qp-ink); background:linear-gradient(180deg,#F1F4EF 0%,#F5F2E9 46%,#F3F0E7 100%); scroll-margin-top:58px; }
+    .qp-core-sliced-waves { position:absolute; z-index:0; inset:0; width:100%; height:100%; pointer-events:none; opacity:.44; }
+    .qp-core-wave-slice { transform-box:fill-box; transform-origin:center; animation:qp-core-wave-shift 24s ease-in-out infinite alternate; }
+    .qp-core-wave-slice:nth-child(2n) { animation-duration:29s; animation-direction:alternate-reverse; }
+    .qp-core-wave-slice:nth-child(3n) { animation-duration:34s; }
+    .qp-core-wave-tea { fill:#B8D0C2; opacity:.14; }
+    .qp-core-wave-green { fill:#5F8B78; opacity:.06; }
+    .qp-core-wave-gold { fill:#D5A33F; opacity:.042; }
+    @keyframes qp-core-wave-shift { from { transform:translate3d(-1.2%,0,0); } to { transform:translate3d(1.2%,-8px,0); } }
+    .qp-core-head { position:relative; z-index:2; max-width:1100px; margin:0; text-align:left; }
+    .qp-core-kicker { display:block; margin:0 0 18px; color:#7D887F; font-size:12px; font-weight:650; line-height:1; letter-spacing:.18em; }
+    .qp-core-title { max-width:940px; margin:0; color:var(--qp-green); font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,5vw,76px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
+    .qp-core-intro { max-width:760px; margin:26px 0 0; color:#66736D; font-size:clamp(15px,1.25vw,19px); font-weight:400; line-height:1.8; letter-spacing:.025em; }
+    .qp-network-stage { position:relative; z-index:2; height:clamp(590px,52vw,790px); margin-top:clamp(52px,6vw,86px); overflow:hidden; background:#123B32; border:1px solid rgba(213,163,63,.56); box-shadow:0 18px 42px rgba(18,59,50,.15); }
+    .qp-network-stage::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.6; background-image:radial-gradient(circle at 50% 50%,rgba(213,163,63,.12),transparent 25%),linear-gradient(rgba(247,244,236,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(247,244,236,.055) 1px,transparent 1px); background-size:auto,54px 54px,54px 54px; }
+    .qp-network-stage::after { content:""; position:absolute; z-index:1; inset:16px; pointer-events:none; border:1px solid rgba(247,244,236,.11); }
+    .qp-network-route { position:absolute; z-index:7; left:clamp(20px,3.2vw,54px); right:clamp(20px,3.2vw,54px); display:grid; grid-template-columns:minmax(155px,.8fr) minmax(0,2.5fr); align-items:center; gap:24px; min-height:62px; padding:10px 16px; background:rgba(7,38,31,.8); border:1px solid rgba(247,244,236,.16); }
+    .qp-network-route-demand { top:clamp(24px,3vw,46px); }
+    .qp-network-route-expand { bottom:clamp(24px,3vw,46px); border-color:rgba(213,163,63,.48); }
+    .qp-network-route-title { display:block; color:#F7F4EC; font-size:17px; font-weight:700; letter-spacing:.06em; }
+    .qp-network-route-meta { display:block; margin-top:4px; color:#AFC7BB; font-size:10px; font-weight:700; letter-spacing:.15em; }
+    .qp-network-route-expand .qp-network-route-meta { color:#D9B96D; }
+    .qp-network-route-flow { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#DCE9E1; font-size:15px; font-weight:650; line-height:1.35; }
+    .qp-network-route-flow b { color:#D5A33F; font-size:20px; font-weight:400; }
+    .qp-network-route-expand .qp-network-route-flow { color:#F6E8C7; }
+    .qp-network-phase { display:inline-flex; align-items:center; width:max-content; margin-left:7px; padding:3px 6px; color:#E9C775; border:1px solid rgba(213,163,63,.55); font-size:9px; font-weight:750; letter-spacing:.1em; vertical-align:middle; }
+    .qp-network-links { position:absolute; z-index:2; inset:0; width:100%; height:100%; pointer-events:none; }
+    .qp-network-link { fill:none; stroke:#8DAA9B; stroke-width:1.15; opacity:.5; }
+    .qp-network-link-flow { stroke:#D5A33F; stroke-width:1.9; opacity:.78; stroke-dasharray:7 11; animation:qp-network-flow 11s linear infinite; }
+    .qp-network-link-return { stroke:#DCE9E1; stroke-dashoffset:32; animation-direction:reverse; animation-duration:13s; }
+    .qp-network-side { position:absolute; z-index:4; top:25%; bottom:22%; width:27%; min-width:0; }
+    .qp-network-buyers { left:5.2%; }
+    .qp-network-supply { right:5.2%; }
+    .qp-network-side-head { position:relative; z-index:4; }
+    .qp-network-side-code { display:block; color:#D5A33F; font-size:11px; font-weight:750; letter-spacing:.16em; }
+    .qp-network-side-title { margin:8px 0 0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(29px,2.3vw,40px); font-weight:600; line-height:1.15; letter-spacing:-.02em; }
+    .qp-network-question { margin:7px 0 0; color:#B9CEC4; font-size:15px; font-weight:650; letter-spacing:.05em; }
+    .qp-network-art { position:absolute; z-index:2; left:6%; right:6%; top:34%; height:48%; display:grid; place-items:center; }
+    .qp-network-world-map { width:100%; height:100%; object-fit:contain; opacity:.84; filter:drop-shadow(0 10px 15px rgba(0,0,0,.16)); }
+    .qp-network-guizhou-map { width:76%; height:100%; object-fit:contain; filter:drop-shadow(0 10px 15px rgba(0,0,0,.2)); }
+    .qp-network-fields { position:absolute; z-index:3; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px 5px; margin:0; padding:0; list-style:none; }
+    .qp-network-fields li { min-width:0; color:#DCE9E1; font-size:12px; font-weight:700; line-height:1.2; text-align:center; white-space:nowrap; }
+    .qp-network-fields li::before { content:""; display:inline-block; width:4px; height:4px; margin:0 5px 2px 0; background:#D5A33F; border-radius:50%; }
+    .qp-network-supply .qp-network-fields li::before { background:#B4D2C1; }
+    .qp-network-node { position:absolute; z-index:3; display:flex; align-items:center; gap:5px; color:#F7F4EC; font-size:11px; font-weight:700; letter-spacing:.03em; white-space:nowrap; }
+    .qp-network-node::before { content:""; width:7px; height:7px; flex:0 0 auto; background:#D5A33F; border:2px solid #123B32; border-radius:50%; box-shadow:0 0 0 3px rgba(213,163,63,.18); }
+    .qp-network-node-us { left:18%; top:42%; }.qp-network-node-de { left:59%; top:36%; }.qp-network-node-jp { right:7%; top:50%; }.qp-network-node-ae { left:63%; top:62%; }.qp-network-node-br { left:37%; top:70%; }
+    .qp-network-node-matcha { left:28%; top:42%; }.qp-network-node-rosa { right:11%; top:57%; }.qp-network-node-blue { left:18%; top:68%; }
+    .qp-network-node-matcha::before,.qp-network-node-rosa::before,.qp-network-node-blue::before { background:#B4D2C1; box-shadow:0 0 0 3px rgba(180,210,193,.16); }
+    .qp-network-engine { position:absolute; z-index:6; left:50%; top:50%; width:clamp(230px,20.5vw,340px); aspect-ratio:1; display:grid; place-items:center; transform:translate(-50%,-50%); }
+    .qp-network-engine-orbit,.qp-network-engine-orbit::before,.qp-network-engine-orbit::after { position:absolute; border:1px solid rgba(213,163,63,.48); border-radius:50%; }
+    .qp-network-engine-orbit { inset:2%; box-shadow:0 0 0 14px rgba(213,163,63,.035),0 0 48px rgba(0,0,0,.2); }
+    .qp-network-engine-orbit::before { content:""; inset:13%; border-color:rgba(220,233,225,.32); }
+    .qp-network-engine-orbit::after { content:""; inset:25%; border-color:rgba(213,163,63,.28); }
+    .qp-network-engine-core { position:relative; z-index:3; width:118%; aspect-ratio:1.52; display:grid; place-items:center; padding:10%; color:#17372F; text-align:center; background:#F7F4EC; border:5px solid #D5A33F; border-radius:999px; box-shadow:0 10px 26px rgba(2,23,17,.36),0 0 0 2px rgba(247,244,236,.8) inset; }
+    .qp-network-engine-logo { display:block; width:100%; height:auto; filter:drop-shadow(0 1px 0 rgba(255,255,255,.5)); }
+    .qp-network-engine-skill { position:absolute; z-index:4; padding:6px 8px; color:#DCE9E1; background:rgba(7,38,31,.86); border:1px solid rgba(220,233,225,.25); font-size:11px; font-weight:700; line-height:1; letter-spacing:.03em; white-space:nowrap; }
+    .qp-network-engine-skill-one { left:-14%; top:21%; }.qp-network-engine-skill-two { right:-15%; top:21%; }.qp-network-engine-skill-three { left:-17%; bottom:21%; }.qp-network-engine-skill-four { right:-12%; bottom:21%; }
+    .qp-core-section.qp-core-reveal .qp-network-stage { animation:qp-network-enter .78s cubic-bezier(.16,1,.3,1) both; }
+    @keyframes qp-network-enter { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes qp-network-flow { to { stroke-dashoffset:-72; } }
 
+    .qp-deal-section { position:relative; isolation:isolate; width:100%; max-width:2940px; margin:0 auto; padding:clamp(76px,8vw,126px) clamp(34px,7.5vw,132px) clamp(88px,9vw,142px); overflow:hidden; color:#F7F4EC; background:#0D2D25; scroll-margin-top:58px; }
+    .qp-deal-section::before { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; opacity:.52; background-image:linear-gradient(rgba(220,233,225,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(220,233,225,.045) 1px,transparent 1px),radial-gradient(circle at 50% 15%,rgba(213,163,63,.12),transparent 32%); background-size:64px 64px,64px 64px,auto; }
+    .qp-deal-section-head { max-width:1000px; }
+    .qp-deal-kicker { display:block; margin:0 0 18px; color:#D5A33F; font-size:12px; font-weight:700; letter-spacing:.18em; }
+    .qp-deal-title { margin:0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,5vw,76px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
+    .qp-deal-intro { max-width:760px; margin:26px 0 0; color:rgba(220,233,225,.76); font-size:clamp(15px,1.25vw,19px); font-weight:400; line-height:1.8; letter-spacing:.025em; }
+    .qp-bento-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(14px,1.5vw,26px); margin-top:clamp(52px,6vw,86px); }
+    .qp-bento-card { --qp-bento-x:50%; --qp-bento-y:50%; position:relative; min-width:0; min-height:clamp(280px,24vw,380px); overflow:hidden; background:#143B31; border:1px solid rgba(220,233,225,.18); border-radius:22px; box-shadow:0 16px 34px rgba(1,19,14,.2),0 1px 0 rgba(255,255,255,.06) inset; outline:none; transform:translateZ(0); transition:border-color .35s ease,box-shadow .35s ease,transform .45s cubic-bezier(.16,1,.3,1),background .35s ease; }
+    .qp-bento-card::before { content:""; position:absolute; z-index:0; inset:-1px; pointer-events:none; background:radial-gradient(300px circle at var(--qp-bento-x) var(--qp-bento-y),rgba(213,163,63,.25),rgba(90,145,117,.13) 28%,transparent 64%); opacity:0; transition:opacity .35s ease; }
+    .qp-bento-card::after { content:""; position:absolute; z-index:0; left:0; right:0; bottom:0; height:42%; pointer-events:none; background:linear-gradient(180deg,transparent,rgba(3,24,18,.2)); }
+    .qp-bento-card > * { position:relative; z-index:1; }
+    .qp-bento-card:hover,.qp-bento-card:focus-visible,.qp-bento-card.qp-bento-is-active { background:#174438; border-color:rgba(213,163,63,.72); box-shadow:0 22px 44px rgba(0,18,13,.34),0 0 0 1px rgba(213,163,63,.12) inset; transform:translateY(-8px) scale(1.015); }
+    .qp-bento-card:hover::before,.qp-bento-card:focus-visible::before,.qp-bento-card.qp-bento-is-active::before { opacity:1; }
+    .qp-bento-card:focus-visible { outline:2px solid #D5A33F; outline-offset:4px; }
+    .qp-bento-card { min-height:clamp(380px,30vw,540px); padding:clamp(20px,1.8vw,30px); }
+    .qp-bento-card-title { margin:0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(28px,2.15vw,42px); font-weight:600; line-height:1.1; letter-spacing:-.025em; }
+    .qp-bento-card-question { min-height:44px; margin:12px 0 0; color:#BFD2C8; font-size:clamp(15px,1.05vw,19px); font-weight:500; line-height:1.48; letter-spacing:.02em; }
+    .qp-card-visual { position:relative; flex:1; min-height:0; margin-top:clamp(18px,1.8vw,28px); }
+    .qp-timing-visual { display:grid; grid-template-rows:1.35fr 1fr; gap:10px; }
+    .qp-timing-track { position:relative; min-height:76px; display:flex; align-items:center; justify-content:space-between; padding:0 3px; }
+    .qp-timing-track::before { content:""; position:absolute; left:5%; right:5%; top:50%; height:1px; background:rgba(220,233,225,.36); }
+    .qp-timing-node { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:7px; color:#DCE9E1; font-size:11px; font-weight:700; letter-spacing:.04em; }
+    .qp-timing-node::before { content:""; width:12px; height:12px; background:#143B31; border:2px solid #8DB5A1; border-radius:50%; box-shadow:0 0 0 4px rgba(141,181,161,.1); }
+    .qp-timing-node-current { color:#F4D588; }
+    .qp-timing-node-current::before { width:17px; height:17px; background:#D5A33F; border-color:#FFF4D9; box-shadow:0 0 0 6px rgba(213,163,63,.14); }
+    .qp-timing-node-deadline::before { border-color:#D5A33F; }
+    .qp-timing-signals { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .qp-timing-signal { min-width:0; padding:10px; background:rgba(7,38,31,.4); border:1px solid rgba(220,233,225,.13); border-radius:10px; }
+    .qp-timing-signal span { display:block; color:#BFD2C8; font-size:10px; font-weight:650; letter-spacing:.04em; }
+    .qp-timing-spark { display:block; width:100%; height:30px; margin-top:6px; }
+    .qp-timing-spark path { fill:none; stroke:#DCE9E1; stroke-width:2; }
+    .qp-timing-spark circle { fill:#D5A33F; }
+    .qp-match-visual { display:grid; grid-template-columns:.92fr 1.08fr; align-items:center; gap:12px; }
+    .qp-match-source,.qp-match-candidates { position:relative; z-index:2; display:grid; gap:11px; }
+    .qp-match-node { min-height:43px; display:flex; align-items:center; padding:0 10px; color:#DCE9E1; background:rgba(7,38,31,.42); border:1px solid rgba(220,233,225,.17); border-radius:9px; font-size:11px; font-weight:700; line-height:1.2; }
+    .qp-match-source .qp-match-node { min-height:70px; color:#FFF4D9; border-color:rgba(213,163,63,.72); background:rgba(213,163,63,.1); }
+    .qp-match-node.qp-match-selected { color:#183C31; background:#DCE9E1; border-color:#F7F4EC; box-shadow:0 0 0 4px rgba(220,233,225,.1); }
+    .qp-match-lines { position:absolute; z-index:1; inset:22% 12% 18% 25%; width:64%; height:60%; overflow:visible; pointer-events:none; }
+    .qp-match-lines path { fill:none; stroke:rgba(220,233,225,.25); stroke-width:1.25; }
+    .qp-match-lines .qp-match-line-selected { stroke:#D5A33F; stroke-width:2.2; stroke-dasharray:5 5; animation:qp-match-dash 8s linear infinite; }
+    .qp-risk-visual { display:grid; place-items:center; }
+    .qp-risk-gauge { position:relative; width:min(100%,210px); aspect-ratio:1; display:grid; place-items:center; border:1px solid rgba(220,233,225,.19); border-radius:50%; box-shadow:0 0 0 16px rgba(220,233,225,.025),0 0 0 34px rgba(213,163,63,.035); }
+    .qp-risk-gauge::before,.qp-risk-gauge::after { content:""; position:absolute; border:1px solid rgba(220,233,225,.18); border-radius:50%; }
+    .qp-risk-gauge::before { inset:21%; }.qp-risk-gauge::after { inset:41%; border-color:rgba(213,163,63,.58); }
+    .qp-risk-core { position:relative; z-index:1; display:grid; place-items:center; width:39%; aspect-ratio:1; color:#F7F4EC; background:#174438; border:1px solid rgba(213,163,63,.75); border-radius:50%; font-size:11px; font-weight:800; letter-spacing:.1em; }
+    .qp-risk-label { position:absolute; color:#BFD2C8; font-size:10px; font-weight:650; white-space:nowrap; }
+    .qp-risk-label::before { content:""; display:inline-block; width:6px; height:6px; margin:0 5px 1px 0; border-radius:50%; background:#8DB5A1; }
+    .qp-risk-label-entity { top:-9px; left:50%; transform:translateX(-50%); }.qp-risk-label-credit { top:22%; right:-35px; }.qp-risk-label-evidence { bottom:15%; right:-53px; }.qp-risk-label-payment { bottom:15%; left:-54px; }.qp-risk-label-fulfillment { top:22%; left:-57px; }
+    .qp-risk-label-credit::before,.qp-risk-label-payment::before { background:#D5A33F; }.qp-risk-label-evidence::before { background:#C98652; }
+    .qp-risk-legend { position:absolute; left:50%; bottom:4px; display:flex; gap:8px; color:#AFC7BB; font-size:9px; font-weight:650; white-space:nowrap; transform:translateX(-50%); }
+    .qp-risk-legend span::before { content:""; display:inline-block; width:6px; height:6px; margin:0 4px 1px 0; border-radius:50%; background:#8DB5A1; }.qp-risk-legend span:nth-child(2)::before { background:#D5A33F; }.qp-risk-legend span:nth-child(3)::before { background:#C98652; }
+    .qp-progress-visual { display:flex; flex-direction:column; justify-content:center; gap:11px; }
+    .qp-progress-step { display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:8px; min-height:42px; color:#DCE9E1; border-bottom:1px solid rgba(220,233,225,.14); font-size:12px; font-weight:650; }
+    .qp-progress-step:last-of-type { border-bottom:0; }
+    .qp-progress-step-index { display:grid; place-items:center; width:20px; height:20px; color:#A9C6B7; border:1px solid rgba(220,233,225,.36); border-radius:50%; font-size:9px; }
+    .qp-progress-step-status { color:#9BB6A8; font-size:9px; letter-spacing:.04em; }
+    .qp-progress-step.qp-progress-next { color:#FFF4D9; }.qp-progress-step.qp-progress-next .qp-progress-step-index { color:#143B31; background:#D5A33F; border-color:#D5A33F; }.qp-progress-step.qp-progress-next .qp-progress-step-status { color:#E8C774; }
+    .qp-progress-meter { height:6px; margin-top:8px; overflow:hidden; background:rgba(220,233,225,.12); border-radius:999px; }
+    .qp-progress-meter span { display:block; width:38%; height:100%; background:#D5A33F; border-radius:inherit; }
+    .qp-specular-button { --qp-specular-x:28%; --qp-specular-y:20%; position:relative; isolation:isolate; align-self:flex-start; display:inline-flex; align-items:center; justify-content:center; min-width:152px; height:46px; margin-top:clamp(30px,3.5vw,52px); overflow:hidden; color:#153B30; background:#DCE9E1; border:1px solid rgba(247,244,236,.8); border-radius:999px; box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 9px 22px rgba(0,18,13,.22); cursor:pointer; font-size:13px; font-weight:800; letter-spacing:.12em; text-decoration:none; transition:transform .34s cubic-bezier(.16,1,.3,1),box-shadow .34s ease,background .34s ease; }
+    .qp-specular-button::before { content:""; position:absolute; z-index:-1; inset:-40%; background:radial-gradient(130px circle at var(--qp-specular-x) var(--qp-specular-y),rgba(255,255,255,.98),rgba(213,163,63,.42) 28%,transparent 58%); transition:opacity .3s ease; }
+    .qp-specular-button::after { content:""; position:absolute; z-index:-1; top:5px; left:14%; width:72%; height:37%; border-radius:999px; background:linear-gradient(180deg,rgba(255,255,255,.94),transparent); opacity:.78; }
+    .qp-specular-button:hover,.qp-specular-button:focus-visible { background:#F7F4EC; box-shadow:0 1px 0 #fff inset,0 15px 28px rgba(0,18,13,.3); outline:none; transform:translateY(-3px) scale(1.025); }
+    .qp-specular-button:focus-visible { outline:2px solid #D5A33F; outline-offset:4px; }
+    @keyframes qp-match-dash { to { stroke-dashoffset:-60; } }
+
+    .qp-bento-card.qp-op-card { min-height:560px; display:flex; flex-direction:column; padding:28px; background:linear-gradient(155deg,#17473A 0%,#10352C 64%,#0B2B23 100%); }
+    .qp-op-card-head { padding-bottom:22px; border-bottom:1px solid rgba(220,233,225,.15); }
+    .qp-op-step { display:block; margin-bottom:16px; color:#D5A33F; font-size:11px; font-weight:800; line-height:1; letter-spacing:.17em; }
+    .qp-op-card .qp-bento-card-title { font-size:clamp(28px,2vw,38px); }
+    .qp-op-card .qp-bento-card-question { min-height:0; margin-top:14px; color:#F1E8D4; font-size:clamp(16px,1.08vw,19px); font-weight:650; line-height:1.48; }
+    .qp-op-explain { min-height:88px; margin:20px 0 0; color:rgba(220,233,225,.77); font-size:14px; line-height:1.72; letter-spacing:.015em; }
+    .qp-op-panel { position:relative; flex:1; min-height:220px; margin-top:18px; padding:18px; overflow:hidden; background:rgba(5,29,23,.47); border:1px solid rgba(220,233,225,.13); border-radius:16px; box-shadow:0 1px 0 rgba(255,255,255,.035) inset; }
+    .qp-op-panel-label { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .qp-op-panel-label span,.qp-op-supply-pool > small { color:#F7F4EC; font-size:12px; font-weight:750; letter-spacing:.06em; }
+    .qp-op-panel-label em { color:#9EB9AC; font-size:10px; font-style:normal; letter-spacing:.08em; }
+    .qp-op-timebar { position:relative; display:flex; align-items:center; justify-content:space-between; height:82px; margin:2px 3px 0; }
+    .qp-op-timebar::before { content:""; position:absolute; left:3%; right:3%; top:40%; height:2px; background:linear-gradient(90deg,#8DB5A1 0 48%,#D5A33F 48% 100%); }
+    .qp-op-time-node { position:relative; z-index:1; display:grid; gap:8px; justify-items:center; padding-top:36px; color:#AFC7BB; font-size:10px; font-weight:700; }
+    .qp-op-time-node::before { content:""; position:absolute; top:23px; width:10px; height:10px; background:#10352C; border:2px solid #8DB5A1; border-radius:50%; }
+    .qp-op-time-now { color:#F4D588; }
+    .qp-op-time-now::before { top:19px; width:18px; height:18px; background:#D5A33F; border-color:#FFF4D9; box-shadow:0 0 0 6px rgba(213,163,63,.13); }
+    .qp-op-signal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .qp-op-signal-grid span { position:relative; min-height:39px; display:flex; align-items:center; padding:0 10px 0 27px; color:#DCE9E1; background:rgba(220,233,225,.045); border:1px solid rgba(220,233,225,.1); border-radius:8px; font-size:11px; font-weight:650; }
+    .qp-op-signal-grid span::before { content:""; position:absolute; left:11px; width:6px; height:6px; background:#D5A33F; border-radius:50%; box-shadow:0 0 0 4px rgba(213,163,63,.1); }
+    .qp-op-match { display:grid; grid-template-columns:minmax(0,.95fr) 50px minmax(0,1.05fr); align-items:center; gap:8px; }
+    .qp-op-demand-node { padding:13px; color:#F7F4EC; background:rgba(213,163,63,.09); border:1px solid rgba(213,163,63,.48); border-radius:12px; }
+    .qp-op-demand-node small { display:block; color:#E1BE69; font-size:9px; font-weight:750; letter-spacing:.08em; }
+    .qp-op-demand-node strong { display:block; margin-top:6px; font-size:15px; }
+    .qp-op-demand-node div { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px; }
+    .qp-op-demand-node span { color:#BFD2C8; font-size:9px; }
+    .qp-op-match-bridge { position:relative; height:150px; display:grid; place-items:center; }
+    .qp-op-match-bridge i { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,rgba(213,163,63,.75),rgba(220,233,225,.28)); transform-origin:left center; }
+    .qp-op-match-bridge i:first-child { top:38px; transform:rotate(-25deg); }.qp-op-match-bridge i:nth-child(2) { top:75px; background:#D5A33F; }.qp-op-match-bridge i:nth-child(3) { top:112px; transform:rotate(25deg); }
+    .qp-op-match-bridge b { position:relative; z-index:2; display:grid; place-items:center; width:42px; height:42px; color:#17382F; text-align:center; background:#DCE9E1; border:3px solid #123B32; border-radius:50%; box-shadow:0 0 0 1px #D5A33F; font-size:9px; line-height:1.05; }
+    .qp-op-supply-pool { display:grid; gap:7px; }
+    .qp-op-supply-pool > small { margin-bottom:2px; font-size:10px; }
+    .qp-op-supply-pool > span { min-height:34px; display:flex; align-items:center; padding:0 9px; color:#AFC7BB; background:rgba(220,233,225,.04); border:1px solid rgba(220,233,225,.13); border-radius:8px; font-size:10px; font-weight:650; }
+    .qp-op-supply-pool > .qp-op-supply-selected { color:#17382F; background:#DCE9E1; border-color:#F7F4EC; box-shadow:0 0 0 3px rgba(220,233,225,.08); }
+    .qp-op-risk { display:flex; flex-direction:column; justify-content:center; gap:9px; padding-top:16px; }
+    .qp-op-risk-scale { display:grid; grid-template-columns:1fr 1fr 1fr; margin-left:76px; color:#8FAD9E; font-size:8px; text-align:center; }
+    .qp-op-risk-scale span:nth-child(2) { color:#D5A33F; }.qp-op-risk-scale span:last-child { color:#CE8C62; }
+    .qp-op-risk-row { display:grid; grid-template-columns:68px 1fr 42px; align-items:center; gap:8px; min-height:27px; }
+    .qp-op-risk-row strong { color:#DCE9E1; font-size:10px; font-weight:650; }
+    .qp-op-risk-row i { position:relative; height:5px; background:linear-gradient(90deg,#6F9E87 0 33%,#D5A33F 33% 66%,#B96F50 66%); border-radius:99px; opacity:.82; }
+    .qp-op-risk-row i::after { content:""; position:absolute; left:calc(50% - 5px); top:-4px; width:11px; height:11px; background:#F7F4EC; border:2px solid #123B32; border-radius:50%; box-shadow:0 0 0 1px rgba(247,244,236,.7); }
+    .qp-op-risk-row em { color:#AFC7BB; font-size:8px; font-style:normal; text-align:right; }
+    .qp-op-actions { display:flex; flex-direction:column; justify-content:center; padding:14px 16px; }
+    .qp-op-action { position:relative; display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:9px; min-height:51px; }
+    .qp-op-action:not(:last-child)::after { content:""; position:absolute; left:13px; top:38px; bottom:-13px; width:1px; background:rgba(220,233,225,.2); }
+    .qp-op-action > b { position:relative; z-index:1; display:grid; place-items:center; width:27px; height:27px; color:#9DB8AB; background:#12382F; border:1px solid rgba(220,233,225,.27); border-radius:50%; font-size:8px; }
+    .qp-op-action span { display:grid; gap:3px; }.qp-op-action span strong { color:#DCE9E1; font-size:11px; }.qp-op-action span small { color:#8FAC9E; font-size:8px; }
+    .qp-op-action > em { color:#8FAC9E; font-size:8px; font-style:normal; }
+    .qp-op-action-next > b { color:#16392F; background:#D5A33F; border-color:#F0D28D; box-shadow:0 0 0 4px rgba(213,163,63,.1); }.qp-op-action-next span strong,.qp-op-action-next > em { color:#F4D588; }
+    .qp-op-actions .qp-specular-button { margin-top:14px; font-size:17px; letter-spacing:.12em; }
     .qp-final-cta { position:relative; isolation:isolate; width:100%; max-width:2940px; min-height:500px; display:grid; place-items:center; margin:0 auto; overflow:hidden; color:var(--qp-warm); background:#173E33; scroll-margin-top:58px; }
     .qp-final-cta-image { position:absolute; z-index:-3; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 54%; transform:scale(1.015); transition:transform 9s cubic-bezier(.16,1,.3,1); }
     .qp-final-cta::before { content:""; position:absolute; z-index:-2; inset:0; background:rgba(13,54,44,.69); }
@@ -268,20 +389,34 @@
       .qp-order-metrics { grid-template-columns:1fr; }
       .qp-demand-board { height:480px; }
       .qp-demand-row { grid-template-columns:minmax(150px,1.3fr) minmax(100px,.85fr) 82px 74px; }
-      .qp-core-section { padding:64px 20px 52px; scroll-margin-top:52px; }
+      .qp-core-section { padding:66px 20px 78px; scroll-margin-top:52px; }
+      .qp-core-sliced-waves { opacity:.34; transform:scale(1.18); }
       .qp-core-title { font-size:clamp(36px,10.5vw,54px); }
-      .qp-logic-stage { margin-top:40px; }
-      .qp-logic-panel { padding:20px 16px; }
-      .qp-logic-panel-head { gap:10px; }
-      .qp-logic-panel-title { font-size:27px; }
-      .qp-logic-map { height:235px; }
-      .qp-logic-signal-grid { left:10px; width:48%; gap:6px; }
-      .qp-logic-signal { padding:8px 7px; }
-      .qp-logic-radar { right:5%; width:126px; height:126px; }
-      .qp-logic-radar-label { margin-top:78px; }
-      .qp-logic-seller-core { left:5%; width:120px; height:120px; }
-      .qp-logic-action-list { right:9px; width:49%; gap:5px; }
-      .qp-logic-action { padding:6px 7px; }
+      .qp-network-stage { height:auto; min-height:0; display:flex; flex-direction:column; gap:28px; margin-top:48px; padding:16px; overflow:hidden; }
+      .qp-network-stage::after { inset:8px; }
+      .qp-network-route { position:relative; left:auto; right:auto; top:auto; bottom:auto; grid-template-columns:1fr; gap:8px; width:100%; min-height:0; padding:12px; }
+      .qp-network-route-demand { order:1; }.qp-network-buyers { order:2; }.qp-network-engine { order:3; }.qp-network-supply { order:4; }.qp-network-route-expand { order:5; }
+      .qp-network-route-title { font-size:16px; }.qp-network-route-meta { font-size:9px; }.qp-network-route-flow { gap:5px; font-size:12px; }.qp-network-route-flow b { font-size:17px; }
+      .qp-network-side { position:relative; top:auto; right:auto; bottom:auto; left:auto; width:100%; height:268px; }
+      .qp-network-side-code { font-size:10px; }.qp-network-side-title { font-size:31px; }.qp-network-question { margin-top:5px; font-size:14px; }
+      .qp-network-art { top:29%; height:46%; }.qp-network-world-map { width:92%; }.qp-network-guizhou-map { width:48%; }
+      .qp-network-fields { gap:8px 4px; }.qp-network-fields li { font-size:12px; }
+      .qp-network-node { font-size:9px; }.qp-network-node::before { width:7px; height:7px; }
+      .qp-network-engine { position:relative; left:auto; top:auto; width:250px; margin:5px auto; transform:none; }
+      .qp-network-engine-skill { padding:5px 6px; font-size:9px; }
+      .qp-network-engine-skill-one { left:-10%; }.qp-network-engine-skill-two { right:-14%; }.qp-network-engine-skill-three { left:-12%; }.qp-network-engine-skill-four { right:-10%; }
+      .qp-network-links { display:none; }
+      .qp-deal-section { padding:66px 20px 78px; scroll-margin-top:52px; }
+      .qp-deal-title { font-size:clamp(36px,10.5vw,54px); }
+      .qp-bento-grid { grid-template-columns:1fr; gap:16px; margin-top:48px; }
+      .qp-bento-card { min-height:390px; padding:22px; border-radius:18px; }
+      .qp-bento-card:first-child { min-height:390px; padding:22px; }
+      .qp-bento-card-title { font-size:clamp(34px,10vw,44px); }
+      .qp-bento-card-question { min-height:auto; margin-top:14px; font-size:clamp(18px,5vw,22px); }
+      .qp-card-visual { margin-top:24px; }
+      .qp-timing-node { font-size:11px; }
+      .qp-risk-gauge { width:190px; }
+      .qp-specular-button { width:100%; margin-top:34px; }
       .qp-final-cta { min-height:540px; scroll-margin-top:52px; }
       .qp-final-cta-content { width:min(680px,88%); }
       .qp-final-cta-title { font-size:clamp(40px,10.5vw,58px); }
@@ -351,42 +486,37 @@
       .qp-quantity { font-size:.82cqw; }
       .qp-time { margin-top:.28cqw; font-size:.64cqw; }
 
-      .qp-core-section { width:100%; max-width:2940px; height:auto; max-height:1548px; aspect-ratio:2940/1548; padding:2.15cqw 3.35cqw 1.2cqw; container-type:inline-size; }
-      .qp-core-head { max-width:82cqw; }
+      .qp-core-section { width:100%; max-width:2940px; height:auto; max-height:none; aspect-ratio:auto; padding:3.15cqw 4.5cqw 4.3cqw; container-type:inline-size; }
+      .qp-core-head { max-width:48cqw; }
       .qp-core-kicker { margin-bottom:.62cqw; font-size:.72cqw; }
-      .qp-core-title { font-size:3.55cqw; line-height:1.04; }
-      .qp-core-intro { max-width:64cqw; margin-top:.62cqw; font-size:.82cqw; line-height:1.48; }
-      .qp-logic-stage { grid-template-columns:minmax(0,1fr) 7.5cqw minmax(0,1fr); align-items:stretch; gap:0; margin-top:1.45cqw; }
-      .qp-logic-panel { min-height:37.2cqw; padding:1.05cqw 1.12cqw .92cqw; border-radius:.78cqw; }
-      .qp-logic-panel-head { gap:1cqw; }
-      .qp-logic-panel-code { font-size:.62cqw; }
-      .qp-logic-panel-title { margin-top:.5cqw; font-size:1.82cqw; }
-      .qp-logic-panel-copy { max-width:27cqw; margin-top:.42cqw; font-size:.74cqw; line-height:1.5; }
-      .qp-logic-status { gap:.42cqw; padding:.46cqw .7cqw; font-size:.56cqw; }
-      .qp-logic-status::before { width:.42cqw; height:.42cqw; }
-      .qp-logic-direction { gap:.52cqw; margin-top:.72cqw; padding:.4cqw .62cqw; font-size:.62cqw; }
-      .qp-logic-direction-arrow { font-size:.92cqw; }
-      .qp-logic-map { height:20cqw; margin-top:1cqw; border-radius:.65cqw; }
-      .qp-logic-signal-grid { left:1cqw; width:46%; gap:.52cqw; }
-      .qp-logic-signal { padding:.62cqw .58cqw; border-radius:.48cqw; }
-      .qp-logic-signal-icon { font-size:.92cqw; }
-      .qp-logic-signal strong { margin-top:.34cqw; font-size:.68cqw; }
-      .qp-logic-signal small { margin-top:.2cqw; font-size:.48cqw; }
-      .qp-logic-radar { right:7%; width:10.2cqw; height:10.2cqw; box-shadow:0 0 0 1.18cqw rgba(90,145,117,.055),0 0 0 2.5cqw rgba(90,145,117,.035); }
-      .qp-logic-radar-label { margin-top:6.35cqw; font-size:.58cqw; }
-      .qp-logic-seller-core { left:7%; width:9.7cqw; height:9.7cqw; box-shadow:0 0 0 1.05cqw rgba(213,163,63,.055); }
-      .qp-logic-seller-core strong { font-size:1.22cqw; }
-      .qp-logic-seller-core span { margin-top:.45cqw; font-size:.5cqw; }
-      .qp-logic-action-list { right:.85cqw; width:48%; gap:.42cqw; }
-      .qp-logic-action { gap:.58cqw; padding:.46cqw .58cqw; border-radius:.46cqw; font-size:.62cqw; }
-      .qp-logic-action-index { width:1.45cqw; height:1.45cqw; font-size:.46cqw; }
-      .qp-logic-hub-wrap { min-height:0; }
-      .qp-logic-hub { width:6.45cqw; height:6.45cqw; border-width:.38cqw; }
-      .qp-logic-hub::before { inset:-1cqw; }
-      .qp-logic-hub-mark { font-size:2.25cqw; }
-      .qp-logic-hub-label { margin-top:.42cqw; font-size:.52cqw; }
-      .qp-logic-flow { gap:.5cqw; margin-top:.78cqw; padding:.65cqw .7cqw; border-radius:.52cqw; font-size:.54cqw; }
-      .qp-logic-flow-arrow { font-size:.86cqw; }
+      .qp-core-title { max-width:none; font-size:3.55cqw; line-height:1.08; }
+      .qp-core-intro { max-width:37cqw; margin-top:.86cqw; font-size:.86cqw; line-height:1.65; }
+      .qp-network-stage { height:min(32.8cqw,790px); margin-top:2.4cqw; }
+      .qp-network-route { left:2.15cqw; right:2.15cqw; grid-template-columns:10.8cqw 1fr; gap:1.2cqw; min-height:3.45cqw; padding:.52cqw .72cqw; }
+      .qp-network-route-demand { top:1.65cqw; }.qp-network-route-expand { bottom:1.65cqw; }
+      .qp-network-route-title { font-size:1.02cqw; }.qp-network-route-meta { margin-top:.22cqw; font-size:.58cqw; }.qp-network-route-flow { gap:.65cqw; font-size:.87cqw; }.qp-network-route-flow b { font-size:1.16cqw; }
+      .qp-network-phase { margin-left:.35cqw; padding:.17cqw .3cqw; font-size:.45cqw; }
+      .qp-network-side { top:21%; bottom:18%; width:27.2%; }.qp-network-buyers { left:4.6%; }.qp-network-supply { right:4.6%; }
+      .qp-network-side-code { font-size:.62cqw; }.qp-network-side-title { margin-top:.42cqw; font-size:1.78cqw; }.qp-network-question { margin-top:.36cqw; font-size:.78cqw; }
+      .qp-network-art { top:31%; height:49%; }.qp-network-fields { gap:.45cqw .25cqw; }.qp-network-fields li { font-size:.68cqw; }.qp-network-fields li::before { width:.27cqw; height:.27cqw; margin-right:.25cqw; }
+      .qp-network-node { gap:.3cqw; font-size:.6cqw; }.qp-network-node::before { width:.44cqw; height:.44cqw; border-width:.1cqw; }
+      .qp-network-engine { width:min(15.5cqw,340px); }.qp-network-engine-core { border-width:.27cqw; }.qp-network-engine-skill { padding:.34cqw .44cqw; font-size:.55cqw; }
+      .qp-deal-section { width:100%; max-width:2940px; padding:3.15cqw 4.5cqw 4.3cqw; container-type:inline-size; }
+      .qp-deal-section-head { max-width:55cqw; }
+      .qp-deal-kicker { margin-bottom:.62cqw; font-size:.72cqw; }
+      .qp-deal-title { font-size:3.55cqw; line-height:1.08; }
+      .qp-deal-intro { max-width:43cqw; margin-top:.86cqw; font-size:.86cqw; line-height:1.65; }
+      .qp-bento-grid { gap:1.15cqw; margin-top:2.4cqw; }
+      .qp-bento-card,.qp-bento-card:first-child { min-height:min(35cqw,540px); padding:1.3cqw; border-radius:1.12cqw; }
+      .qp-bento-card-title { font-size:1.8cqw; }
+      .qp-bento-card-question { min-height:2.1cqw; margin-top:.62cqw; font-size:.86cqw; }
+      .qp-card-visual { margin-top:1.25cqw; }
+      .qp-timing-track { min-height:5.4cqw; }.qp-timing-node { gap:.42cqw; font-size:.56cqw; }.qp-timing-node::before { width:.66cqw; height:.66cqw; border-width:.14cqw; }.qp-timing-node-current::before { width:.9cqw; height:.9cqw; box-shadow:0 0 0 .34cqw rgba(213,163,63,.14); }
+      .qp-timing-signals { gap:.52cqw; }.qp-timing-signal { padding:.58cqw; border-radius:.52cqw; }.qp-timing-signal span { font-size:.56cqw; }.qp-timing-spark { height:2.1cqw; margin-top:.34cqw; }
+      .qp-match-visual { gap:.62cqw; }.qp-match-candidates,.qp-match-source { gap:.58cqw; }.qp-match-node { min-height:2.35cqw; padding:0 .58cqw; border-radius:.48cqw; font-size:.56cqw; }.qp-match-source .qp-match-node { min-height:3.7cqw; }
+      .qp-risk-gauge { width:min(13cqw,210px); }.qp-risk-label { font-size:.52cqw; }.qp-risk-core { font-size:.56cqw; }.qp-risk-legend { bottom:.25cqw; gap:.42cqw; font-size:.48cqw; }
+      .qp-progress-visual { gap:.6cqw; }.qp-progress-step { grid-template-columns:1.2cqw 1fr auto; gap:.4cqw; min-height:2.55cqw; font-size:.62cqw; }.qp-progress-step-index { width:1.12cqw; height:1.12cqw; font-size:.42cqw; }.qp-progress-step-status { font-size:.45cqw; }.qp-progress-meter { height:.3cqw; margin-top:.42cqw; }
+      .qp-specular-button { min-width:9.2cqw; height:2.9cqw; margin-top:2cqw; font-size:.62cqw; }
       .qp-final-cta { height:auto; min-height:0; max-height:1050px; aspect-ratio:2940/1050; }
       .qp-final-cta-content { width:72cqw; }
       .qp-final-cta-title { max-width:70cqw; font-size:4.05cqw; line-height:1.1; }
@@ -395,13 +525,41 @@
       .qp-glass-button-arrow { width:3.04cqw; height:3.04cqw; font-size:1.2cqw; }
     }
 
+    @media (min-width:1081px) {
+      .qp-deal-section .qp-bento-grid { align-items:stretch; }
+      .qp-deal-section .qp-bento-card.qp-op-card { height:clamp(500px,38cqw,900px); min-height:0; max-height:none; padding:1.35cqw; }
+      .qp-deal-section .qp-op-card-head { padding-bottom:1.05cqw; }
+      .qp-deal-section .qp-op-step { margin-bottom:.72cqw; font-size:clamp(10px,.7cqw,16px); }
+      .qp-deal-section .qp-op-card .qp-bento-card-title { font-size:clamp(30px,2.35cqw,58px); }
+      .qp-deal-section .qp-op-card .qp-bento-card-question { margin-top:.58cqw; font-size:clamp(16px,1.25cqw,30px); }
+      .qp-deal-section .qp-op-explain { min-height:5.4cqw; margin-top:.85cqw; font-size:clamp(13px,1cqw,24px); line-height:1.65; }
+      .qp-deal-section .qp-op-panel { min-height:15.7cqw; margin-top:.75cqw; padding:.85cqw; border-radius:.7cqw; }
+      .qp-deal-section .qp-op-timebar { height:5cqw; }.qp-deal-section .qp-op-signal-grid { gap:.38cqw; }.qp-deal-section .qp-op-signal-grid span { min-height:2.15cqw; font-size:.53cqw; }
+      .qp-deal-section .qp-op-demand-node strong { font-size:.82cqw; }.qp-deal-section .qp-op-demand-node span,.qp-deal-section .qp-op-demand-node small { font-size:.52cqw; }.qp-deal-section .qp-op-supply-pool > span { min-height:2.15cqw; font-size:.55cqw; }
+      .qp-deal-section .qp-op-risk { gap:.5cqw; }.qp-deal-section .qp-op-risk-row { grid-template-columns:3.7cqw 1fr 2.1cqw; min-height:1.65cqw; }.qp-deal-section .qp-op-risk-row strong { font-size:.57cqw; }.qp-deal-section .qp-op-risk-row em,.qp-deal-section .qp-op-risk-scale { font-size:.47cqw; }
+      .qp-deal-section .qp-op-action { grid-template-columns:1.45cqw 1fr auto; min-height:3.2cqw; }.qp-deal-section .qp-op-action > b { width:1.4cqw; height:1.4cqw; font-size:.42cqw; }.qp-deal-section .qp-op-action span strong { font-size:.64cqw; }.qp-deal-section .qp-op-action span small,.qp-deal-section .qp-op-action > em { font-size:.48cqw; }
+    }
+
+    @media (min-width:761px) and (max-width:1080px) {
+      .qp-bento-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .qp-bento-card.qp-op-card { min-height:550px; }
+    }
+
+    @media (max-width:760px) {
+      .qp-bento-card.qp-op-card { min-height:540px; padding:24px; }
+      .qp-op-card .qp-bento-card-title { font-size:clamp(31px,8.7vw,42px); }
+      .qp-op-card .qp-bento-card-question { font-size:18px; }
+      .qp-op-explain { min-height:0; font-size:14px; }
+      .qp-op-panel { min-height:230px; }
+    }
+
     @media (prefers-reduced-motion:reduce) {
       .qp-html { scroll-behavior:auto; }
       .qp-product-slide.qp-is-entering,.qp-product-slide.qp-is-leaving { animation-duration:.01ms; }
       .qp-demand-list.qp-is-scrolling { transition-duration:.01ms; }
-      .qp-logic-panel { transition:none; }
-      .qp-core-section.qp-core-reveal .qp-logic-panel { animation:none; }
-      .qp-logic-radar-sweep,.qp-logic-hub::before { animation:none; }
+      .qp-core-section.qp-core-reveal .qp-network-stage,.qp-network-link-flow { animation:none; }
+      .qp-core-wave-slice { animation:none; }
+      .qp-bento-card,.qp-bento-card::before,.qp-specular-button,.qp-match-lines .qp-match-line-selected { transition:none; animation:none; }
       .qp-final-cta-image,.qp-glass-button,.qp-glass-button-arrow { transition:none; }
     }
   </style>
@@ -582,61 +740,107 @@
     </section>
 
     <section class="qp-core-section" id="core-capabilities" aria-labelledby="qpCoreTitle">
+      <svg class="qp-core-sliced-waves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path class="qp-core-wave-slice qp-core-wave-tea" d="M-120 160 C120 72 328 86 520 174 C742 276 920 248 1110 150 C1310 47 1490 72 1720 188 L1720 244 C1490 128 1310 103 1110 206 C920 304 742 332 520 230 C328 142 120 128 -120 216 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-green" d="M-120 232 C110 144 332 157 536 247 C756 344 934 322 1126 222 C1325 118 1508 143 1720 257 L1720 301 C1508 187 1325 162 1126 266 C934 366 756 388 536 291 C332 201 110 188 -120 276 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-gold" d="M-120 296 C116 210 340 220 548 310 C768 405 946 384 1140 286 C1338 186 1520 208 1720 316 L1720 346 C1520 238 1338 216 1140 316 C946 414 768 435 548 340 C340 250 116 240 -120 326 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-tea" d="M-120 622 C116 530 346 548 558 645 C776 745 960 716 1152 612 C1350 504 1528 528 1720 641 L1720 701 C1528 588 1350 564 1152 672 C960 776 776 805 558 705 C346 608 116 590 -120 682 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-green" d="M-120 702 C126 610 354 628 570 727 C790 828 970 798 1164 696 C1360 593 1538 616 1720 725 L1720 769 C1538 660 1360 637 1164 740 C970 842 790 872 570 771 C354 672 126 654 -120 746 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-gold" d="M-120 772 C130 682 362 696 582 796 C802 896 984 870 1178 768 C1372 666 1548 688 1720 792 L1720 822 C1548 718 1372 696 1178 798 C984 900 802 926 582 826 C362 726 130 712 -120 802 Z" />
+      </svg>
       <header class="qp-core-head">
-        <span class="qp-core-kicker">PLATFORM LOGIC</span>
-        <h2 class="qp-core-title" id="qpCoreTitle">全球商机，如何双向抵达？</h2>
-        <p class="qp-core-intro">一端捕捉真实需求，将海外买家情报交给贵州卖家；另一端理解贵州企业的供应能力，主动找到可能采购的海外买家。</p>
+        <span class="qp-core-kicker">CORE CAPABILITIES</span>
+        <h2 class="qp-core-title" id="qpCoreTitle">连接全球需求与贵州供给</h2>
+        <p class="qp-core-intro">一端发现谁正在买，把真实需求带给贵州企业；一端读懂谁能供，把合适的黔品带给全球买家。</p>
       </header>
 
-      <div class="qp-logic-stage" aria-label="黔脉双向平台逻辑">
-        <article class="qp-logic-panel qp-logic-panel-discover">
-          <header class="qp-logic-panel-head">
-            <div><span class="qp-logic-panel-code">A1 / DISCOVER</span><h3 class="qp-logic-panel-title">全球需求捕捉</h3><p class="qp-logic-panel-copy">从全球贸易、采购与企业信号中，发现并验证正在发生的真实需求。</p></div>
-            <span class="qp-logic-status">当前核心</span>
-          </header>
-          <div class="qp-logic-direction"><span>买家情报</span><span class="qp-logic-direction-arrow">→</span><span>贵州卖家</span></div>
-          <div class="qp-logic-map qp-discover-map" aria-label="买家需求信号汇入黔脉雷达">
-            <svg class="qp-logic-links" viewBox="0 0 600 250" preserveAspectRatio="none" aria-hidden="true">
-              <path class="qp-logic-link" d="M145 40 C260 40 330 90 448 124"/><path class="qp-logic-link" d="M275 40 C350 55 390 88 448 124"/><path class="qp-logic-link" d="M145 125 C270 125 350 125 448 125"/><path class="qp-logic-link" d="M275 125 C350 125 390 125 448 125"/><path class="qp-logic-link" d="M145 210 C270 208 350 160 448 126"/><path class="qp-logic-link" d="M275 210 C350 194 394 160 448 126"/>
-            </svg>
-            <div class="qp-logic-signal-grid">
-              <div class="qp-logic-signal"><span class="qp-logic-signal-icon">◎</span><strong>买家</strong><small>BUYER</small></div>
-              <div class="qp-logic-signal"><span class="qp-logic-signal-icon">◒</span><strong>产品</strong><small>PRODUCT</small></div>
-              <div class="qp-logic-signal"><span class="qp-logic-signal-icon">≡</span><strong>规格</strong><small>SPEC</small></div>
-              <div class="qp-logic-signal"><span class="qp-logic-signal-icon">#</span><strong>数量</strong><small>VOLUME</small></div>
-              <div class="qp-logic-signal"><span class="qp-logic-signal-icon">⌖</span><strong>目的地</strong><small>DESTINATION</small></div>
-              <div class="qp-logic-signal"><span class="qp-logic-signal-icon">◷</span><strong>时间</strong><small>TIMING</small></div>
-            </div>
-            <div class="qp-logic-radar"><span class="qp-logic-radar-sweep" aria-hidden="true"></span><span class="qp-logic-radar-label">需求雷达</span></div>
-          </div>
-          <div class="qp-logic-flow"><span>海外买家信号</span><span class="qp-logic-flow-arrow">→</span><span>需求验证与匹配</span><span class="qp-logic-flow-arrow">→</span><span>贵州卖家</span></div>
-        </article>
-
-        <div class="qp-logic-hub-wrap" aria-label="黔脉双向情报中枢">
-          <span class="qp-logic-hub-line" aria-hidden="true"></span>
-          <div class="qp-logic-hub"><span class="qp-logic-hub-mark">∞</span><span class="qp-logic-hub-label">情报中枢</span></div>
+      <div class="qp-network-stage" aria-label="全球买家、黔脉 AI 情报引擎与贵州供给的双向情报网络图">
+        <div class="qp-network-route qp-network-route-demand">
+          <div><strong class="qp-network-route-title">全球需求捕捉</strong><span class="qp-network-route-meta">BUYER → SELLER</span></div>
+          <div class="qp-network-route-flow"><span>买家情报</span><b>→</b><span>需求验证</span><b>→</b><span>匹配贵州卖家</span></div>
         </div>
 
-        <article class="qp-logic-panel qp-logic-panel-expand">
-          <header class="qp-logic-panel-head">
-            <div><span class="qp-logic-panel-code">A2 / EXPAND</span><h3 class="qp-logic-panel-title">主动商机拓展</h3><p class="qp-logic-panel-copy">理解企业的产品与供应能力，围绕目标市场持续研究、找客并跟进。</p></div>
-            <span class="qp-logic-status qp-logic-status-phase">二期能力</span>
-          </header>
-          <div class="qp-logic-direction"><span>贵州卖家情报</span><span class="qp-logic-direction-arrow">→</span><span>海外买家</span></div>
-          <div class="qp-logic-map qp-expand-map" aria-label="贵州企业能力画像生成主动拓客行动">
-            <svg class="qp-logic-links" viewBox="0 0 600 250" preserveAspectRatio="none" aria-hidden="true">
-              <path class="qp-logic-link" d="M158 125 C270 125 330 38 420 32"/><path class="qp-logic-link" d="M158 125 C275 125 335 80 420 78"/><path class="qp-logic-link" d="M158 125 C280 125 345 125 420 125"/><path class="qp-logic-link" d="M158 125 C275 125 335 170 420 172"/><path class="qp-logic-link" d="M158 125 C270 125 330 212 420 218"/>
-            </svg>
-            <div class="qp-logic-seller-core"><strong>企业能力<br/>画像</strong><span>SELLER PROFILE</span></div>
-            <div class="qp-logic-action-list">
-              <div class="qp-logic-action"><span class="qp-logic-action-index">01</span><span>目标市场定位</span></div>
-              <div class="qp-logic-action"><span class="qp-logic-action-index">02</span><span>海外客户画像</span></div>
-              <div class="qp-logic-action"><span class="qp-logic-action-index">03</span><span>自动研究与找客</span></div>
-              <div class="qp-logic-action"><span class="qp-logic-action-index">04</span><span>个性化主动触达</span></div>
-              <div class="qp-logic-action"><span class="qp-logic-action-index">05</span><span>响应识别与动态跟进</span></div>
-            </div>
+        <svg class="qp-network-links" viewBox="0 0 1600 760" preserveAspectRatio="none" aria-hidden="true">
+          <defs><marker id="qpNetworkArrowGold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path fill="#D5A33F" d="M0,0 L0,6 L6,3 z"/></marker><marker id="qpNetworkArrowPale" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path fill="#DCE9E1" d="M0,0 L0,6 L6,3 z"/></marker></defs>
+          <path class="qp-network-link" d="M160 330 C420 330 540 305 690 340 M910 340 C1060 305 1180 330 1440 330"/>
+          <path class="qp-network-link qp-network-link-flow" marker-end="url(#qpNetworkArrowGold)" d="M180 286 C400 286 550 264 698 300 M902 300 C1050 264 1200 286 1420 286"/>
+          <path class="qp-network-link qp-network-link-flow qp-network-link-return" marker-end="url(#qpNetworkArrowPale)" d="M1420 482 C1200 482 1050 500 902 464 M698 464 C550 500 400 482 180 482"/>
+        </svg>
+
+        <section class="qp-network-side qp-network-buyers" aria-labelledby="qpBuyerNetworkTitle">
+          <header class="qp-network-side-head"><span class="qp-network-side-code">GLOBAL BUYER NETWORK</span><h3 class="qp-network-side-title" id="qpBuyerNetworkTitle">全球买家网络</h3><p class="qp-network-question">谁正在买？</p></header>
+          <div class="qp-network-art"><img class="qp-network-world-map" src="assets/qianpulse-world-map.svg" alt="世界国家轮廓地图" /></div>
+          <span class="qp-network-node qp-network-node-us">美国</span><span class="qp-network-node qp-network-node-de">德国</span><span class="qp-network-node qp-network-node-jp">日本</span><span class="qp-network-node qp-network-node-ae">阿联酋</span><span class="qp-network-node qp-network-node-br">巴西</span>
+          <ul class="qp-network-fields" aria-label="买家情报字段"><li>买家</li><li>产品</li><li>规格</li><li>数量</li><li>目的地</li><li>时间</li></ul>
+        </section>
+
+        <section class="qp-network-engine" aria-label="黔脉 AI 情报引擎">
+          <span class="qp-network-engine-orbit" aria-hidden="true"></span>
+          <span class="qp-network-engine-skill qp-network-engine-skill-one">全球信号汇集</span><span class="qp-network-engine-skill qp-network-engine-skill-two">需求真实性验证</span><span class="qp-network-engine-skill qp-network-engine-skill-three">采购主体溯源</span><span class="qp-network-engine-skill qp-network-engine-skill-four">供需匹配</span>
+          <div class="qp-network-engine-core"><img class="qp-network-engine-logo" src="assets/qianpulse-logo.png" alt="黔脉 QianPulse" /></div>
+        </section>
+
+        <section class="qp-network-side qp-network-supply" aria-labelledby="qpSupplyNetworkTitle">
+          <header class="qp-network-side-head"><span class="qp-network-side-code">GUIZHOU SUPPLY NETWORK</span><h3 class="qp-network-side-title" id="qpSupplyNetworkTitle">贵州供给网络</h3><p class="qp-network-question">谁最适合供应？</p></header>
+          <div class="qp-network-art"><img class="qp-network-guizhou-map" src="assets/guizhou-outline.svg" alt="贵州省行政区划轮廓" /></div>
+          <span class="qp-network-node qp-network-node-matcha">抹茶</span><span class="qp-network-node qp-network-node-rosa">刺梨</span><span class="qp-network-node qp-network-node-blue">蓝莓</span>
+          <ul class="qp-network-fields" aria-label="贵州供应情报字段"><li>企业</li><li>产品</li><li>规格</li><li>认证</li><li>产能</li><li>MOQ</li></ul>
+        </section>
+
+        <div class="qp-network-route qp-network-route-expand">
+          <div><strong class="qp-network-route-title">主动商机拓展 <span class="qp-network-phase">PHASE II</span></strong><span class="qp-network-route-meta">SELLER → BUYER</span></div>
+          <div class="qp-network-route-flow"><span>贵州供应情报</span><b>→</b><span>匹配目标市场</span><b>→</b><span>触达全球买家</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="qp-deal-section" id="deal-progression" aria-labelledby="qpDealProgressionTitle">
+      <header class="qp-deal-section-head">
+        <span class="qp-deal-kicker">OPPORTUNITY PROGRESSION</span>
+        <h2 class="qp-deal-title" id="qpDealProgressionTitle">从商机发现到成交推进</h2>
+        <p class="qp-deal-intro">商机被发现后，黔脉继续判断采购时机、匹配贵州供给、识别交易风险，并给出下一步行动建议。</p>
+      </header>
+      <div class="qp-bento-grid" aria-label="商机推进四阶段框架">
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpTimingTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">01 · TIMING</span><h3 class="qp-bento-card-title" id="qpTimingTitle">采购时机判断</h3><p class="qp-bento-card-question">这笔需求，现在还值得跟进吗？</p></header>
+          <p class="qp-op-explain">系统将四类时间信号合并为采购窗口，判断需求是否仍然有效，以及何时必须采取行动。</p>
+          <div class="qp-op-panel qp-op-timing" aria-label="采购时间窗口与四项判断信号">
+            <div class="qp-op-panel-label"><span>采购窗口</span><em>时效分析</em></div>
+            <div class="qp-op-timebar" aria-hidden="true"><span class="qp-op-time-node">发布</span><span class="qp-op-time-node qp-op-time-now">当前</span><span class="qp-op-time-node">截止</span></div>
+            <div class="qp-op-signal-grid"><span>发布时间</span><span>截止时间</span><span>采购频率</span><span>数量变化</span></div>
           </div>
-          <div class="qp-logic-flow"><span>贵州卖家情报</span><span class="qp-logic-flow-arrow">→</span><span>客户研究与触达</span><span class="qp-logic-flow-arrow">→</span><span>海外买家</span></div>
+        </article>
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpMatchTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">02 · MATCH</span><h3 class="qp-bento-card-title" id="qpMatchTitle">贵州供需匹配</h3><p class="qp-bento-card-question">贵州哪家企业、哪款产品最适合？</p></header>
+          <p class="qp-op-explain">把海外采购条件拆成可核对字段，再与贵州企业的真实供应能力逐项比对，找出最佳候选。</p>
+          <div class="qp-op-panel qp-op-match" aria-label="海外采购要求与贵州供应候选匹配关系">
+            <div class="qp-op-demand-node"><small>海外需求</small><strong>采购要求</strong><div><span>规格</span><span>认证</span><span>数量</span><span>交期</span></div></div>
+            <div class="qp-op-match-bridge" aria-hidden="true"><i></i><i></i><i></i><b>AI<br/>匹配</b></div>
+            <div class="qp-op-supply-pool"><small>贵州供应池</small><span>候选企业</span><span class="qp-op-supply-selected">最适合供应</span><span>候选企业</span></div>
+          </div>
+        </article>
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpRiskTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">03 · RISK</span><h3 class="qp-bento-card-title" id="qpRiskTitle">智能匹配风控</h3><p class="qp-bento-card-question">这家买家和这笔交易可信吗？</p></header>
+          <p class="qp-op-explain">每一项结论都回到主体、证据和交易条件进行核验，避免把单一采购信号误判为真实订单。</p>
+          <div class="qp-op-panel qp-op-risk" aria-label="五项交易风险核验仪表盘">
+            <div class="qp-op-risk-scale"><span>低风险</span><span>需关注</span><span>高风险</span></div>
+            <div class="qp-op-risk-row"><strong>企业主体</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>买家信用</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>采购证据</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>付款条件</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>履约风险</strong><i></i><em>待核验</em></div>
+          </div>
+        </article>
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpProgressTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">04 · ACTION</span><h3 class="qp-bento-card-title" id="qpProgressTitle">商机推进</h3><p class="qp-bento-card-question">下一步应该做什么？</p></header>
+          <p class="qp-op-explain">将前面的判断转成可执行任务，明确每一步的负责人、完成条件与跟进状态。</p>
+          <div class="qp-op-panel qp-op-actions" aria-label="商机推进任务路径">
+            <div class="qp-op-action"><b>01</b><span><strong>需求确认</strong><small>补齐规格与交付要求</small></span><em>准备</em></div>
+            <div class="qp-op-action"><b>02</b><span><strong>供应确认</strong><small>锁定企业与产品能力</small></span><em>匹配</em></div>
+            <div class="qp-op-action qp-op-action-next"><b>03</b><span><strong>买家触达</strong><small>生成首轮沟通建议</small></span><em>下一步</em></div>
+            <div class="qp-op-action"><b>04</b><span><strong>跟进复盘</strong><small>更新反馈与商机状态</small></span><em>持续</em></div>
+            <a class="qp-specular-button" id="qpContactSales" href="#start-hunting">联系销售</a>
+          </div>
         </article>
       </div>
     </section>
@@ -826,6 +1030,27 @@
       } else {
         qpCoreSection?.classList.add('qp-core-reveal');
       }
+
+      document.querySelectorAll('.qp-bento-card').forEach(qpBentoCard => {
+        qpBentoCard.addEventListener('pointermove',qpEvent => {
+          if (qpReducedMotion) return;
+          const qpCardBounds = qpBentoCard.getBoundingClientRect();
+          qpBentoCard.style.setProperty('--qp-bento-x',`${((qpEvent.clientX - qpCardBounds.left) / qpCardBounds.width) * 100}%`);
+          qpBentoCard.style.setProperty('--qp-bento-y',`${((qpEvent.clientY - qpCardBounds.top) / qpCardBounds.height) * 100}%`);
+        });
+        qpBentoCard.addEventListener('pointerenter',() => qpBentoCard.classList.add('qp-bento-is-active'));
+        qpBentoCard.addEventListener('pointerleave',() => qpBentoCard.classList.remove('qp-bento-is-active'));
+        qpBentoCard.addEventListener('focus',() => qpBentoCard.classList.add('qp-bento-is-active'));
+        qpBentoCard.addEventListener('blur',() => qpBentoCard.classList.remove('qp-bento-is-active'));
+      });
+
+      const qpContactSales = document.getElementById('qpContactSales');
+      qpContactSales?.addEventListener('pointermove',qpEvent => {
+        if (qpReducedMotion) return;
+        const qpContactBounds = qpContactSales.getBoundingClientRect();
+        qpContactSales.style.setProperty('--qp-specular-x',`${((qpEvent.clientX - qpContactBounds.left) / qpContactBounds.width) * 100}%`);
+        qpContactSales.style.setProperty('--qp-specular-y',`${((qpEvent.clientY - qpContactBounds.top) / qpContactBounds.height) * 100}%`);
+      });
 
       const qpOpportunityNavLink = document.querySelector('.qp-nav-link[href="opportunities.html"]');
       const qpCoreNavLink = document.querySelector('.qp-nav-link[href="#core-capabilities"]');
