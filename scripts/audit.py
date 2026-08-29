@@ -446,6 +446,42 @@ def audit_orchestrator_skills() -> None:
     )
 
 
+def audit_a2_contracts() -> None:
+    script = r"""
+import { createCapabilityAdapter } from './capability-adapter.js';
+import { A2_CAPABILITY_ID } from './skill-runtime/index.js';
+import { getQianPulseSkillMetadata } from './skill-runtime/registry.js';
+const metadata = getQianPulseSkillMetadata(A2_CAPABILITY_ID);
+const envelope = await createCapabilityAdapter()(A2_CAPABILITY_ID, {
+  seller: { seller_id: 'audit', company_id: 'audit', product_id: 'audit' },
+  target: { countries: ['US'], product_keywords: ['matcha'] },
+  buyer_profile: { company_types: ['IMPORTER'], buyer_roles: ['Procurement'] },
+  constraints: { max_candidates: 5, language: 'en', contact_limit_per_company: 1 },
+  execution: { channel: 'email', human_gate: true }
+});
+console.log(JSON.stringify({
+  registry: ['target_definition','candidates','summary','provider_trace','next_state'].every(key => metadata.produced_outputs.includes(key)),
+  direct: envelope.capability_id === A2_CAPABILITY_ID && Array.isArray(envelope.domain_result?.candidates) && Boolean(envelope.domain_result?.summary),
+  envelope
+}));
+"""
+    proc = run([NODE, "--input-type=module", "-e", script], cwd=AGENT)
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        payload = {}
+    check("A2 canonical registry").record(payload.get("registry") is True, f"canonical outputs={payload.get('registry')}")
+    check("A2 agent direct dispatch").record(payload.get("direct") is True, f"canonical envelope={payload.get('direct')}")
+    contract = AGENT / "skills" / "qianpulse-a2-proactive-buyer-development" / "contracts" / "a2-result.schema.json"
+    try:
+        schema = json.loads(contract.read_text(encoding="utf-8"))
+        required = set(schema.get("required", []))
+        contract_ok = {"target_definition", "candidates", "summary", "provider_trace", "next_state"} <= required
+    except (OSError, json.JSONDecodeError):
+        contract_ok = False
+    check("A2 batch contract").record(contract_ok, f"canonical required fields={contract_ok}")
+
+
 def audit_a6_progression() -> None:
     a6_dir = AGENT / "skill-runtime" / "a6"
     sources = "\n".join(path.read_text(encoding="utf-8") for path in sorted(a6_dir.glob("*.js")))
@@ -760,6 +796,7 @@ def main() -> int:
     audit_agent_boot()
     dispatch = audit_skill_dispatch()
     audit_orchestrator_skills()
+    audit_a2_contracts()
     audit_a6_progression()
     audit_landing_site()
     audit_portal_wiring()
