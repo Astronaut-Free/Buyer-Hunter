@@ -19,45 +19,50 @@
 (() => {
   "use strict";
 
-  function appUrl() {
-    if (typeof window.QIANPULSE_APP_URL === "string" && window.QIANPULSE_APP_URL) {
-      return window.QIANPULSE_APP_URL;
-    }
-    const meta = document.querySelector('meta[name="qianpulse-app"]');
-    if (meta && meta.content) return meta.content;
+  // Base origin of the agent app. The hash picks which surface we land on:
+  //   #workspace -> the workbench   (从「即刻开始」进入)
+  //   #auth      -> the sign-in page (从「登录」进入)
+  function appOrigin() {
+    const explicit = (typeof window.QIANPULSE_APP_URL === "string" && window.QIANPULSE_APP_URL)
+      || document.querySelector('meta[name="qianpulse-app"]')?.content
+      || "";
+    if (explicit) return explicit.replace(/#.*$/, "").replace(/\/+$/, "");
     const host = location.hostname || "localhost";
-    return `${location.protocol}//${host}:3317/#workspace`;
+    return `${location.protocol}//${host}:3317`;
   }
 
-  function goToApp(event) {
+  const appUrl = (hash = "#workspace") => `${appOrigin()}/${hash}`;
+
+  const goTo = hash => function (event) {
     if (event) event.preventDefault();
-    window.location.assign(appUrl());
+    window.location.assign(appUrl(hash));
+  };
+
+  function wire(id, hash, title) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // replace the node so the page's own handler (e.g. the login text toggle,
+    // or the CTA's in-page scroll) cannot fire alongside ours
+    const node = el.cloneNode(true);
+    el.parentNode.replaceChild(node, el);
+    node.addEventListener("click", goTo(hash));
+    node.setAttribute("title", title);
+    if (node.tagName === "A") node.href = appUrl(hash);
   }
 
   function wireLogin() {
-    // index.html -> #loginButton ; opportunities.html -> #qpLogin
-    const controls = [
-      document.getElementById("loginButton"),
-      document.getElementById("qpLogin"),
-    ].filter(Boolean);
-
-    for (const el of controls) {
-      const clone = el.cloneNode(true); // drop the page's own text-toggle listener
-      el.parentNode.replaceChild(clone, el);
-      clone.addEventListener("click", goToApp);
-      clone.setAttribute("title", "进入买家猎手工作台");
-      if (clone.tagName === "A") clone.href = appUrl();
-    }
+    // 登录 lands on the agent's sign-in screen, not straight in the workbench
+    wire("loginButton", "#auth", "登录买家猎手");   // index.html
+    wire("qpLogin", "#auth", "登录买家猎手");        // opportunities.html
   }
 
   function wirePrimaryCta() {
-    // opportunities.html final CTA "即刻开始" — send it into the app rather than
-    // just scrolling. index.html hero CTA already routes to opportunities.html.
-    const start = document.getElementById("qpGlassStart");
-    if (start) {
-      start.href = appUrl();
-      start.addEventListener("click", goToApp);
-    }
+    // 即刻开始 goes straight to the workbench. Both live on opportunities.html:
+    // qpHeroStart is the first-screen CTA (upstream shipped it unwired,
+    // aria-label "跳转功能待接入"), qpGlassStart is the closing one.
+    // index.html's #heroCta stays an in-site link to opportunities.html.
+    wire("qpHeroStart", "#workspace", "进入买家猎手工作台");
+    wire("qpGlassStart", "#workspace", "进入买家猎手工作台");
   }
 
   function init() {

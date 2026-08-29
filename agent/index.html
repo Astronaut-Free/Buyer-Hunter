@@ -439,4 +439,41 @@ async function refreshResults(){
     setStatus('等待你的回答');
   };
 })();
+</script><script>
+/* 门户 <-> 工作台 的回程。前门 (4180) 把「登录」送到 #auth、「即刻开始」送到
+   #workspace（见 site/nav-bridge.js）；这里负责反方向：Agent 里的「返回首页」
+   应该回到前门，而不是本 SPA 自带的 #home 视图。
+   同时补上缺失的 #auth 路由 —— showAuth() 早就存在，但 hash 路由只认
+   #workspace，所以从前门跳进 /#auth 会落到别的视图。 */
+(function installPortalNav(){
+  function portalUrl(){
+    const explicit=(typeof window.QIANPULSE_PORTAL_URL==='string'&&window.QIANPULSE_PORTAL_URL)
+      ||document.querySelector('meta[name="qianpulse-portal"]')?.content||'';
+    if(explicit)return explicit;
+    const host=location.hostname||'localhost';
+    return `${location.protocol}//${host}:4180/`;
+  }
+  function goPortal(event){ if(event)event.preventDefault(); window.location.assign(portalUrl()); }
+
+  // 覆盖 SPA 内部的 showHome（enhanceV15Layout 在解析期重定义过一次，本块在其后）
+  window.showHome=goPortal;
+
+  // 三个入口：登录页「返回主页」、工作台侧栏「返回首页」、业务台「返回主页」
+  for(const sel of ['.auth-back','.home-link','#business .biz-back']){
+    const el=document.querySelector(sel);
+    if(!el)continue;
+    el.onclick=goPortal;
+    if(el.tagName==='A')el.href=portalUrl();
+    el.title='返回黔脉门户首页';
+  }
+
+  // hash 路由：#auth 打开登录页，#workspace 打开工作台
+  function routeHash(){
+    const h=location.hash;
+    if(h==='#auth'&&typeof showAuth==='function')showAuth('login');
+    else if(h==='#workspace'&&typeof showWorkspace==='function')showWorkspace();
+  }
+  routeHash();
+  window.addEventListener('hashchange',routeHash);
+})();
 </script></body></html>
