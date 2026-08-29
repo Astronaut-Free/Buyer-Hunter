@@ -96,8 +96,17 @@ export function evaluateOutreachReadiness({ buyerCompany, buyerFit, contact, con
   if (!seller.product_name && !seller.product?.name && !seller.product_id) return { status: 'MORE_EVIDENCE', reason: 'SELLER_PRODUCT_REQUIRED' };
   const a4Status = dependencyStatus(a4Result);
   const a5Status = dependencyStatus(a5Result);
-  if (a4Status === 'BLOCKED') return { status: 'BLOCKED', reason: 'A4_SUPPLY_BLOCKED' };
-  if (!['DONE', 'PASS', 'READY'].includes(a4Status)) return { status: 'MORE_EVIDENCE', reason: 'A4_SUPPLY_CHECK_REQUIRED' };
+  if (a4Status === 'BLOCKED' || a4Result?.domain_result?.recommendation === 'NOT_FIT') return { status: 'BLOCKED', reason: 'A4_SUPPLY_BLOCKED' };
+  if (!a4Result) return { status: 'MORE_EVIDENCE', reason: 'A4_SUPPLY_CHECK_REQUIRED' };
+  if (!['DONE', 'PASS', 'READY'].includes(a4Status)) {
+    // Python-authoritative A4 honestly reports UNKNOWN for demand-side facts
+    // (quantity / specification / delivery) that a proactive campaign exists
+    // to discover. Only seller-side prerequisites gate outreach: the seller
+    // must have declared a category and an evaluable supply pool.
+    const sellerSide = (a4Result.missing_evidence || []).some(item =>
+      item === 'product_category' || item === 'seller_supply_pool');
+    if (sellerSide) return { status: 'MORE_EVIDENCE', reason: 'A4_SUPPLY_CHECK_REQUIRED' };
+  }
   if (!['DONE', 'PASS', 'READY', 'REVIEWED'].includes(a5Status)) return { status: 'MORE_EVIDENCE', reason: 'A5_MARKET_RISK_CHECK_REQUIRED' };
   if (execution.human_gate !== true) return { status: 'BLOCKED', reason: 'HUMAN_GATE_REQUIRED' };
   if (!execution.campaign_id) return { status: 'MORE_EVIDENCE', reason: 'TRANSPORT_CAMPAIGN_REQUIRED', missing_evidence: ['execution.campaign_id'] };

@@ -17,7 +17,6 @@ cli = importlib.import_module("capability_cli")
 SCHEMA = json.loads((ROOT / "contracts" / "capability-result-envelope.schema.json").read_text(encoding="utf-8"))
 
 A3, A4, A5 = cli.A3, cli.A4, cli.A5
-A8 = cli.A8
 
 
 def ctx(**over):
@@ -104,20 +103,21 @@ class CapabilityCliTest(unittest.TestCase):
 
     def test_a5_review_carries_rule_depth_risk_items(self) -> None:
         env = cli.run_capability(A5, ctx(
-            field_updates={"destination": "DE", "payment_terms": "100% T/T in advance, no guarantee"},
+            destination_market="DE",
+            field_updates={"payment_terms": "100% T/T in advance, no guarantee"},
             latest_buyer_message={"content": "want starbucks-style matcha"},
             seller_context={"allowed_markets": ["DE"], "payment_policy": ["T/T"]},
         ))
-        self.assertEqual(env["run_status"], "DONE")
         result = env["domain_result"]
+        self.assertEqual(result["access_status"], "CONDITIONAL")
         codes = {item["code"] for item in result.get("risk_items", [])}
         self.assertIn("CONTRACT_RISK", codes)
         self.assertIn("IP_CONFLICT", codes)
 
     def test_a5_depth_fraud_signal_on_free_mail(self) -> None:
         env = cli.run_capability(A5, ctx(
-            field_updates={"destination": "DE", "contact_email_raw": "buyer77@qq.com",
-                           "buyer_identity_status": "UNRESOLVED"},
+            destination_market="DE",
+            field_updates={"contact_email_raw": "buyer77@qq.com", "buyer_identity_status": "UNRESOLVED"},
             seller_context={"allowed_markets": ["DE"], "market_access": "EU-GMP-baseline"},
         ))
         result = env["domain_result"]
@@ -125,51 +125,11 @@ class CapabilityCliTest(unittest.TestCase):
         self.assertEqual(len(fraud), 1)
         self.assertEqual(fraud[0]["severity"], "MEDIUM")
 
-    def _a8(self, **over):
-        base = {
-            "opportunity_id": "opp-a8",
-            "decision": {"decision_status": "PURSUE_NOW", "opportunity_score": 82.0,
-                         "component_scores": {"timing": 80, "seller_fit": 90}, "gaps": []},
-            "risks": [], "access_status": "CONDITIONAL", "stage": "QUALIFYING",
-        }
-        base.update(over)
-        return cli.run_capability(A8, base)
-
-    def test_a8_pursue_now_maps_to_outreach(self) -> None:
-        env = self._a8()
-        self.assertEqual(env["run_status"], "DONE")
-        result = env["domain_result"]
-        self.assertEqual(result["decision"], "OUTREACH")
-        self.assertEqual(result["primary_action"]["type"], "OUTREACH")
-        self.assertTrue(result["human_approval_required"])
-        self.assertEqual(result["contact_strategy"]["preferred"], "public_channel_first")
-
-    def test_a8_verify_first_maps_to_verify_gaps(self) -> None:
-        env = self._a8(decision={"decision_status": "VERIFY_FIRST", "gaps": ["规格待确认", "主体未核验"]})
-        result = env["domain_result"]
-        self.assertEqual(result["primary_action"]["type"], "VERIFY_GAPS")
-        self.assertIn("规格待确认", result["primary_action"]["reason"])
-        self.assertEqual(result["secondary_action"]["type"], "PREPARE_OUTREACH")
-
-    def test_a8_block_never_bypassed(self) -> None:
-        env = self._a8(access_status="BLOCK")
-        self.assertEqual(env["run_status"], "BLOCKED")
-        self.assertEqual(env["domain_result"]["primary_action"]["type"], "HALT")
-        self.assertTrue(env["human_review_required"])
-
-    def test_a8_pass_maps_to_no_action(self) -> None:
-        env = self._a8(decision={"decision_status": "PASS", "gaps": []})
-        result = env["domain_result"]
-        self.assertEqual(result["primary_action"]["type"], "NO_ACTION")
-        self.assertFalse(result["human_approval_required"])
-
-    def test_a8_missing_decision_is_not_applicable(self) -> None:
-        env = self._a8(decision={})
-        self.assertEqual(env["run_status"], "NOT_APPLICABLE")
-        self.assertEqual(env["domain_result"]["decision"], "NO_SNAPSHOT")
+    # A8 deal-action was quarantined to agent/quarantine/a8.js by the a345
+    # runtime and is no longer dispatched by the Python CLI.
 
     def test_missing_opportunity_id_blocks(self) -> None:
-        for cap in (A3, A4, A5, A8):
+        for cap in (A3, A4, A5):
             env = cli.run_capability(cap, ctx(opportunity_id=None))
             self.assertEqual(env["run_status"], "BLOCKED")
 

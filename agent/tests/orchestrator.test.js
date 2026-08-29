@@ -46,6 +46,12 @@ test('A2 batch persists READY candidates as idempotent Opportunity records', asy
   const orchestrator = createQianPulseSkillOrchestrator({
     opportunityStore: store,
     clock: () => '2026-08-29T02:00:00Z',
+    // PR#2 preflight gates every candidate on A4/A5 before outreach; stub both
+    // DONE so the Human Gate path can reach READY_FOR_OUTREACH_APPROVAL.
+    dependencyRunners: {
+      'qianpulse.a4.supply_match': dependencyRunner('qianpulse.a4.supply_match'),
+      'qianpulse.a5.trade_risk': dependencyRunner('qianpulse.a5.trade_risk')
+    },
     providers: {
       trade_data: { async searchBuyers() { return { companies: [providerCompany()] }; } },
       contact_data: { async findDecisionMakers() { return [{ name: 'Alex', work_email: 'alex@buyer.example', role_reason: 'Procurement Manager', source_refs: ['ev_contact'] }]; } }

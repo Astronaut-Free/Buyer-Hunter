@@ -79,7 +79,7 @@ def run(context: dict[str, Any]) -> dict[str, Any]:
         "description_raw": " ".join(filter(None, [text, str(demand.get("specification") or ""), str(demand.get("grade") or ""),
                                                     " ".join(demand.get("mandatory_certifications") or [])])),
         "quantity_raw": str(demand.get("quantity_raw") or demand.get("quantity") or ""),
-        "buyer_country_code": str(demand.get("destination_market") or ""),
+        "destination_market": str(demand.get("destination_market") or ""),
         "deadline_at": demand.get("delivery_deadline") or demand.get("deadline_at"),
     }
     report = evaluate(row, catalog, evaluated_at=context["evaluated_at"])

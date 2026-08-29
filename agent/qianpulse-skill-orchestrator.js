@@ -63,22 +63,30 @@ export function createQianPulseSkillOrchestrator({
     const sellerContext = input?.seller_context || seller?.seller_context || seller || input?.seller || {};
     const supplied = input?.dependencies || {};
     const evaluatedAt = clock();
+    const targetMarket = input?.target?.countries?.[0] || null;
     const dependencies = {
       ...supplied,
       a4: supplied.a4 || await dependencyRunners[A4_CAPABILITY_ID]({
         opportunity_id: dependencyContextId,
         evaluated_at: evaluatedAt,
         changed_fields: [],
-        seller_context: sellerContext
+        seller_context: sellerContext,
+        // Pre-outreach demand facts are unknown by design; the seller-side
+        // prerequisites (category + supply pool) are what A4 can certify now.
+        demand: {
+          category_code: sellerContext?.category_code || sellerContext?.product || input?.seller?.category_code || input?.seller?.product || null,
+          destination_market: targetMarket
+        }
       }),
       a5: supplied.a5 || await dependencyRunners[A5_CAPABILITY_ID]({
         opportunity_id: dependencyContextId,
         evaluated_at: evaluatedAt,
         changed_fields: [],
-        buyer_country: input?.target?.countries?.[0] || null,
-        destination_market: input?.target?.countries?.[0] || null,
+        buyer_country: targetMarket,
+        destination_market: targetMarket,
         seller_policy: sellerContext,
-        seller_sku: {}
+        seller_sku: {},
+        regulatory_evidence: sellerContext?.regulatory_evidence || []
       })
     };
     const batchResult = await runA2Batch({ input: { ...input, dependencies }, providers, maxReady, maxContactedCompanies });

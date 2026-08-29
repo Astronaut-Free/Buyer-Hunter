@@ -48,22 +48,24 @@ test('A5 blocks only an evidence-backed regulatory prohibition and dependency ru
   assert.equal(refresh.dependency_results.a5.run_status, 'BLOCKED');
 });
 
-test('A5 review carries rule-depth risk items (fraud / contract / IP)', () => {
-  const direct = runA5TradeRisk({
-    opportunity_id: 'opp1',
+test('A5 review carries rule-depth risk items (fraud / contract / IP)', async () => {
+  const direct = await runners[A5_CAPABILITY_ID]({
+    opportunity_id: 'opp1', evaluated_at,
     changed_fields: ['destination'],
     field_updates: {
-      destination: 'DE',
+      destination_market: 'DE',
       payment_terms: '100% T/T in advance, no guarantee',
       contact_email_raw: 'buyer77@qq.com',
       buyer_identity_status: 'UNRESOLVED'
     },
+    destination_market: 'DE',
     latest_buyer_message: { content: 'want starbucks-style matcha' },
-    seller_context: { allowed_markets: ['DE'], payment_policy: ['T/T'] }
+    seller_policy: { allowed_markets: ['DE'] }
   });
-  assert.equal(direct.run_status, 'DONE');
+  assert.equal(direct.domain_result.access_status, 'CONDITIONAL');
   const codes = new Set(direct.domain_result.risk_items.map(item => item.code));
   assert.ok(codes.has('FRAUD_SIGNAL'), 'free-mail + unresolved identity');
   assert.ok(codes.has('CONTRACT_RISK'), 'full advance without guarantee');
   assert.ok(codes.has('IP_CONFLICT'), 'brand mention without authorization');
+  assert.ok(codes.has('CREDIT_UNKNOWN'), 'no verifiable credit anchor');
 });

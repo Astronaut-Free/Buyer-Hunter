@@ -373,6 +373,9 @@ def audit_skill_dispatch() -> dict[str, Any]:
 
 
 def audit_a345_invariants(dispatch: dict[str, Any]) -> None:
+    # supply_demand_fit_v1 imports destination_v1 as a sibling module, so the
+    # pipeline directory itself must be importable here (audit runs from any cwd).
+    sys.path.insert(0, str(ROOT / "pipeline"))
     from pipeline.skills.a3_purchase_timing import run as run_a3
     from pipeline.skills.a4_supply_match import run as run_a4
     from pipeline.skills.a5_trade_risk import run as run_a5
@@ -833,12 +836,32 @@ def audit_a2_sandbox_chain() -> None:
     script = """
       import { createSandboxTradeProvider, createSandboxContactProvider } from './providers/sandbox.js';
       import { createA2BatchPipeline } from './skill-runtime/a2-batch.js';
+      import { createPythonDependencyRunners } from './skill-runtime/python-capability-runners.mjs';
+      import { A4_CAPABILITY_ID, A5_CAPABILITY_ID } from './skill-runtime/capability-ids.js';
+      // 真实闭环：预检走 Python 权威 A4/A5（与 server 的 dependencyRunners 同源）。
+      const runners = createPythonDependencyRunners();
+      const evaluatedAt = new Date().toISOString();
+      const sellerContext = {
+        seller_id: 's1', company_id: 'c1', product_id: 'p1', company_name: 'Guizhou Tea',
+        product_name: 'Guizhou matcha', category_code: 'MATCHA',
+        allowed_markets: ['US'],
+        regulatory_evidence: [{ market: 'US', result: 'ALLOWED', evidence_ref: 'audit-sandbox-reg' }]
+      };
+      const preflight = {
+        a4: await runners[A4_CAPABILITY_ID]({ opportunity_id: 'a2-sandbox-preflight', evaluated_at: evaluatedAt, changed_fields: [],
+          seller_context: sellerContext, demand: { category_code: 'MATCHA', destination_market: 'US' } }),
+        a5: await runners[A5_CAPABILITY_ID]({ opportunity_id: 'a2-sandbox-preflight', evaluated_at: evaluatedAt, changed_fields: [],
+          buyer_country: 'US', destination_market: 'US', seller_policy: sellerContext, seller_sku: {},
+          regulatory_evidence: sellerContext.regulatory_evidence })
+      };
       const out = await createA2BatchPipeline()({
         input: {
-          seller: { seller_id: 's1', company_id: 'c1', product_id: 'p1', product_name: 'Guizhou matcha' },
+          seller: { seller_id: 's1', company_id: 'c1', product_id: 'p1', company_name: 'Guizhou Tea', product_name: 'Guizhou matcha' },
           target: { countries: ['US'], product_keywords: ['matcha'] },
           buyer_profile: { company_types: ['importer'], buyer_roles: ['Procurement Manager'] },
-          constraints: { max_candidates: 10, language: 'en', contact_limit_per_company: 1 }
+          constraints: { max_candidates: 10, language: 'en', contact_limit_per_company: 1 },
+          execution: { channel: 'email', human_gate: true, campaign_id: 'sandbox-campaign' },
+          dependencies: preflight
         },
         providers: { trade_data: createSandboxTradeProvider(), contact_data: createSandboxContactProvider() },
         maxReady: 3
@@ -848,6 +871,7 @@ def audit_a2_sandbox_chain() -> None:
       console.log(JSON.stringify({
         status: out.status, discovered: out.summary.discovered, ready: out.summary.ready,
         draft: Boolean(d && d.subject && d.content), evidence: d ? d.evidence_refs.length : 0,
+        a4_status: preflight.a4.run_status, a5_status: preflight.a5.run_status,
         sandbox_tagged: out.opportunity_candidates.every(x =>
           x.envelope?.domain_result?.buyer_company?.data_mode === 'SANDBOX')
       }));

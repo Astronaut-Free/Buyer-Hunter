@@ -34,6 +34,15 @@ function normalizedMessage(event = {}) {
   };
 }
 
+// The P0 bridge exports destination as ISO-2 or the literal "UNKNOWN" string.
+// A missing destination must never masquerade as a market: downstream gates
+// (A4 export experience, A5 destination-based blocking) treat a set market as
+// a claim, so "UNKNOWN" is mapped to null at the gate boundary.
+function marketOrNull(value) {
+  const market = (value || '').trim().toUpperCase();
+  return market && market !== 'UNKNOWN' ? market : null;
+}
+
 export function buildAffectedSkillInput({ capabilityId, opportunity, event, sellerContext = {}, fieldObservations = {} } = {}) {
   const message = normalizedMessage(event);
   const explicitUpdates = eventFieldUpdates(event);
@@ -77,7 +86,7 @@ export function buildAffectedSkillInput({ capabilityId, opportunity, event, sell
       quantity_raw: fields.quantity_raw || fields.quantity,
       quantity_unit: fields.quantity_unit,
       mandatory_certifications: mandatoryCertifications,
-      destination_market: fields.destination_market || fields.destination,
+      destination_market: marketOrNull(fields.destination_market || fields.destination),
       delivery_deadline: fields.delivery_date || fields.deadline_at,
       packaging: fields.packaging,
       oem: fields.oem_required,
@@ -85,7 +94,7 @@ export function buildAffectedSkillInput({ capabilityId, opportunity, event, sell
       target_price: fields.target_price
     },
     buyer_country: opportunity?.buyer?.market || fields.buyer_country || null,
-    destination_market: fields.destination_market || fields.destination || null,
+    destination_market: marketOrNull(fields.destination_market || fields.destination),
     product: {
       category_code: category,
       mandatory_certifications: mandatoryCertifications

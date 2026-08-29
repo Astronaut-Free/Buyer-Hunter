@@ -148,7 +148,12 @@ export function createLiveA2A6Runtime({
     state.runs[run.run_id] = run;
 
     try {
-      const input = payload.input || payload;
+      const rawInput = payload.input || payload;
+      const campaignId = payload.campaign_id || rawInput.execution?.campaign_id || null;
+      const input = {
+        ...rawInput,
+        execution: { ...(rawInput.execution || {}), campaign_id: campaignId }
+      };
       const seller = sellerFromAuthenticatedUser(user, input.seller || payload.seller || {});
       const result = await orchestrator.runProactiveDevelopment({
         input: { ...input, seller },
@@ -180,7 +185,6 @@ export function createLiveA2A6Runtime({
       };
       state.steps[step.step_id] = step;
 
-      const campaignId = payload.campaign_id || input.execution?.campaign_id || null;
       const approvals = campaignId ? createA2OutreachApprovals({
         state,
         run,

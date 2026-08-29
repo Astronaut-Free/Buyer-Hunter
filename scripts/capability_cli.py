@@ -9,6 +9,9 @@ from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+# supply_demand_fit_v1 imports destination_v1 as a sibling module, so the
+# pipeline directory itself must be importable when the CLI runs from any cwd.
+sys.path.insert(0, str(ROOT / "pipeline"))
 
 from pipeline.skills.a3_purchase_timing import A3, run as run_a3  # noqa: E402
 from pipeline.skills.a4_supply_match import A4, run as run_a4  # noqa: E402
