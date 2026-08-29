@@ -482,7 +482,19 @@ async function createRun(payload, user) {
 async function authHandler(req, res, path) {
   const payload = await readBody(req);
   if (req.method === 'POST' && path === '/api/v1/auth/register') {
-    const role = ['SELLER', 'BUYER'].includes(payload.role) ? payload.role : null;
+    // INTERNAL is invite-only: the operator sets INTERNAL_INVITE_CODE on the
+    // server; a matching invite_code in the payload opens the role. Unset env
+    // keeps INTERNAL registration closed entirely.
+    const requestedRole = String(payload.role || '');
+    const internalCode = String(process.env.INTERNAL_INVITE_CODE || '');
+    let role = null;
+    if (requestedRole === 'SELLER' || requestedRole === 'BUYER') {
+      role = requestedRole;
+    } else if (requestedRole === 'INTERNAL') {
+      if (!internalCode) return sendJson(res, 403, { error: 'INTERNAL 注册未开放' });
+      if (String(payload.invite_code || '') !== internalCode) return sendJson(res, 403, { error: '邀请码无效' });
+      role = 'INTERNAL';
+    }
     const email = String(payload.email || '').trim().toLowerCase();
     const password = String(payload.password || '');
     if (!role) return sendJson(res, 400, { error: 'role 必须是 SELLER 或 BUYER' });
@@ -516,7 +528,7 @@ async function authHandler(req, res, path) {
     return sendJson(res, 201, {
       user: publicUser(user),
       token,
-      next: role === 'SELLER' ? 'seller-onboarding' : 'buyer-onboarding'
+      next: role === 'SELLER' ? 'seller-onboarding' : role === 'BUYER' ? 'buyer-onboarding' : 'workspace'
     });
   }
 
@@ -535,7 +547,7 @@ async function authHandler(req, res, path) {
     return sendJson(res, 200, {
       user: publicUser(user),
       token,
-      next: user.role === 'SELLER' ? 'seller-onboarding' : 'buyer-onboarding'
+      next: user.role === 'SELLER' ? 'seller-onboarding' : user.role === 'BUYER' ? 'buyer-onboarding' : 'workspace'
     });
   }
 
