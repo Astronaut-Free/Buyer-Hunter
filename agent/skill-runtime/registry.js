@@ -10,7 +10,7 @@ export const QIANPULSE_SKILL_REGISTRY = Object.freeze([
     version: A2_VERSION,
     description: '主动开发海外潜在买家：Buyer Company → Buyer Fit → Contact → Email-ready → pre-reply follow-up。',
     required_inputs: ['seller', 'target', 'buyer_profile', 'constraints', 'execution'],
-    produced_outputs: ['target_definition', 'buyer_company', 'buyer_fit', 'contact', 'outreach_readiness', 'followup', 'handoff'],
+    produced_outputs: ['target_definition', 'candidates', 'summary', 'provider_trace', 'next_state'],
     status_contract: ['DONE', 'MORE_EVIDENCE', 'BLOCKED', 'NOT_APPLICABLE', 'ERROR'],
     timeout_seconds: 120,
     enabled: true

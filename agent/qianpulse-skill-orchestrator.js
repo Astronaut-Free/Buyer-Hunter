@@ -2,6 +2,8 @@ import {
   A6_CAPABILITY_ID,
   A6_VERSION,
   createA2BatchPipeline,
+  runA4SupplyMatch,
+  runA5TradeRisk,
   runA6Skill,
   validateA6Envelope
 } from './skill-runtime/index.js';
@@ -45,10 +47,18 @@ export function createQianPulseSkillOrchestrator({
   const runA2Batch = createA2BatchPipeline();
 
   async function runProactiveDevelopment({ input, seller, product, maxReady, maxContactedCompanies } = {}) {
-    const batchResult = await runA2Batch({ input, providers, maxReady, maxContactedCompanies });
+    const dependencyContextId = `a2-preflight:${seller?.seller_id || input?.seller?.seller_id || 'seller'}:${input?.seller?.product_id || 'product'}`;
+    const sellerContext = input?.seller_context || seller?.seller_context || seller || input?.seller || {};
+    const dependencies = {
+      a4: input?.dependencies?.a4 || runA4SupplyMatch({ opportunity_id: dependencyContextId, changed_fields: [], seller_context: sellerContext }),
+      a5: input?.dependencies?.a5 || runA5TradeRisk({ opportunity_id: dependencyContextId, destination: input?.target?.countries?.[0] || null, changed_fields: [], seller_context: sellerContext }),
+      ...(input?.dependencies || {})
+    };
+    // Temporary adapter: A4/A5 are invoked by the Agent here until candidate-scoped dependency runs are persisted independently.
+    const batchResult = await runA2Batch({ input: { ...input, dependencies }, providers, maxReady, maxContactedCompanies });
     const seeds = createOpportunitySeeds({ batchResult, seller: seller || input?.seller, product, createdAt: clock() });
     const opportunities = opportunityStore.upsertSeeds(seeds);
-    return { run_status: batchResult.status, batch_result: batchResult, opportunity_seeds: seeds, opportunities };
+    return { run_status: batchResult.envelope?.run_status || batchResult.status, envelope: batchResult.envelope, batch_result: batchResult, opportunity_seeds: seeds, opportunities };
   }
 
   function runBuyerProgression({

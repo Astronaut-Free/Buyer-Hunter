@@ -18,8 +18,14 @@ export function validateA2Envelope(envelope = {}) {
   const errors = [...base.errors];
   const result = envelope.domain_result || {};
   if (!result.target_definition) errors.push('domain_result.target_definition required');
-  if (!result.outreach_readiness) errors.push('domain_result.outreach_readiness required');
-  if (!result.followup) errors.push('domain_result.followup required');
+  if (Array.isArray(result.candidates)) {
+    if (!result.summary) errors.push('domain_result.summary required');
+    if (!result.provider_trace) errors.push('domain_result.provider_trace required');
+    if (!result.next_state) errors.push('domain_result.next_state required');
+  } else {
+    if (!result.outreach_readiness) errors.push('domain_result.outreach_readiness required');
+    if (!result.followup) errors.push('domain_result.followup required');
+  }
   return { valid: errors.length === 0, errors };
 }
 

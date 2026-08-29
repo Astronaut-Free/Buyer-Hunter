@@ -34,7 +34,8 @@ export function createA2FirstOutreachExecutor({
   onMutate = () => {},
   smartlead,
   opportunityStore,
-  now = () => new Date().toISOString()
+  now = () => new Date().toISOString(),
+  authorizeApproval = (user, opportunity) => Boolean(user && opportunity && (user.role === 'INTERNAL' || (['SELLER', 'SALES'].includes(user.role) && [opportunity.seller?.id, opportunity.seller?.company_id].filter(Boolean).includes(user.id))))
 } = {}) {
   if (typeof getState !== 'function') throw new Error('getState required');
   if (!opportunityStore?.get || !opportunityStore?.bindExternalRef) throw new Error('opportunityStore required');
@@ -42,14 +43,19 @@ export function createA2FirstOutreachExecutor({
   return async function executeA2FirstOutreach({ approvalId, user, status, editedPayload } = {}) {
     const state = getState();
     state.approvals ||= {};
-    const idem = `approval:${approvalId}:a2-first-outreach`;
     const idemStore = externalActionStore(state);
 
-    if (!user || user.role !== 'INTERNAL') return { status: 403, body: { code: 'INTERNAL_REQUIRED' } };
     const approval = state.approvals[approvalId];
     if (!approval) return { status: 404, body: { code: 'APPROVAL_NOT_FOUND' } };
     if (approval.action_type !== 'A2_OUTREACH_DRAFT') return { status: 409, body: { code: 'APPROVAL_ACTION_MISMATCH' } };
     if (!['APPROVED', 'EDITED', 'REJECTED'].includes(status)) return { status: 400, body: { code: 'INVALID_APPROVAL_STATUS' } };
+
+    const opportunity = opportunityStore.get(approval.opportunity_id);
+    if (!opportunity) return { status: 422, body: { code: 'OPPORTUNITY_REQUIRED' } };
+    if (!authorizeApproval(user, opportunity)) return { status: 403, body: { code: 'APPROVAL_FORBIDDEN' } };
+    const contactId = opportunity.contact?.contact_id || approval.payload?.transport?.lead?.email || 'contact';
+    const outreachRound = Number(approval.outreach_round || opportunity.a2?.followup?.outreach_round || 1);
+    const idem = `a2-send:${opportunity.id}:${contactId}:${outreachRound}`;
 
     if (idemStore[idem]) {
       return { status: 200, body: { approval, execution: { ...idemStore[idem], replayed: true } }, replayed: true };
@@ -58,7 +64,11 @@ export function createA2FirstOutreachExecutor({
     approval.status = status;
     approval.approved_by = user.id;
     approval.approved_at = now();
-    if (status === 'EDITED' && editedPayload) approval.payload = editedPayload;
+    if (status === 'EDITED' && editedPayload) {
+      approval.edited_fields = Object.keys(editedPayload).filter(key => JSON.stringify(approval.payload?.[key]) !== JSON.stringify(editedPayload[key]));
+      approval.payload = editedPayload;
+    }
+    approval.approved_draft = structuredClone(approval.payload?.draft || null);
 
     if (status === 'REJECTED') {
       const execution = { executed: false, status: 'REJECTED', updated_at: now() };
@@ -80,9 +90,6 @@ export function createA2FirstOutreachExecutor({
     if (!transport.campaign_id) return { status: 422, body: { code: 'SMARTLEAD_CAMPAIGN_REQUIRED' } };
     if (!lead.email) return { status: 422, body: { code: 'LEAD_EMAIL_REQUIRED' } };
     if (!draft.subject || !draft.content) return { status: 422, body: { code: 'OUTREACH_DRAFT_REQUIRED' } };
-
-    const opportunity = opportunityStore.get(approval.opportunity_id);
-    if (!opportunity) return { status: 422, body: { code: 'OPPORTUNITY_REQUIRED' } };
 
     try {
       const sequences = await smartlead.getCampaignSequences({ campaignId: transport.campaign_id });
@@ -141,6 +148,14 @@ export function createA2FirstOutreachExecutor({
       });
 
       opportunity.status = 'OUTREACH_QUEUED';
+      opportunity.a2 ||= {};
+      opportunity.a2.lifecycle_status = outreachRound > 1 ? 'FOLLOWUP_QUEUED' : 'QUEUED';
+      opportunity.a2.outreach_state = 'QUEUED';
+      opportunity.a2.followup = {
+        ...(opportunity.a2.followup || {}),
+        outreach_round: outreachRound,
+        last_delivery_state: 'QUEUED'
+      };
       opportunity.outreach = {
         provider: 'smartlead',
         campaign_id: transport.campaign_id,
