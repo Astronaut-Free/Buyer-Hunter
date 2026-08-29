@@ -81,8 +81,9 @@ if ($Up) {
     $env:PORT = "$AgentPort"
     $agent = Start-Process -PassThru -WorkingDirectory (Join-Path $Root 'agent') 'node' `
         -ArgumentList 'server\bootstrap.js'
-    $demo = Start-Process -PassThru -WorkingDirectory (Join-Path $Root 'demo') 'npm' `
-        -ArgumentList 'run','dev','--','--host','127.0.0.1','--port',"$DemoPort"
+    # npm is npm.cmd on Windows; Start-Process needs a real executable, so go via cmd.
+    $demo = Start-Process -PassThru -WorkingDirectory (Join-Path $Root 'demo') 'cmd.exe' `
+        -ArgumentList '/c', "npm run dev -- --host 127.0.0.1 --port $DemoPort"
     @($api.Id, $agent.Id, $demo.Id) | ConvertTo-Json | Set-Content $PidFile -Encoding utf8
     Write-Host ""
     Write-Host "api   -> http://127.0.0.1:$ApiPort   (pid $($api.Id))"
