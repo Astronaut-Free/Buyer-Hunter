@@ -1,0 +1,1106 @@
+<!doctype html>
+<html class="qp-html" lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F7F4EC" />
+  <title>全球商机｜黔脉 QianPulse</title>
+  <style>
+    :root {
+      --qp-green:#123B32;
+      --qp-warm:#F7F4EC;
+      --qp-tea:#DCE9E1;
+      --qp-gold:#D5A33F;
+      --qp-ink:#172720;
+      --qp-muted:#718079;
+      --qp-line:#E2E4DF;
+    }
+
+    * { box-sizing:border-box; }
+    .qp-html { width:100%; min-height:100%; background:var(--qp-warm); scroll-behavior:smooth; }
+    .qp-body { width:100%; min-height:100%; margin:0; padding-top:58px; overflow-x:hidden; overflow-y:auto; color:var(--qp-ink); background:var(--qp-warm); font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+    .qp-button { font:inherit; -webkit-tap-highlight-color:transparent; }
+
+    .qp-top-nav { position:fixed; z-index:100; top:0; left:0; width:100%; height:58px; display:flex; align-items:center; justify-content:space-between; gap:28px; padding:0 clamp(30px,4.8vw,80px); background:#fff; border-radius:0 0 6px 6px; box-shadow:0 5px 16px rgba(18,59,50,.18),0 -1px 0 rgba(18,59,50,.06) inset; }
+    .qp-nav-left { display:flex; align-items:center; gap:13px; min-width:0; }
+    .qp-nav-logo { position:relative; flex:0 0 142px; height:44px; display:block; overflow:hidden; text-decoration:none; }
+    .qp-nav-logo-image { position:absolute; left:-3px; top:-8px; display:block; width:140px; height:auto; filter:contrast(1.08) saturate(1.08) drop-shadow(0 2px 2px rgba(18,59,50,.15)); }
+    .qp-main-nav { flex:1; min-width:0; margin-left:auto; }
+    .qp-nav-links { display:flex; align-items:center; justify-content:flex-end; gap:clamp(18px,2.2vw,38px); margin:0; padding:0; list-style:none; white-space:nowrap; }
+    .qp-nav-link { position:relative; display:block; padding:21px 0 20px; color:var(--qp-green); text-decoration:none; font-size:clamp(15px,1.1vw,18px); font-weight:600; line-height:1; letter-spacing:.055em; transition:color .2s ease; }
+    .qp-nav-link::after { content:""; position:absolute; left:50%; bottom:9px; width:0; height:2px; background:var(--qp-gold); transform:translateX(-50%); transition:width .22s ease; }
+    .qp-nav-link:hover,.qp-nav-link:focus-visible,.qp-nav-link[aria-current] { color:var(--qp-gold); outline:none; }
+    .qp-nav-link:hover::after,.qp-nav-link:focus-visible::after,.qp-nav-link[aria-current]::after { width:100%; }
+
+    .qp-login { --qp-shine-angle:135deg; position:relative; isolation:isolate; display:flex; align-items:center; gap:9px; flex:0 0 auto; height:36px; padding:0 7px 0 16px; overflow:hidden; color:var(--qp-green); background:transparent; border:0; border-radius:999px; box-shadow:0 4px 12px rgba(18,59,50,.16); cursor:pointer; font-size:14px; font-weight:600; letter-spacing:.1em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
+    .qp-login::before { content:""; position:absolute; z-index:-2; inset:-100%; background:conic-gradient(from var(--qp-shine-angle),transparent 0 36%,rgba(213,163,63,.15) 42%,#D5A33F 47%,#FFF9E8 50%,#D5A33F 53%,rgba(213,163,63,.15) 58%,transparent 64%); opacity:.45; }
+    .qp-login::after { content:""; position:absolute; z-index:-1; inset:1px; border-radius:999px; background:rgba(247,244,236,.94); box-shadow:0 1px 0 rgba(255,255,255,.75) inset; transition:background .24s ease; }
+    .qp-login-arrow { display:grid; place-items:center; width:24px; height:24px; color:var(--qp-warm); background:var(--qp-green); border-radius:50%; font-size:14px; line-height:1; transition:color .24s ease,background .24s ease,transform .24s cubic-bezier(.2,.8,.2,1); }
+    .qp-login:hover { color:var(--qp-warm); transform:translateY(-1px); box-shadow:0 7px 16px rgba(18,59,50,.24); }
+    .qp-login:hover::after { background:var(--qp-green); }
+    .qp-login:hover .qp-login-arrow { color:var(--qp-green); background:var(--qp-gold); transform:translate(2px,-1px) rotate(7deg); }
+    .qp-login:focus-visible,.qp-show-all:focus-visible { outline:2px solid var(--qp-gold); outline-offset:2px; }
+
+    .qp-brand-hero { width:100%; height:auto; min-height:0; margin:0; padding:0; display:grid; grid-template-columns:1fr; align-items:start; gap:0; }
+
+    .qp-product-gallery { --qp-copy-upper-x:6.4%; --qp-copy-upper-y:17.9%; --qp-copy-upper-scale:.76; --qp-copy-lower-x:6.9%; --qp-copy-lower-y:63.7%; --qp-copy-lower-scale:.8; position:relative; min-width:0; width:100%; height:auto; aspect-ratio:2940/1350; overflow:hidden; background:#fff; border-radius:0; box-shadow:none; container-type:inline-size; }
+    .qp-product-slide { position:absolute; inset:0; overflow:hidden; opacity:0; transform:translate3d(100%,0,0); pointer-events:none; will-change:transform,opacity; }
+    .qp-product-slide.qp-is-active { z-index:2; opacity:1; transform:translate3d(0,0,0); }
+    .qp-product-slide.qp-is-entering { z-index:3; opacity:1; transform:translate3d(100%,0,0); animation:qp-slide-enter .9s cubic-bezier(.22,.75,.22,1) forwards; }
+    .qp-product-slide.qp-is-leaving { z-index:2; opacity:1; transform:translate3d(0,0,0); animation:qp-slide-leave .9s cubic-bezier(.22,.75,.22,1) forwards; }
+    .qp-product-slide-matcha { background:#2f4720; }
+    .qp-product-slide-rosa { background:#65662b; }
+    .qp-product-slide-blueberry { background:#3d4c60; }
+    .qp-product-image { display:block; width:100%; height:100%; object-fit:cover; filter:none; transform:none; }
+    .qp-product-slide-matcha .qp-product-image { opacity:.5; }
+    .qp-product-slide-rosa .qp-product-image { opacity:.66; }
+    .qp-product-slide-blueberry .qp-product-image { opacity:.6; }
+    @keyframes qp-slide-enter { from{transform:translate3d(100%,0,0)} to{transform:translate3d(0,0,0)} }
+    @keyframes qp-slide-leave { from{transform:translate3d(0,0,0)} to{transform:translate3d(-100%,0,0)} }
+
+    .qp-brand-copy { position:absolute; z-index:5; inset:0; color:#fff; pointer-events:none; text-shadow:0 2px 14px rgba(0,24,17,.28); }
+    .qp-copy-upper { position:absolute; left:var(--qp-copy-upper-x); top:var(--qp-copy-upper-y); transform:scale(var(--qp-copy-upper-scale)); transform-origin:left top; }
+    .qp-copy-lower { position:absolute; left:var(--qp-copy-lower-x); top:var(--qp-copy-lower-y); transform:scale(var(--qp-copy-lower-scale)); transform-origin:left top; }
+    .qp-brand-name { margin:0; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:5.8cqw; font-style:italic; font-weight:700; line-height:1; letter-spacing:.065em; }
+    .qp-brand-title { margin:2.35cqw 0 0; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:7.9cqw; font-weight:700; line-height:1.04; letter-spacing:.01em; white-space:nowrap; }
+    .qp-brand-slogan { margin:1.9cqw 0 0; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:3.55cqw; font-weight:700; line-height:1.15; letter-spacing:.035em; }
+    .qp-brand-highlight { color:var(--qp-gold); }
+    .qp-brand-description { width:90cqw; margin:0; font-family:"PingFang SC","Microsoft YaHei",sans-serif; font-size:2.65cqw; font-weight:400; line-height:1.28; letter-spacing:.035em; }
+
+
+    .qp-demand-section { width:100%; max-width:2940px; margin:0 auto; padding:clamp(76px,8vw,126px) clamp(34px,7.5vw,132px) clamp(88px,9vw,142px); background:#F6F1E9; }
+    .qp-demand-section-head { max-width:1100px; margin:0 0 clamp(58px,6vw,88px); }
+    .qp-section-kicker { display:block; margin:0 0 18px; color:#7D887F; font-size:12px; font-weight:650; line-height:1; letter-spacing:.18em; }
+    .qp-section-title { max-width:930px; margin:0; color:var(--qp-green); font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,5vw,76px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
+    .qp-section-intro { max-width:700px; margin:26px 0 0; color:#66736D; font-size:clamp(15px,1.25vw,19px); font-weight:400; line-height:1.8; letter-spacing:.025em; }
+    .qp-demand-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid #CBD2CD; border-bottom:1px solid #E0E4E1; }
+    .qp-demand-kpi { min-width:0; padding:18px 20px; border-right:1px solid #E0E4E1; }
+    .qp-demand-kpi:last-child { border-right:0; }
+    .qp-demand-kpi-value { display:block; color:var(--qp-gold); font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:38px; font-weight:650; line-height:1; letter-spacing:-.025em; }
+    .qp-demand-kpi-label { display:block; margin-top:8px; color:var(--qp-ink); font-size:11px; font-weight:700; letter-spacing:.06em; }
+    .qp-demand-layout { display:grid; grid-template-columns:minmax(0,1.04fr) minmax(480px,.96fr); align-items:start; gap:clamp(52px,6vw,96px); }
+
+    .qp-featured-orders { min-width:0; padding-top:0; }
+    .qp-featured-head { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; }
+    .qp-featured-title-wrap { min-width:0; }
+    .qp-featured-live { display:flex; align-items:center; gap:7px; margin:0 0 5px; color:#527864; font-size:10px; font-weight:700; letter-spacing:.12em; }
+    .qp-featured-live::before { content:""; width:7px; height:7px; background:#8CA593; border-radius:50%; box-shadow:0 0 0 4px rgba(140,165,147,.12); }
+    .qp-featured-title { margin:0; color:var(--qp-ink); font-size:clamp(20px,1.6vw,25px); font-weight:650; line-height:1.15; letter-spacing:.01em; }
+    .qp-order-stack:focus-visible { outline:2px solid rgba(213,163,63,.65); outline-offset:3px; }
+    .qp-order-card-list { display:flex; flex-direction:column; gap:14px; }
+    .qp-order-card { position:relative; min-width:0; padding:17px 18px 13px; background:#fff; border:1px solid #DDE3DF; border-radius:12px; box-shadow:none; }
+    .qp-order-card:first-child::after { content:"向下滑动"; position:absolute; left:50%; bottom:-13px; color:#A2AAA6; font-size:10px; font-weight:500; letter-spacing:.12em; white-space:nowrap; transform:translate(-50%,50%); transition:opacity .35s ease; }
+    .qp-featured-orders.qp-stack-engaged .qp-order-card:first-child::after { opacity:0; }
+    .qp-order-card:nth-child(1) { background:#E4ECE6; border-color:#C3D1C7; }
+    .qp-order-card:nth-child(2) { background:#E4E9EF; border-color:#C3CDD6; }
+    .qp-order-card:nth-child(3) { background:#EEEBD9; border-color:#D5D0AE; }
+    .qp-order-card:nth-child(4) { background:#E9EFE6; border-color:#C9D4C5; }
+    .qp-order-card:nth-child(1) .qp-order-category { color:#365448; background:#D3E0D6; }
+    .qp-order-card:nth-child(2) .qp-order-category { color:#4B6072; background:#D4DEE7; }
+    .qp-order-card:nth-child(3) .qp-order-category { color:#675E32; background:#E2DEC2; }
+    .qp-order-card:nth-child(4) .qp-order-category { color:#435A43; background:#D7E2D4; }
+    .qp-order-card-head { display:flex; align-items:center; gap:8px; min-width:0; }
+    .qp-order-origin { flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; min-width:0; }
+    .qp-order-flag { width:22px; height:22px; display:grid; place-items:center; overflow:hidden; background:rgba(255,255,255,.64); border:1px solid rgba(18,59,50,.1); border-radius:50%; box-shadow:0 2px 7px rgba(18,59,50,.08); font-size:14px; line-height:1; }
+    .qp-order-country { flex:0 0 auto; color:var(--qp-green); font-size:11px; font-weight:700; letter-spacing:.04em; }
+    .qp-order-category { flex:0 0 auto; padding:3px 7px; color:#78612D; background:#F6EFD9; border-radius:999px; font-size:9px; font-weight:650; letter-spacing:.04em; }
+    .qp-order-updated { margin-left:auto; color:#909A95; font-size:9px; font-weight:500; white-space:nowrap; }
+    .qp-order-product { margin:10px 0 0; color:var(--qp-ink); font-size:18px; font-weight:650; line-height:1.28; letter-spacing:.005em; }
+    .qp-order-requirement { margin:6px 0 0; overflow:hidden; color:#6C7973; font-size:10.5px; font-weight:450; line-height:1.4; text-overflow:ellipsis; white-space:nowrap; }
+    .qp-order-requirement-label { color:#51635B; font-weight:650; }
+    .qp-order-metrics { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:9px 14px; margin-top:11px; padding-top:10px; border-top:1px solid #E6EAE7; }
+    .qp-order-metric { min-width:0; padding:0; background:transparent; border-radius:0; }
+    .qp-order-metric-label { display:block; margin-bottom:4px; color:#939C97; font-size:8.5px; font-weight:550; letter-spacing:.04em; }
+    .qp-order-metric-value { display:block; overflow:hidden; color:#30433B; font-size:10.5px; font-weight:650; line-height:1.3; text-overflow:ellipsis; white-space:nowrap; }
+    .qp-order-target { display:flex; align-items:center; gap:6px; }
+    .qp-order-target-flag { flex:0 0 auto; font-size:13px; line-height:1; }
+    .qp-order-amount { color:#8D6720; }
+    .qp-order-more { display:flex; align-items:center; justify-content:space-between; margin-top:9px; padding-top:8px; color:#9AA29E; border-top:1px solid #EEF0ED; font-size:9px; font-weight:500; letter-spacing:.03em; }
+    .qp-order-more-arrow { color:#77847E; font-size:12px; line-height:1; }
+
+    .qp-demand-board { min-width:0; width:100%; height:500px; align-self:start; display:flex; flex-direction:column; overflow:hidden; padding:20px 17px 17px; background:#fff; border:1px solid #CDD5D0; border-radius:12px; box-shadow:none; font-family:"Inter","Avenir Next","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif; font-feature-settings:"tnum" 1,"kern" 1; }
+    .qp-board-head { display:flex; align-items:center; justify-content:space-between; gap:14px; flex:0 0 auto; min-height:48px; padding:0 5px 14px; }
+    .qp-board-title-wrap { min-width:0; }
+    .qp-board-live { display:flex; align-items:center; gap:7px; margin:0 0 5px; color:#527864; font-size:10px; font-weight:700; letter-spacing:.12em; }
+    .qp-board-live::before { content:""; width:7px; height:7px; background:#5A9175; border-radius:50%; box-shadow:0 0 0 4px rgba(90,145,117,.12); }
+    .qp-board-title { margin:0; color:var(--qp-ink); font-size:clamp(20px,1.6vw,25px); font-weight:650; line-height:1.15; letter-spacing:.01em; }
+    .qp-show-all { flex:0 0 auto; display:inline-flex; align-items:center; gap:7px; padding:4px 2px; color:#68746E; background:transparent; border:0; cursor:pointer; font-size:12px; font-weight:550; }
+    .qp-show-all-arrow { color:var(--qp-green); font-size:22px; font-weight:400; line-height:1; transition:transform .2s ease; }
+    .qp-show-all:hover .qp-show-all-arrow { transform:translateX(3px); }
+
+    .qp-demand-viewport { flex:1; min-height:0; overflow:hidden; border-radius:0; }
+    .qp-demand-list { display:flex; flex-direction:column; gap:7px; transform:translate3d(0,0,0); will-change:transform; }
+    .qp-demand-list.qp-is-scrolling { transition:transform .85s cubic-bezier(.22,.72,.24,1); }
+    .qp-demand-list.qp-is-expanded { height:100%; overflow-y:auto; padding-right:3px; transform:none!important; scrollbar-color:rgba(18,59,50,.22) transparent; scrollbar-width:thin; }
+    .qp-demand-row { flex:0 0 88px; min-height:88px; display:grid; grid-template-columns:minmax(146px,1.34fr) minmax(98px,.9fr) minmax(76px,.66fr) minmax(72px,.62fr); align-items:center; gap:9px; padding:11px 13px; background:#fff; border:0; border-bottom:1px solid #E5E9E6; border-radius:0; }
+    .qp-demand-row.qp-demand-row-tint { background:#FBFCFA; border-color:#E5E9E6; }
+    .qp-buyer-name { display:block; overflow:hidden; color:var(--qp-ink); font-size:13px; font-weight:650; line-height:1.22; letter-spacing:.01em; text-overflow:ellipsis; white-space:nowrap; }
+    .qp-demand-name { display:-webkit-box; overflow:hidden; margin-top:4px; color:#66736D; font-size:10.5px; font-weight:450; line-height:1.35; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+    .qp-signal-code { display:block; color:#35453E; font-size:11.5px; font-weight:650; letter-spacing:.015em; white-space:nowrap; }
+    .qp-source-button { display:inline-block; margin-top:5px; padding:0; color:#94702E; background:transparent; border:0; border-bottom:1px solid rgba(148,112,46,.25); cursor:pointer; font-size:9.5px; font-weight:600; }
+    .qp-status { display:inline-flex; align-items:center; justify-content:center; min-width:72px; min-height:31px; padding:0 10px; border-radius:999px; font-size:10px; font-weight:650; white-space:nowrap; }
+    .qp-status-confirmed { color:#153D30; background:#CFE5D8; }
+    .qp-status-tracking { color:#654A14; background:#F1DCA7; }
+    .qp-status-verifying { color:#51605A; background:#E6E9E5; }
+    .qp-quantity { display:block; color:var(--qp-ink); font-size:12.5px; font-weight:650; text-align:right; white-space:nowrap; }
+    .qp-time { display:block; margin-top:4px; color:#77827D; font-size:9.5px; font-weight:500; text-align:right; white-space:nowrap; }
+
+    .qp-core-section { position:relative; isolation:isolate; width:100%; max-width:2940px; margin:0 auto; padding:clamp(76px,8vw,126px) clamp(34px,7.5vw,132px) clamp(88px,9vw,142px); overflow:hidden; color:var(--qp-ink); background:linear-gradient(180deg,#F1F4EF 0%,#F5F2E9 46%,#F3F0E7 100%); scroll-margin-top:58px; }
+    .qp-core-sliced-waves { position:absolute; z-index:0; inset:0; width:100%; height:100%; pointer-events:none; opacity:.44; }
+    .qp-core-wave-slice { transform-box:fill-box; transform-origin:center; animation:qp-core-wave-shift 24s ease-in-out infinite alternate; }
+    .qp-core-wave-slice:nth-child(2n) { animation-duration:29s; animation-direction:alternate-reverse; }
+    .qp-core-wave-slice:nth-child(3n) { animation-duration:34s; }
+    .qp-core-wave-tea { fill:#B8D0C2; opacity:.14; }
+    .qp-core-wave-green { fill:#5F8B78; opacity:.06; }
+    .qp-core-wave-gold { fill:#D5A33F; opacity:.042; }
+    @keyframes qp-core-wave-shift { from { transform:translate3d(-1.2%,0,0); } to { transform:translate3d(1.2%,-8px,0); } }
+    .qp-core-head { position:relative; z-index:2; max-width:1100px; margin:0; text-align:left; }
+    .qp-core-kicker { display:block; margin:0 0 18px; color:#7D887F; font-size:12px; font-weight:650; line-height:1; letter-spacing:.18em; }
+    .qp-core-title { max-width:940px; margin:0; color:var(--qp-green); font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,5vw,76px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
+    .qp-core-intro { max-width:760px; margin:26px 0 0; color:#66736D; font-size:clamp(15px,1.25vw,19px); font-weight:400; line-height:1.8; letter-spacing:.025em; }
+    .qp-network-stage { position:relative; z-index:2; height:clamp(590px,52vw,790px); margin-top:clamp(52px,6vw,86px); overflow:hidden; background:#123B32; border:1px solid rgba(213,163,63,.56); box-shadow:0 18px 42px rgba(18,59,50,.15); }
+    .qp-network-stage::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.6; background-image:radial-gradient(circle at 50% 50%,rgba(213,163,63,.12),transparent 25%),linear-gradient(rgba(247,244,236,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(247,244,236,.055) 1px,transparent 1px); background-size:auto,54px 54px,54px 54px; }
+    .qp-network-stage::after { content:""; position:absolute; z-index:1; inset:16px; pointer-events:none; border:1px solid rgba(247,244,236,.11); }
+    .qp-network-route { position:absolute; z-index:7; left:clamp(20px,3.2vw,54px); right:clamp(20px,3.2vw,54px); display:grid; grid-template-columns:minmax(155px,.8fr) minmax(0,2.5fr); align-items:center; gap:24px; min-height:62px; padding:10px 16px; background:rgba(7,38,31,.8); border:1px solid rgba(247,244,236,.16); }
+    .qp-network-route-demand { top:clamp(24px,3vw,46px); }
+    .qp-network-route-expand { bottom:clamp(24px,3vw,46px); border-color:rgba(213,163,63,.48); }
+    .qp-network-route-title { display:block; color:#F7F4EC; font-size:17px; font-weight:700; letter-spacing:.06em; }
+    .qp-network-route-meta { display:block; margin-top:4px; color:#AFC7BB; font-size:10px; font-weight:700; letter-spacing:.15em; }
+    .qp-network-route-expand .qp-network-route-meta { color:#D9B96D; }
+    .qp-network-route-flow { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#DCE9E1; font-size:15px; font-weight:650; line-height:1.35; }
+    .qp-network-route-flow b { color:#D5A33F; font-size:20px; font-weight:400; }
+    .qp-network-route-expand .qp-network-route-flow { color:#F6E8C7; }
+    .qp-network-phase { display:inline-flex; align-items:center; width:max-content; margin-left:7px; padding:3px 6px; color:#E9C775; border:1px solid rgba(213,163,63,.55); font-size:9px; font-weight:750; letter-spacing:.1em; vertical-align:middle; }
+    .qp-network-links { position:absolute; z-index:2; inset:0; width:100%; height:100%; pointer-events:none; }
+    .qp-network-link { fill:none; stroke:#8DAA9B; stroke-width:1.15; opacity:.5; }
+    .qp-network-link-flow { stroke:#D5A33F; stroke-width:1.9; opacity:.78; stroke-dasharray:7 11; animation:qp-network-flow 11s linear infinite; }
+    .qp-network-link-return { stroke:#DCE9E1; stroke-dashoffset:32; animation-direction:reverse; animation-duration:13s; }
+    .qp-network-side { position:absolute; z-index:4; top:25%; bottom:22%; width:27%; min-width:0; }
+    .qp-network-buyers { left:5.2%; }
+    .qp-network-supply { right:5.2%; }
+    .qp-network-side-head { position:relative; z-index:4; }
+    .qp-network-side-code { display:block; color:#D5A33F; font-size:11px; font-weight:750; letter-spacing:.16em; }
+    .qp-network-side-title { margin:8px 0 0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(29px,2.3vw,40px); font-weight:600; line-height:1.15; letter-spacing:-.02em; }
+    .qp-network-question { margin:7px 0 0; color:#B9CEC4; font-size:15px; font-weight:650; letter-spacing:.05em; }
+    .qp-network-art { position:absolute; z-index:2; left:6%; right:6%; top:34%; height:48%; display:grid; place-items:center; }
+    .qp-network-world-map { width:100%; height:100%; object-fit:contain; opacity:.84; filter:drop-shadow(0 10px 15px rgba(0,0,0,.16)); }
+    .qp-network-guizhou-map { width:76%; height:100%; object-fit:contain; filter:drop-shadow(0 10px 15px rgba(0,0,0,.2)); }
+    .qp-network-fields { position:absolute; z-index:3; left:0; right:0; bottom:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px 5px; margin:0; padding:0; list-style:none; }
+    .qp-network-fields li { min-width:0; color:#DCE9E1; font-size:12px; font-weight:700; line-height:1.2; text-align:center; white-space:nowrap; }
+    .qp-network-fields li::before { content:""; display:inline-block; width:4px; height:4px; margin:0 5px 2px 0; background:#D5A33F; border-radius:50%; }
+    .qp-network-supply .qp-network-fields li::before { background:#B4D2C1; }
+    .qp-network-node { position:absolute; z-index:3; display:flex; align-items:center; gap:5px; color:#F7F4EC; font-size:11px; font-weight:700; letter-spacing:.03em; white-space:nowrap; }
+    .qp-network-node::before { content:""; width:7px; height:7px; flex:0 0 auto; background:#D5A33F; border:2px solid #123B32; border-radius:50%; box-shadow:0 0 0 3px rgba(213,163,63,.18); }
+    .qp-network-node-us { left:18%; top:42%; }.qp-network-node-de { left:59%; top:36%; }.qp-network-node-jp { right:7%; top:50%; }.qp-network-node-ae { left:63%; top:62%; }.qp-network-node-br { left:37%; top:70%; }
+    .qp-network-node-matcha { left:28%; top:42%; }.qp-network-node-rosa { right:11%; top:57%; }.qp-network-node-blue { left:18%; top:68%; }
+    .qp-network-node-matcha::before,.qp-network-node-rosa::before,.qp-network-node-blue::before { background:#B4D2C1; box-shadow:0 0 0 3px rgba(180,210,193,.16); }
+    .qp-network-engine { position:absolute; z-index:6; left:50%; top:50%; width:clamp(230px,20.5vw,340px); aspect-ratio:1; display:grid; place-items:center; transform:translate(-50%,-50%); }
+    .qp-network-engine-orbit,.qp-network-engine-orbit::before,.qp-network-engine-orbit::after { position:absolute; border:1px solid rgba(213,163,63,.48); border-radius:50%; }
+    .qp-network-engine-orbit { inset:2%; box-shadow:0 0 0 14px rgba(213,163,63,.035),0 0 48px rgba(0,0,0,.2); }
+    .qp-network-engine-orbit::before { content:""; inset:13%; border-color:rgba(220,233,225,.32); }
+    .qp-network-engine-orbit::after { content:""; inset:25%; border-color:rgba(213,163,63,.28); }
+    .qp-network-engine-core { position:relative; z-index:3; width:118%; aspect-ratio:1.52; display:grid; place-items:center; padding:10%; color:#17372F; text-align:center; background:#F7F4EC; border:5px solid #D5A33F; border-radius:999px; box-shadow:0 10px 26px rgba(2,23,17,.36),0 0 0 2px rgba(247,244,236,.8) inset; }
+    .qp-network-engine-logo { display:block; width:100%; height:auto; filter:drop-shadow(0 1px 0 rgba(255,255,255,.5)); }
+    .qp-network-engine-skill { position:absolute; z-index:4; padding:6px 8px; color:#DCE9E1; background:rgba(7,38,31,.86); border:1px solid rgba(220,233,225,.25); font-size:11px; font-weight:700; line-height:1; letter-spacing:.03em; white-space:nowrap; }
+    .qp-network-engine-skill-one { left:-14%; top:21%; }.qp-network-engine-skill-two { right:-15%; top:21%; }.qp-network-engine-skill-three { left:-17%; bottom:21%; }.qp-network-engine-skill-four { right:-12%; bottom:21%; }
+    .qp-core-section.qp-core-reveal .qp-network-stage { animation:qp-network-enter .78s cubic-bezier(.16,1,.3,1) both; }
+    @keyframes qp-network-enter { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes qp-network-flow { to { stroke-dashoffset:-72; } }
+
+    .qp-deal-section { position:relative; isolation:isolate; width:100%; max-width:2940px; margin:0 auto; padding:clamp(76px,8vw,126px) clamp(34px,7.5vw,132px) clamp(88px,9vw,142px); overflow:hidden; color:#F7F4EC; background:#0D2D25; scroll-margin-top:58px; }
+    .qp-deal-section::before { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; opacity:.52; background-image:linear-gradient(rgba(220,233,225,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(220,233,225,.045) 1px,transparent 1px),radial-gradient(circle at 50% 15%,rgba(213,163,63,.12),transparent 32%); background-size:64px 64px,64px 64px,auto; }
+    .qp-deal-section-head { max-width:1000px; }
+    .qp-deal-kicker { display:block; margin:0 0 18px; color:#D5A33F; font-size:12px; font-weight:700; letter-spacing:.18em; }
+    .qp-deal-title { margin:0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,5vw,76px); font-weight:600; line-height:1.12; letter-spacing:-.025em; }
+    .qp-deal-intro { max-width:760px; margin:26px 0 0; color:rgba(220,233,225,.76); font-size:clamp(15px,1.25vw,19px); font-weight:400; line-height:1.8; letter-spacing:.025em; }
+    .qp-bento-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(14px,1.5vw,26px); margin-top:clamp(52px,6vw,86px); }
+    .qp-bento-card { --qp-bento-x:50%; --qp-bento-y:50%; position:relative; min-width:0; min-height:clamp(280px,24vw,380px); overflow:hidden; background:#143B31; border:1px solid rgba(220,233,225,.18); border-radius:22px; box-shadow:0 16px 34px rgba(1,19,14,.2),0 1px 0 rgba(255,255,255,.06) inset; outline:none; transform:translateZ(0); transition:border-color .35s ease,box-shadow .35s ease,transform .45s cubic-bezier(.16,1,.3,1),background .35s ease; }
+    .qp-bento-card::before { content:""; position:absolute; z-index:0; inset:-1px; pointer-events:none; background:radial-gradient(300px circle at var(--qp-bento-x) var(--qp-bento-y),rgba(213,163,63,.25),rgba(90,145,117,.13) 28%,transparent 64%); opacity:0; transition:opacity .35s ease; }
+    .qp-bento-card::after { content:""; position:absolute; z-index:0; left:0; right:0; bottom:0; height:42%; pointer-events:none; background:linear-gradient(180deg,transparent,rgba(3,24,18,.2)); }
+    .qp-bento-card > * { position:relative; z-index:1; }
+    .qp-bento-card:hover,.qp-bento-card:focus-visible,.qp-bento-card.qp-bento-is-active { background:#174438; border-color:rgba(213,163,63,.72); box-shadow:0 22px 44px rgba(0,18,13,.34),0 0 0 1px rgba(213,163,63,.12) inset; transform:translateY(-8px) scale(1.015); }
+    .qp-bento-card:hover::before,.qp-bento-card:focus-visible::before,.qp-bento-card.qp-bento-is-active::before { opacity:1; }
+    .qp-bento-card:focus-visible { outline:2px solid #D5A33F; outline-offset:4px; }
+    .qp-bento-card { min-height:clamp(380px,30vw,540px); padding:clamp(20px,1.8vw,30px); }
+    .qp-bento-card-title { margin:0; color:#F7F4EC; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(28px,2.15vw,42px); font-weight:600; line-height:1.1; letter-spacing:-.025em; }
+    .qp-bento-card-question { min-height:44px; margin:12px 0 0; color:#BFD2C8; font-size:clamp(15px,1.05vw,19px); font-weight:500; line-height:1.48; letter-spacing:.02em; }
+    .qp-card-visual { position:relative; flex:1; min-height:0; margin-top:clamp(18px,1.8vw,28px); }
+    .qp-timing-visual { display:grid; grid-template-rows:1.35fr 1fr; gap:10px; }
+    .qp-timing-track { position:relative; min-height:76px; display:flex; align-items:center; justify-content:space-between; padding:0 3px; }
+    .qp-timing-track::before { content:""; position:absolute; left:5%; right:5%; top:50%; height:1px; background:rgba(220,233,225,.36); }
+    .qp-timing-node { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:7px; color:#DCE9E1; font-size:11px; font-weight:700; letter-spacing:.04em; }
+    .qp-timing-node::before { content:""; width:12px; height:12px; background:#143B31; border:2px solid #8DB5A1; border-radius:50%; box-shadow:0 0 0 4px rgba(141,181,161,.1); }
+    .qp-timing-node-current { color:#F4D588; }
+    .qp-timing-node-current::before { width:17px; height:17px; background:#D5A33F; border-color:#FFF4D9; box-shadow:0 0 0 6px rgba(213,163,63,.14); }
+    .qp-timing-node-deadline::before { border-color:#D5A33F; }
+    .qp-timing-signals { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .qp-timing-signal { min-width:0; padding:10px; background:rgba(7,38,31,.4); border:1px solid rgba(220,233,225,.13); border-radius:10px; }
+    .qp-timing-signal span { display:block; color:#BFD2C8; font-size:10px; font-weight:650; letter-spacing:.04em; }
+    .qp-timing-spark { display:block; width:100%; height:30px; margin-top:6px; }
+    .qp-timing-spark path { fill:none; stroke:#DCE9E1; stroke-width:2; }
+    .qp-timing-spark circle { fill:#D5A33F; }
+    .qp-match-visual { display:grid; grid-template-columns:.92fr 1.08fr; align-items:center; gap:12px; }
+    .qp-match-source,.qp-match-candidates { position:relative; z-index:2; display:grid; gap:11px; }
+    .qp-match-node { min-height:43px; display:flex; align-items:center; padding:0 10px; color:#DCE9E1; background:rgba(7,38,31,.42); border:1px solid rgba(220,233,225,.17); border-radius:9px; font-size:11px; font-weight:700; line-height:1.2; }
+    .qp-match-source .qp-match-node { min-height:70px; color:#FFF4D9; border-color:rgba(213,163,63,.72); background:rgba(213,163,63,.1); }
+    .qp-match-node.qp-match-selected { color:#183C31; background:#DCE9E1; border-color:#F7F4EC; box-shadow:0 0 0 4px rgba(220,233,225,.1); }
+    .qp-match-lines { position:absolute; z-index:1; inset:22% 12% 18% 25%; width:64%; height:60%; overflow:visible; pointer-events:none; }
+    .qp-match-lines path { fill:none; stroke:rgba(220,233,225,.25); stroke-width:1.25; }
+    .qp-match-lines .qp-match-line-selected { stroke:#D5A33F; stroke-width:2.2; stroke-dasharray:5 5; animation:qp-match-dash 8s linear infinite; }
+    .qp-risk-visual { display:grid; place-items:center; }
+    .qp-risk-gauge { position:relative; width:min(100%,210px); aspect-ratio:1; display:grid; place-items:center; border:1px solid rgba(220,233,225,.19); border-radius:50%; box-shadow:0 0 0 16px rgba(220,233,225,.025),0 0 0 34px rgba(213,163,63,.035); }
+    .qp-risk-gauge::before,.qp-risk-gauge::after { content:""; position:absolute; border:1px solid rgba(220,233,225,.18); border-radius:50%; }
+    .qp-risk-gauge::before { inset:21%; }.qp-risk-gauge::after { inset:41%; border-color:rgba(213,163,63,.58); }
+    .qp-risk-core { position:relative; z-index:1; display:grid; place-items:center; width:39%; aspect-ratio:1; color:#F7F4EC; background:#174438; border:1px solid rgba(213,163,63,.75); border-radius:50%; font-size:11px; font-weight:800; letter-spacing:.1em; }
+    .qp-risk-label { position:absolute; color:#BFD2C8; font-size:10px; font-weight:650; white-space:nowrap; }
+    .qp-risk-label::before { content:""; display:inline-block; width:6px; height:6px; margin:0 5px 1px 0; border-radius:50%; background:#8DB5A1; }
+    .qp-risk-label-entity { top:-9px; left:50%; transform:translateX(-50%); }.qp-risk-label-credit { top:22%; right:-35px; }.qp-risk-label-evidence { bottom:15%; right:-53px; }.qp-risk-label-payment { bottom:15%; left:-54px; }.qp-risk-label-fulfillment { top:22%; left:-57px; }
+    .qp-risk-label-credit::before,.qp-risk-label-payment::before { background:#D5A33F; }.qp-risk-label-evidence::before { background:#C98652; }
+    .qp-risk-legend { position:absolute; left:50%; bottom:4px; display:flex; gap:8px; color:#AFC7BB; font-size:9px; font-weight:650; white-space:nowrap; transform:translateX(-50%); }
+    .qp-risk-legend span::before { content:""; display:inline-block; width:6px; height:6px; margin:0 4px 1px 0; border-radius:50%; background:#8DB5A1; }.qp-risk-legend span:nth-child(2)::before { background:#D5A33F; }.qp-risk-legend span:nth-child(3)::before { background:#C98652; }
+    .qp-progress-visual { display:flex; flex-direction:column; justify-content:center; gap:11px; }
+    .qp-progress-step { display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:8px; min-height:42px; color:#DCE9E1; border-bottom:1px solid rgba(220,233,225,.14); font-size:12px; font-weight:650; }
+    .qp-progress-step:last-of-type { border-bottom:0; }
+    .qp-progress-step-index { display:grid; place-items:center; width:20px; height:20px; color:#A9C6B7; border:1px solid rgba(220,233,225,.36); border-radius:50%; font-size:9px; }
+    .qp-progress-step-status { color:#9BB6A8; font-size:9px; letter-spacing:.04em; }
+    .qp-progress-step.qp-progress-next { color:#FFF4D9; }.qp-progress-step.qp-progress-next .qp-progress-step-index { color:#143B31; background:#D5A33F; border-color:#D5A33F; }.qp-progress-step.qp-progress-next .qp-progress-step-status { color:#E8C774; }
+    .qp-progress-meter { height:6px; margin-top:8px; overflow:hidden; background:rgba(220,233,225,.12); border-radius:999px; }
+    .qp-progress-meter span { display:block; width:38%; height:100%; background:#D5A33F; border-radius:inherit; }
+    .qp-specular-button { --qp-specular-x:28%; --qp-specular-y:20%; position:relative; isolation:isolate; align-self:flex-start; display:inline-flex; align-items:center; justify-content:center; min-width:152px; height:46px; margin-top:clamp(30px,3.5vw,52px); overflow:hidden; color:#153B30; background:#DCE9E1; border:1px solid rgba(247,244,236,.8); border-radius:999px; box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 9px 22px rgba(0,18,13,.22); cursor:pointer; font-size:13px; font-weight:800; letter-spacing:.12em; text-decoration:none; transition:transform .34s cubic-bezier(.16,1,.3,1),box-shadow .34s ease,background .34s ease; }
+    .qp-specular-button::before { content:""; position:absolute; z-index:-1; inset:-40%; background:radial-gradient(130px circle at var(--qp-specular-x) var(--qp-specular-y),rgba(255,255,255,.98),rgba(213,163,63,.42) 28%,transparent 58%); transition:opacity .3s ease; }
+    .qp-specular-button::after { content:""; position:absolute; z-index:-1; top:5px; left:14%; width:72%; height:37%; border-radius:999px; background:linear-gradient(180deg,rgba(255,255,255,.94),transparent); opacity:.78; }
+    .qp-specular-button:hover,.qp-specular-button:focus-visible { background:#F7F4EC; box-shadow:0 1px 0 #fff inset,0 15px 28px rgba(0,18,13,.3); outline:none; transform:translateY(-3px) scale(1.025); }
+    .qp-specular-button:focus-visible { outline:2px solid #D5A33F; outline-offset:4px; }
+    @keyframes qp-match-dash { to { stroke-dashoffset:-60; } }
+
+    .qp-bento-card.qp-op-card { min-height:560px; display:flex; flex-direction:column; padding:28px; background:linear-gradient(155deg,#17473A 0%,#10352C 64%,#0B2B23 100%); }
+    .qp-op-card-head { padding-bottom:22px; border-bottom:1px solid rgba(220,233,225,.15); }
+    .qp-op-step { display:block; margin-bottom:16px; color:#D5A33F; font-size:11px; font-weight:800; line-height:1; letter-spacing:.17em; }
+    .qp-op-card .qp-bento-card-title { font-size:clamp(28px,2vw,38px); }
+    .qp-op-card .qp-bento-card-question { min-height:0; margin-top:14px; color:#F1E8D4; font-size:clamp(16px,1.08vw,19px); font-weight:650; line-height:1.48; }
+    .qp-op-explain { min-height:88px; margin:20px 0 0; color:rgba(220,233,225,.77); font-size:14px; line-height:1.72; letter-spacing:.015em; }
+    .qp-op-panel { position:relative; flex:1; min-height:220px; margin-top:18px; padding:18px; overflow:hidden; background:rgba(5,29,23,.47); border:1px solid rgba(220,233,225,.13); border-radius:16px; box-shadow:0 1px 0 rgba(255,255,255,.035) inset; }
+    .qp-op-panel-label { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .qp-op-panel-label span,.qp-op-supply-pool > small { color:#F7F4EC; font-size:12px; font-weight:750; letter-spacing:.06em; }
+    .qp-op-panel-label em { color:#9EB9AC; font-size:10px; font-style:normal; letter-spacing:.08em; }
+    .qp-op-timebar { position:relative; display:flex; align-items:center; justify-content:space-between; height:82px; margin:2px 3px 0; }
+    .qp-op-timebar::before { content:""; position:absolute; left:3%; right:3%; top:40%; height:2px; background:linear-gradient(90deg,#8DB5A1 0 48%,#D5A33F 48% 100%); }
+    .qp-op-time-node { position:relative; z-index:1; display:grid; gap:8px; justify-items:center; padding-top:36px; color:#AFC7BB; font-size:10px; font-weight:700; }
+    .qp-op-time-node::before { content:""; position:absolute; top:23px; width:10px; height:10px; background:#10352C; border:2px solid #8DB5A1; border-radius:50%; }
+    .qp-op-time-now { color:#F4D588; }
+    .qp-op-time-now::before { top:19px; width:18px; height:18px; background:#D5A33F; border-color:#FFF4D9; box-shadow:0 0 0 6px rgba(213,163,63,.13); }
+    .qp-op-signal-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .qp-op-signal-grid span { position:relative; min-height:39px; display:flex; align-items:center; padding:0 10px 0 27px; color:#DCE9E1; background:rgba(220,233,225,.045); border:1px solid rgba(220,233,225,.1); border-radius:8px; font-size:11px; font-weight:650; }
+    .qp-op-signal-grid span::before { content:""; position:absolute; left:11px; width:6px; height:6px; background:#D5A33F; border-radius:50%; box-shadow:0 0 0 4px rgba(213,163,63,.1); }
+    .qp-op-match { display:grid; grid-template-columns:minmax(0,.95fr) 50px minmax(0,1.05fr); align-items:center; gap:8px; }
+    .qp-op-demand-node { padding:13px; color:#F7F4EC; background:rgba(213,163,63,.09); border:1px solid rgba(213,163,63,.48); border-radius:12px; }
+    .qp-op-demand-node small { display:block; color:#E1BE69; font-size:9px; font-weight:750; letter-spacing:.08em; }
+    .qp-op-demand-node strong { display:block; margin-top:6px; font-size:15px; }
+    .qp-op-demand-node div { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px; }
+    .qp-op-demand-node span { color:#BFD2C8; font-size:9px; }
+    .qp-op-match-bridge { position:relative; height:150px; display:grid; place-items:center; }
+    .qp-op-match-bridge i { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,rgba(213,163,63,.75),rgba(220,233,225,.28)); transform-origin:left center; }
+    .qp-op-match-bridge i:first-child { top:38px; transform:rotate(-25deg); }.qp-op-match-bridge i:nth-child(2) { top:75px; background:#D5A33F; }.qp-op-match-bridge i:nth-child(3) { top:112px; transform:rotate(25deg); }
+    .qp-op-match-bridge b { position:relative; z-index:2; display:grid; place-items:center; width:42px; height:42px; color:#17382F; text-align:center; background:#DCE9E1; border:3px solid #123B32; border-radius:50%; box-shadow:0 0 0 1px #D5A33F; font-size:9px; line-height:1.05; }
+    .qp-op-supply-pool { display:grid; gap:7px; }
+    .qp-op-supply-pool > small { margin-bottom:2px; font-size:10px; }
+    .qp-op-supply-pool > span { min-height:34px; display:flex; align-items:center; padding:0 9px; color:#AFC7BB; background:rgba(220,233,225,.04); border:1px solid rgba(220,233,225,.13); border-radius:8px; font-size:10px; font-weight:650; }
+    .qp-op-supply-pool > .qp-op-supply-selected { color:#17382F; background:#DCE9E1; border-color:#F7F4EC; box-shadow:0 0 0 3px rgba(220,233,225,.08); }
+    .qp-op-risk { display:flex; flex-direction:column; justify-content:center; gap:9px; padding-top:16px; }
+    .qp-op-risk-scale { display:grid; grid-template-columns:1fr 1fr 1fr; margin-left:76px; color:#8FAD9E; font-size:8px; text-align:center; }
+    .qp-op-risk-scale span:nth-child(2) { color:#D5A33F; }.qp-op-risk-scale span:last-child { color:#CE8C62; }
+    .qp-op-risk-row { display:grid; grid-template-columns:68px 1fr 42px; align-items:center; gap:8px; min-height:27px; }
+    .qp-op-risk-row strong { color:#DCE9E1; font-size:10px; font-weight:650; }
+    .qp-op-risk-row i { position:relative; height:5px; background:linear-gradient(90deg,#6F9E87 0 33%,#D5A33F 33% 66%,#B96F50 66%); border-radius:99px; opacity:.82; }
+    .qp-op-risk-row i::after { content:""; position:absolute; left:calc(50% - 5px); top:-4px; width:11px; height:11px; background:#F7F4EC; border:2px solid #123B32; border-radius:50%; box-shadow:0 0 0 1px rgba(247,244,236,.7); }
+    .qp-op-risk-row em { color:#AFC7BB; font-size:8px; font-style:normal; text-align:right; }
+    .qp-op-actions { display:flex; flex-direction:column; justify-content:center; padding:14px 16px; }
+    .qp-op-action { position:relative; display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:9px; min-height:51px; }
+    .qp-op-action:not(:last-child)::after { content:""; position:absolute; left:13px; top:38px; bottom:-13px; width:1px; background:rgba(220,233,225,.2); }
+    .qp-op-action > b { position:relative; z-index:1; display:grid; place-items:center; width:27px; height:27px; color:#9DB8AB; background:#12382F; border:1px solid rgba(220,233,225,.27); border-radius:50%; font-size:8px; }
+    .qp-op-action span { display:grid; gap:3px; }.qp-op-action span strong { color:#DCE9E1; font-size:11px; }.qp-op-action span small { color:#8FAC9E; font-size:8px; }
+    .qp-op-action > em { color:#8FAC9E; font-size:8px; font-style:normal; }
+    .qp-op-action-next > b { color:#16392F; background:#D5A33F; border-color:#F0D28D; box-shadow:0 0 0 4px rgba(213,163,63,.1); }.qp-op-action-next span strong,.qp-op-action-next > em { color:#F4D588; }
+    .qp-op-actions .qp-specular-button { margin-top:14px; font-size:17px; letter-spacing:.12em; }
+    .qp-final-cta { position:relative; isolation:isolate; width:100%; max-width:2940px; min-height:500px; display:grid; place-items:center; margin:0 auto; overflow:hidden; color:var(--qp-warm); background:#173E33; scroll-margin-top:58px; }
+    .qp-final-cta-image { position:absolute; z-index:-3; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 54%; transform:scale(1.015); transition:transform 9s cubic-bezier(.16,1,.3,1); }
+    .qp-final-cta::before { content:""; position:absolute; z-index:-2; inset:0; background:rgba(13,54,44,.69); }
+    .qp-final-cta::after { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(7,31,25,.16),transparent 30%,transparent 68%,rgba(7,31,25,.24)); }
+    .qp-final-cta.qp-final-cta-reveal .qp-final-cta-image { transform:scale(1); }
+    .qp-final-cta-content { width:min(1040px,86%); display:flex; flex-direction:column; align-items:center; text-align:center; }
+    .qp-final-cta-title { max-width:980px; margin:0; color:#FBF7ED; font-family:"Songti SC","Noto Serif SC",STSong,serif; font-size:clamp(42px,5vw,76px); font-weight:500; line-height:1.13; letter-spacing:-.035em; text-wrap:balance; text-shadow:0 3px 22px rgba(4,24,19,.2); }
+    .qp-final-cta-title-line { display:block; white-space:nowrap; }
+    .qp-final-cta-copy { max-width:760px; margin:26px 0 0; color:rgba(247,244,236,.77); font-size:15px; font-weight:430; line-height:1.78; letter-spacing:.035em; text-wrap:balance; }
+    .qp-glass-button { --qp-glass-x:30%; --qp-glass-y:20%; --qp-glass-magnet-x:0px; --qp-glass-magnet-y:0px; position:relative; isolation:isolate; width:188px; height:58px; display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:38px; padding:0 7px 0 24px; overflow:hidden; color:#FFFBEF; background:rgba(247,244,236,.11); border:1px solid rgba(255,255,255,.34); border-radius:999px; box-shadow:0 1px 0 rgba(255,255,255,.48) inset,0 -1px 0 rgba(9,46,37,.26) inset,0 8px 30px rgba(6,31,25,.19),0 0 18px rgba(255,255,255,.07) inset; -webkit-backdrop-filter:blur(15px) saturate(1.5) brightness(1.08); backdrop-filter:blur(15px) saturate(1.5) brightness(1.08); transform:translate3d(var(--qp-glass-magnet-x),var(--qp-glass-magnet-y),0); cursor:pointer; text-decoration:none; font-size:14px; font-weight:560; letter-spacing:.14em; transition:transform .42s cubic-bezier(.16,1,.3,1),background .35s ease,border-color .35s ease,box-shadow .35s ease; }
+    .qp-glass-button::before { content:""; position:absolute; z-index:-2; inset:-1px; pointer-events:none; background:radial-gradient(130px circle at var(--qp-glass-x) var(--qp-glass-y),rgba(255,255,255,.34),rgba(213,163,63,.12) 32%,transparent 68%); opacity:.72; transition:opacity .3s ease; }
+    .qp-glass-button::after { content:""; position:absolute; z-index:-1; top:2px; left:12%; width:68%; height:42%; pointer-events:none; border-radius:999px; background:linear-gradient(180deg,rgba(255,255,255,.22),transparent); filter:blur(2px); opacity:.72; }
+    .qp-glass-button-text { position:relative; z-index:2; white-space:nowrap; }
+    .qp-glass-button-arrow { position:relative; z-index:2; flex:0 0 auto; width:44px; height:44px; display:grid; place-items:center; color:#173C32; background:rgba(247,244,236,.86); border:1px solid rgba(255,255,255,.58); border-radius:50%; box-shadow:0 1px 0 #fff inset,0 5px 15px rgba(7,35,28,.18); font-size:18px; line-height:1; transition:color .35s ease,background .35s ease,transform .42s cubic-bezier(.16,1,.3,1); }
+    .qp-glass-button:hover,.qp-glass-button:focus-visible { color:#fff; background:rgba(247,244,236,.18); border-color:rgba(255,255,255,.54); box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -1px 0 rgba(9,46,37,.22) inset,0 14px 36px rgba(6,31,25,.24),0 0 24px rgba(255,255,255,.1) inset; outline:none; }
+    .qp-glass-button:hover::before,.qp-glass-button:focus-visible::before { opacity:1; }
+    .qp-glass-button:hover .qp-glass-button-arrow,.qp-glass-button:focus-visible .qp-glass-button-arrow { color:#173C32; background:#D5A33F; transform:translate(2px,-1px) rotate(-7deg); }
+    .qp-glass-button:focus-visible { outline:2px solid rgba(247,244,236,.9); outline-offset:4px; }
+    .qp-glass-button:active { transform:translate3d(var(--qp-glass-magnet-x),calc(var(--qp-glass-magnet-y) + 1px),0) scale(.985); }
+
+    @media (max-width:1300px) {
+      .qp-brand-hero { grid-template-columns:1fr; }
+      .qp-demand-section { padding-right:clamp(30px,5vw,72px); padding-left:clamp(30px,5vw,72px); }
+      .qp-demand-layout { grid-template-columns:minmax(0,1fr) minmax(450px,.96fr); gap:42px; }
+      .qp-demand-row { grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr) minmax(0,.68fr) minmax(0,.62fr); gap:6px; padding-right:10px; padding-left:10px; }
+      .qp-status { min-width:58px; padding:0 6px; }
+      .qp-buyer-name { font-size:12px; }
+      .qp-demand-name,.qp-signal-code { font-size:10px; }
+      .qp-quantity { font-size:11.5px; }
+      .qp-time { font-size:9px; }
+    }
+
+    @media (min-width:1440px) {
+      .qp-demand-section { max-height:1548px; overflow:hidden; }
+    }
+
+    @media (max-width:1080px) {
+      .qp-brand-hero { grid-template-columns:1fr; width:100%; padding:0; gap:0; }
+      .qp-demand-layout { grid-template-columns:1fr; gap:64px; }
+      .qp-featured-orders { max-width:760px; }
+      .qp-demand-board { max-width:760px; }
+      .qp-demand-board { padding:16px 13px 14px; }
+      .qp-demand-row { grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr) minmax(0,.66fr) minmax(0,.64fr); gap:5px; padding:10px 8px; }
+      .qp-status { min-width:54px; padding:0 5px; }
+    }
+
+    @media (max-width:760px) {
+      .qp-body { padding-top:52px; overflow:auto; }
+      .qp-top-nav { height:52px; gap:10px; padding:0 12px; overflow:hidden; }
+      .qp-nav-logo { flex-basis:110px; height:38px; }
+      .qp-nav-logo-image { left:-2px; top:-6px; width:109px; }
+      .qp-main-nav { overflow:hidden; }
+      .qp-nav-links { justify-content:flex-start; gap:18px; overflow-x:auto; scrollbar-width:none; }
+      .qp-nav-links::-webkit-scrollbar { display:none; }
+      .qp-nav-link { padding:19px 0; font-size:13px; }
+      .qp-login { height:32px; padding-left:11px; font-size:12px; }
+      .qp-login-arrow { width:22px; height:22px; }
+      .qp-brand-hero { width:100%; height:auto; min-height:0; padding:0; grid-template-columns:1fr; gap:0; }
+      .qp-product-gallery { height:auto; aspect-ratio:2940/1350; }
+      .qp-demand-section { padding:66px 20px 78px; }
+      .qp-demand-section-head { margin-bottom:48px; }
+      .qp-section-title { font-size:clamp(36px,11vw,54px); }
+      .qp-section-intro { margin-top:20px; }
+      .qp-demand-layout { gap:52px; }
+      .qp-order-metrics { grid-template-columns:1fr; }
+      .qp-demand-board { height:480px; }
+      .qp-demand-row { grid-template-columns:minmax(150px,1.3fr) minmax(100px,.85fr) 82px 74px; }
+      .qp-core-section { padding:66px 20px 78px; scroll-margin-top:52px; }
+      .qp-core-sliced-waves { opacity:.34; transform:scale(1.18); }
+      .qp-core-title { font-size:clamp(36px,10.5vw,54px); }
+      .qp-network-stage { height:auto; min-height:0; display:flex; flex-direction:column; gap:28px; margin-top:48px; padding:16px; overflow:hidden; }
+      .qp-network-stage::after { inset:8px; }
+      .qp-network-route { position:relative; left:auto; right:auto; top:auto; bottom:auto; grid-template-columns:1fr; gap:8px; width:100%; min-height:0; padding:12px; }
+      .qp-network-route-demand { order:1; }.qp-network-buyers { order:2; }.qp-network-engine { order:3; }.qp-network-supply { order:4; }.qp-network-route-expand { order:5; }
+      .qp-network-route-title { font-size:16px; }.qp-network-route-meta { font-size:9px; }.qp-network-route-flow { gap:5px; font-size:12px; }.qp-network-route-flow b { font-size:17px; }
+      .qp-network-side { position:relative; top:auto; right:auto; bottom:auto; left:auto; width:100%; height:268px; }
+      .qp-network-side-code { font-size:10px; }.qp-network-side-title { font-size:31px; }.qp-network-question { margin-top:5px; font-size:14px; }
+      .qp-network-art { top:29%; height:46%; }.qp-network-world-map { width:92%; }.qp-network-guizhou-map { width:48%; }
+      .qp-network-fields { gap:8px 4px; }.qp-network-fields li { font-size:12px; }
+      .qp-network-node { font-size:9px; }.qp-network-node::before { width:7px; height:7px; }
+      .qp-network-engine { position:relative; left:auto; top:auto; width:250px; margin:5px auto; transform:none; }
+      .qp-network-engine-skill { padding:5px 6px; font-size:9px; }
+      .qp-network-engine-skill-one { left:-10%; }.qp-network-engine-skill-two { right:-14%; }.qp-network-engine-skill-three { left:-12%; }.qp-network-engine-skill-four { right:-10%; }
+      .qp-network-links { display:none; }
+      .qp-deal-section { padding:66px 20px 78px; scroll-margin-top:52px; }
+      .qp-deal-title { font-size:clamp(36px,10.5vw,54px); }
+      .qp-bento-grid { grid-template-columns:1fr; gap:16px; margin-top:48px; }
+      .qp-bento-card { min-height:390px; padding:22px; border-radius:18px; }
+      .qp-bento-card:first-child { min-height:390px; padding:22px; }
+      .qp-bento-card-title { font-size:clamp(34px,10vw,44px); }
+      .qp-bento-card-question { min-height:auto; margin-top:14px; font-size:clamp(18px,5vw,22px); }
+      .qp-card-visual { margin-top:24px; }
+      .qp-timing-node { font-size:11px; }
+      .qp-risk-gauge { width:190px; }
+      .qp-specular-button { width:100%; margin-top:34px; }
+      .qp-final-cta { min-height:540px; scroll-margin-top:52px; }
+      .qp-final-cta-content { width:min(680px,88%); }
+      .qp-final-cta-title { font-size:clamp(40px,10.5vw,58px); }
+      .qp-final-cta-title-line { white-space:normal; }
+      .qp-final-cta-copy { margin-top:22px; font-size:14px; }
+      .qp-glass-button { margin-top:32px; }
+    }
+
+    @media (min-width:1081px) {
+      .qp-demand-section { width:100%; max-width:2940px; height:auto; max-height:1548px; aspect-ratio:2940/1548; padding:2.4cqw 3.35cqw .68cqw; overflow:hidden; container-type:inline-size; }
+      .qp-demand-section-head { max-width:82cqw; margin:0 0 .8cqw; }
+      .qp-section-kicker { margin-bottom:.62cqw; font-size:.72cqw; }
+      .qp-section-title { max-width:76cqw; font-size:3.75cqw; line-height:1.05; }
+      .qp-section-intro { max-width:62cqw; margin-top:.65cqw; font-size:.86cqw; line-height:1.5; }
+      .qp-demand-kpis { margin-bottom:.85cqw; }
+      .qp-demand-kpi { padding:.58cqw 1.15cqw .62cqw; }
+      .qp-demand-kpi-value { font-size:2.12cqw; }
+      .qp-demand-kpi-label { margin-top:.36cqw; font-size:.67cqw; }
+      .qp-demand-layout { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.68cqw; }
+      .qp-featured-orders { height:38.5cqw; display:flex; flex-direction:column; padding:1.08cqw .48cqw 0 0; }
+      .qp-featured-head { flex:0 0 auto; min-height:3.15cqw; padding:0 .35cqw .85cqw; }
+      .qp-featured-live { gap:.5cqw; margin-bottom:.35cqw; font-size:.7cqw; }
+      .qp-featured-live::before { width:.48cqw; height:.48cqw; box-shadow:0 0 0 .28cqw rgba(140,165,147,.12); }
+      .qp-featured-title { font-size:1.52cqw; }
+      .qp-order-stack { flex:1; min-height:0; padding:.08cqw 0 0; overflow-y:auto; overscroll-behavior:contain; scroll-behavior:smooth; scrollbar-width:none; }
+      .qp-order-stack::-webkit-scrollbar { display:none; }
+      .qp-order-card-list { display:block; padding-bottom:24cqw; }
+      .qp-order-card { --qp-stack-index:0; --qp-stack-scale:1; position:sticky; top:calc(.42cqw + var(--qp-stack-index) * .7cqw); z-index:calc(10 + var(--qp-stack-index)); min-height:15.8cqw; display:flex; flex-direction:column; margin-bottom:2cqw; padding:1.05cqw 1.12cqw .82cqw; border-radius:.68cqw; box-shadow:0 .42cqw 1.3cqw rgba(18,59,50,.09); transform:scale(var(--qp-stack-scale)); transform-origin:top center; will-change:transform; }
+      .qp-order-card:first-child::after { bottom:-1cqw; font-size:.58cqw; }
+      .qp-order-card:nth-child(1) { --qp-stack-index:0; }
+      .qp-order-card:nth-child(2) { --qp-stack-index:1; }
+      .qp-order-card:nth-child(3) { --qp-stack-index:2; }
+      .qp-order-card:nth-child(4) { --qp-stack-index:3; }
+      .qp-order-card-head { gap:.55cqw; }
+      .qp-order-origin { gap:.42cqw; }
+      .qp-order-flag { width:1.55cqw; height:1.55cqw; font-size:.98cqw; }
+      .qp-order-country { font-size:.76cqw; }
+      .qp-order-category { padding:.26cqw .56cqw; font-size:.62cqw; }
+      .qp-order-updated { font-size:.62cqw; }
+      .qp-order-product { margin-top:.55cqw; font-size:1.18cqw; line-height:1.24; }
+      .qp-order-requirement { margin-top:.32cqw; font-size:.7cqw; }
+      .qp-order-metrics { grid-template-columns:1fr 1fr; gap:.52cqw 1.05cqw; margin-top:.72cqw; padding-top:.72cqw; }
+      .qp-order-metric { padding:0; border-radius:0; }
+      .qp-order-metric-label { margin-bottom:.24cqw; font-size:.58cqw; }
+      .qp-order-metric-value { font-size:1.05cqw; font-family:"Songti SC","Noto Serif SC",STSong,serif; }
+      .qp-order-standard .qp-order-metric-value { font-family:"Inter","Avenir Next","Helvetica Neue","PingFang SC",sans-serif; font-size:.7cqw; font-weight:600; }
+      .qp-order-target { gap:.4cqw; }
+      .qp-order-target-flag { font-size:.95cqw; }
+      .qp-order-amount { font-size:1.4cqw; }
+      .qp-order-more { margin-top:auto; padding-top:.52cqw; font-size:.62cqw; }
+      .qp-order-more-arrow { font-size:.82cqw; }
+      .qp-demand-board { height:38.5cqw; margin-top:0; padding:1.08cqw 1.08cqw .9cqw; border-radius:.72cqw; box-shadow:none; }
+      .qp-board-head { min-height:3.15cqw; padding:0 .35cqw .85cqw; }
+      .qp-board-live { gap:.5cqw; margin-bottom:.35cqw; font-size:.7cqw; }
+      .qp-board-live::before { width:.48cqw; height:.48cqw; box-shadow:0 0 0 .28cqw rgba(90,145,117,.12); }
+      .qp-board-title { font-size:1.52cqw; }
+      .qp-show-all { gap:.5cqw; font-size:.78cqw; }
+      .qp-show-all-arrow { font-size:1.5cqw; }
+      .qp-demand-viewport { border-radius:0; }
+      .qp-demand-list { gap:0; }
+      .qp-demand-row { flex-basis:5.55cqw; min-height:5.55cqw; grid-template-columns:minmax(0,1.34fr) minmax(0,.9fr) minmax(0,.66fr) minmax(0,.62fr); gap:.6cqw; padding:.7cqw .8cqw; border-radius:0; }
+      .qp-buyer-name { font-size:.86cqw; }
+      .qp-demand-name { margin-top:.28cqw; font-size:.7cqw; }
+      .qp-signal-code { font-size:.76cqw; }
+      .qp-source-button { margin-top:.32cqw; font-size:.64cqw; }
+      .qp-status { min-width:4.8cqw; min-height:2.1cqw; padding:0 .7cqw; font-size:.68cqw; }
+      .qp-quantity { font-size:.82cqw; }
+      .qp-time { margin-top:.28cqw; font-size:.64cqw; }
+
+      .qp-core-section { width:100%; max-width:2940px; height:auto; max-height:none; aspect-ratio:auto; padding:3.15cqw 4.5cqw 4.3cqw; container-type:inline-size; }
+      .qp-core-head { max-width:48cqw; }
+      .qp-core-kicker { margin-bottom:.62cqw; font-size:.72cqw; }
+      .qp-core-title { max-width:none; font-size:3.55cqw; line-height:1.08; }
+      .qp-core-intro { max-width:37cqw; margin-top:.86cqw; font-size:.86cqw; line-height:1.65; }
+      .qp-network-stage { height:min(32.8cqw,790px); margin-top:2.4cqw; }
+      .qp-network-route { left:2.15cqw; right:2.15cqw; grid-template-columns:10.8cqw 1fr; gap:1.2cqw; min-height:3.45cqw; padding:.52cqw .72cqw; }
+      .qp-network-route-demand { top:1.65cqw; }.qp-network-route-expand { bottom:1.65cqw; }
+      .qp-network-route-title { font-size:1.02cqw; }.qp-network-route-meta { margin-top:.22cqw; font-size:.58cqw; }.qp-network-route-flow { gap:.65cqw; font-size:.87cqw; }.qp-network-route-flow b { font-size:1.16cqw; }
+      .qp-network-phase { margin-left:.35cqw; padding:.17cqw .3cqw; font-size:.45cqw; }
+      .qp-network-side { top:21%; bottom:18%; width:27.2%; }.qp-network-buyers { left:4.6%; }.qp-network-supply { right:4.6%; }
+      .qp-network-side-code { font-size:.62cqw; }.qp-network-side-title { margin-top:.42cqw; font-size:1.78cqw; }.qp-network-question { margin-top:.36cqw; font-size:.78cqw; }
+      .qp-network-art { top:31%; height:49%; }.qp-network-fields { gap:.45cqw .25cqw; }.qp-network-fields li { font-size:.68cqw; }.qp-network-fields li::before { width:.27cqw; height:.27cqw; margin-right:.25cqw; }
+      .qp-network-node { gap:.3cqw; font-size:.6cqw; }.qp-network-node::before { width:.44cqw; height:.44cqw; border-width:.1cqw; }
+      .qp-network-engine { width:min(15.5cqw,340px); }.qp-network-engine-core { border-width:.27cqw; }.qp-network-engine-skill { padding:.34cqw .44cqw; font-size:.55cqw; }
+      .qp-deal-section { width:100%; max-width:2940px; padding:3.15cqw 4.5cqw 4.3cqw; container-type:inline-size; }
+      .qp-deal-section-head { max-width:55cqw; }
+      .qp-deal-kicker { margin-bottom:.62cqw; font-size:.72cqw; }
+      .qp-deal-title { font-size:3.55cqw; line-height:1.08; }
+      .qp-deal-intro { max-width:43cqw; margin-top:.86cqw; font-size:.86cqw; line-height:1.65; }
+      .qp-bento-grid { gap:1.15cqw; margin-top:2.4cqw; }
+      .qp-bento-card,.qp-bento-card:first-child { min-height:min(35cqw,540px); padding:1.3cqw; border-radius:1.12cqw; }
+      .qp-bento-card-title { font-size:1.8cqw; }
+      .qp-bento-card-question { min-height:2.1cqw; margin-top:.62cqw; font-size:.86cqw; }
+      .qp-card-visual { margin-top:1.25cqw; }
+      .qp-timing-track { min-height:5.4cqw; }.qp-timing-node { gap:.42cqw; font-size:.56cqw; }.qp-timing-node::before { width:.66cqw; height:.66cqw; border-width:.14cqw; }.qp-timing-node-current::before { width:.9cqw; height:.9cqw; box-shadow:0 0 0 .34cqw rgba(213,163,63,.14); }
+      .qp-timing-signals { gap:.52cqw; }.qp-timing-signal { padding:.58cqw; border-radius:.52cqw; }.qp-timing-signal span { font-size:.56cqw; }.qp-timing-spark { height:2.1cqw; margin-top:.34cqw; }
+      .qp-match-visual { gap:.62cqw; }.qp-match-candidates,.qp-match-source { gap:.58cqw; }.qp-match-node { min-height:2.35cqw; padding:0 .58cqw; border-radius:.48cqw; font-size:.56cqw; }.qp-match-source .qp-match-node { min-height:3.7cqw; }
+      .qp-risk-gauge { width:min(13cqw,210px); }.qp-risk-label { font-size:.52cqw; }.qp-risk-core { font-size:.56cqw; }.qp-risk-legend { bottom:.25cqw; gap:.42cqw; font-size:.48cqw; }
+      .qp-progress-visual { gap:.6cqw; }.qp-progress-step { grid-template-columns:1.2cqw 1fr auto; gap:.4cqw; min-height:2.55cqw; font-size:.62cqw; }.qp-progress-step-index { width:1.12cqw; height:1.12cqw; font-size:.42cqw; }.qp-progress-step-status { font-size:.45cqw; }.qp-progress-meter { height:.3cqw; margin-top:.42cqw; }
+      .qp-specular-button { min-width:9.2cqw; height:2.9cqw; margin-top:2cqw; font-size:.62cqw; }
+      .qp-final-cta { height:auto; min-height:0; max-height:1050px; aspect-ratio:2940/1050; }
+      .qp-final-cta-content { width:72cqw; }
+      .qp-final-cta-title { max-width:70cqw; font-size:4.05cqw; line-height:1.1; }
+      .qp-final-cta-copy { max-width:51cqw; margin-top:1.35cqw; font-size:.92cqw; line-height:1.68; }
+      .qp-glass-button { width:12.9cqw; height:4cqw; gap:1.05cqw; margin-top:2.25cqw; padding:0 .48cqw 0 1.55cqw; font-size:.9cqw; }
+      .qp-glass-button-arrow { width:3.04cqw; height:3.04cqw; font-size:1.2cqw; }
+    }
+
+    @media (min-width:1081px) {
+      .qp-deal-section .qp-bento-grid { align-items:stretch; }
+      .qp-deal-section .qp-bento-card.qp-op-card { height:clamp(500px,38cqw,900px); min-height:0; max-height:none; padding:1.35cqw; }
+      .qp-deal-section .qp-op-card-head { padding-bottom:1.05cqw; }
+      .qp-deal-section .qp-op-step { margin-bottom:.72cqw; font-size:clamp(10px,.7cqw,16px); }
+      .qp-deal-section .qp-op-card .qp-bento-card-title { font-size:clamp(30px,2.35cqw,58px); }
+      .qp-deal-section .qp-op-card .qp-bento-card-question { margin-top:.58cqw; font-size:clamp(16px,1.25cqw,30px); }
+      .qp-deal-section .qp-op-explain { min-height:5.4cqw; margin-top:.85cqw; font-size:clamp(13px,1cqw,24px); line-height:1.65; }
+      .qp-deal-section .qp-op-panel { min-height:15.7cqw; margin-top:.75cqw; padding:.85cqw; border-radius:.7cqw; }
+      .qp-deal-section .qp-op-timebar { height:5cqw; }.qp-deal-section .qp-op-signal-grid { gap:.38cqw; }.qp-deal-section .qp-op-signal-grid span { min-height:2.15cqw; font-size:.53cqw; }
+      .qp-deal-section .qp-op-demand-node strong { font-size:.82cqw; }.qp-deal-section .qp-op-demand-node span,.qp-deal-section .qp-op-demand-node small { font-size:.52cqw; }.qp-deal-section .qp-op-supply-pool > span { min-height:2.15cqw; font-size:.55cqw; }
+      .qp-deal-section .qp-op-risk { gap:.5cqw; }.qp-deal-section .qp-op-risk-row { grid-template-columns:3.7cqw 1fr 2.1cqw; min-height:1.65cqw; }.qp-deal-section .qp-op-risk-row strong { font-size:.57cqw; }.qp-deal-section .qp-op-risk-row em,.qp-deal-section .qp-op-risk-scale { font-size:.47cqw; }
+      .qp-deal-section .qp-op-action { grid-template-columns:1.45cqw 1fr auto; min-height:3.2cqw; }.qp-deal-section .qp-op-action > b { width:1.4cqw; height:1.4cqw; font-size:.42cqw; }.qp-deal-section .qp-op-action span strong { font-size:.64cqw; }.qp-deal-section .qp-op-action span small,.qp-deal-section .qp-op-action > em { font-size:.48cqw; }
+    }
+
+    @media (min-width:761px) and (max-width:1080px) {
+      .qp-bento-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .qp-bento-card.qp-op-card { min-height:550px; }
+    }
+
+    @media (max-width:760px) {
+      .qp-bento-card.qp-op-card { min-height:540px; padding:24px; }
+      .qp-op-card .qp-bento-card-title { font-size:clamp(31px,8.7vw,42px); }
+      .qp-op-card .qp-bento-card-question { font-size:18px; }
+      .qp-op-explain { min-height:0; font-size:14px; }
+      .qp-op-panel { min-height:230px; }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      .qp-html { scroll-behavior:auto; }
+      .qp-product-slide.qp-is-entering,.qp-product-slide.qp-is-leaving { animation-duration:.01ms; }
+      .qp-demand-list.qp-is-scrolling { transition-duration:.01ms; }
+      .qp-core-section.qp-core-reveal .qp-network-stage,.qp-network-link-flow { animation:none; }
+      .qp-core-wave-slice { animation:none; }
+      .qp-bento-card,.qp-bento-card::before,.qp-specular-button,.qp-match-lines .qp-match-line-selected { transition:none; animation:none; }
+      .qp-final-cta-image,.qp-glass-button,.qp-glass-button-arrow { transition:none; }
+    }
+  </style>
+</head>
+<body class="qp-body">
+  <header class="qp-top-nav">
+    <div class="qp-nav-left">
+      <a class="qp-nav-logo" href="index.html" aria-label="返回黔脉 QianPulse 首页"><img class="qp-nav-logo-image" src="assets/qianpulse-logo.png" alt="黔脉 QianPulse" /></a>
+    </div>
+    <nav class="qp-main-nav" aria-label="主导航">
+      <ul class="qp-nav-links">
+        <li><a class="qp-nav-link" href="opportunities.html" aria-current="page">全球商机</a></li>
+        <li><a class="qp-nav-link" href="#core-capabilities">核心能力</a></li>
+        <li><a class="qp-nav-link" href="index.html#active-outreach">主动拓展</a></li>
+        <li><a class="qp-nav-link" href="index.html#real-cases">真实案例</a></li>
+        <li><a class="qp-nav-link" href="index.html#about-qianpulse">关于黔脉</a></li>
+      </ul>
+    </nav>
+    <a class="qp-login qp-button" id="qpLogin" href="app.html#auth"><span id="qpLoginText">登录</span><span class="qp-login-arrow" aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="qp-brand-hero">
+    <section class="qp-product-gallery" id="qpProductGallery" aria-label="贵州主要对接产品自动轮播">
+      <div class="qp-product-slide qp-product-slide-matcha qp-is-active" aria-hidden="false"><img class="qp-product-image" src="assets/matcha.jpg" alt="贵州抹茶" /></div>
+      <div class="qp-product-slide qp-product-slide-blueberry" aria-hidden="true"><img class="qp-product-image" src="assets/blueberries.jpg" alt="贵州蓝莓" /></div>
+      <div class="qp-product-slide qp-product-slide-rosa" aria-hidden="true"><img class="qp-product-image" src="assets/rosa-roxburghii.jpg" alt="贵州刺梨" /></div>
+      <div class="qp-brand-copy">
+        <div class="qp-copy-upper">
+          <p class="qp-brand-name">黔脉 Qian pulse</p>
+          <p class="qp-brand-title">全球采购商机智能平台</p>
+          <p class="qp-brand-slogan">捕捉全球需求脉搏，让<span class="qp-brand-highlight">贵品</span>出海</p>
+        </div>
+        <div class="qp-copy-lower">
+          <p class="qp-brand-description">全球买家并不难找，难的是判断谁正在采购。<br />黔脉利用 AI 整合全球贸易与采购信号，完成企业溯源、<br />需求验证和产品匹配，为黔品找到真实、可跟进的高潜买家。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="qp-demand-section" id="global-demand" aria-labelledby="qpDemandSectionTitle">
+      <header class="qp-demand-section-head">
+        <span class="qp-section-kicker">GLOBAL DEMAND SIGNALS</span>
+        <h1 class="qp-section-title" id="qpDemandSectionTitle">全球采购需求，正在此刻发生。</h1>
+        <p class="qp-section-intro">从公开采购信号中筛选高可信需求，左侧呈现值得优先跟进的精选订单，右侧同步更新全球实时采购动态。</p>
+      </header>
+
+      <section class="qp-demand-kpis" aria-label="采购需求核心数据">
+        <div class="qp-demand-kpi"><strong class="qp-demand-kpi-value">4</strong><span class="qp-demand-kpi-label">优选订单</span></div>
+        <div class="qp-demand-kpi"><strong class="qp-demand-kpi-value">$138.9K</strong><span class="qp-demand-kpi-label">潜在成交额</span></div>
+        <div class="qp-demand-kpi"><strong class="qp-demand-kpi-value">10.3 t</strong><span class="qp-demand-kpi-label">采购总需求</span></div>
+        <div class="qp-demand-kpi"><strong class="qp-demand-kpi-value">6</strong><span class="qp-demand-kpi-label">实时采购信号</span></div>
+      </section>
+
+      <div class="qp-demand-layout">
+        <section class="qp-featured-orders" aria-labelledby="qpFeaturedTitle">
+          <div class="qp-featured-head">
+            <div class="qp-featured-title-wrap"><p class="qp-featured-live">FOR YOU · 为你推荐</p><h2 class="qp-featured-title" id="qpFeaturedTitle">每日精选订单</h2></div>
+          </div>
+          <div class="qp-order-stack" aria-label="精选订单卡片" tabindex="0">
+            <div class="qp-order-card-list">
+            <article class="qp-order-card">
+              <header class="qp-order-card-head">
+                <span class="qp-order-origin"><span class="qp-order-flag" role="img" aria-label="德国国旗">🇩🇪</span><strong class="qp-order-country">德国</strong></span>
+                <span class="qp-order-category">食品原料</span>
+                <time class="qp-order-updated">12 分钟前更新</time>
+              </header>
+              <h3 class="qp-order-product">食品级抹茶原料</h3>
+              <p class="qp-order-requirement"><span class="qp-order-requirement-label">特殊要求：</span>需提供欧盟有机认证，铅含量 ≤ 2 mg/kg</p>
+              <div class="qp-order-metrics">
+                <div class="qp-order-metric"><span class="qp-order-metric-label">需求量</span><strong class="qp-order-metric-value">1,000 kg</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">目标地</span><strong class="qp-order-metric-value qp-order-target"><span class="qp-order-target-flag" role="img" aria-label="荷兰国旗">🇳🇱</span>荷兰</strong></div>
+                <div class="qp-order-metric qp-order-standard"><span class="qp-order-metric-label">生产标准</span><strong class="qp-order-metric-value">EU Organic · FSSC 22000</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">成交金额（美刀）</span><strong class="qp-order-metric-value qp-order-amount">$28,500</strong></div>
+              </div>
+              <div class="qp-order-more"><span>了解更多</span><span class="qp-order-more-arrow" aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="qp-order-card">
+              <header class="qp-order-card-head">
+                <span class="qp-order-origin"><span class="qp-order-flag" role="img" aria-label="英国国旗">🇬🇧</span><strong class="qp-order-country">英国</strong></span>
+                <span class="qp-order-category">健康食品</span>
+                <time class="qp-order-updated">37 分钟前更新</time>
+              </header>
+              <h3 class="qp-order-product">冻干蓝莓粉</h3>
+              <p class="qp-order-requirement"><span class="qp-order-requirement-label">特殊要求：</span>花青素 ≥ 25%，首批需随货提供 COA</p>
+              <div class="qp-order-metrics">
+                <div class="qp-order-metric"><span class="qp-order-metric-label">需求量</span><strong class="qp-order-metric-value">2.5 t</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">目标地</span><strong class="qp-order-metric-value qp-order-target"><span class="qp-order-target-flag" role="img" aria-label="英国国旗">🇬🇧</span>英国</strong></div>
+                <div class="qp-order-metric qp-order-standard"><span class="qp-order-metric-label">生产标准</span><strong class="qp-order-metric-value">BRCGS · ISO 22000</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">成交金额（美刀）</span><strong class="qp-order-metric-value qp-order-amount">$46,800</strong></div>
+              </div>
+              <div class="qp-order-more"><span>了解更多</span><span class="qp-order-more-arrow" aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="qp-order-card">
+              <header class="qp-order-card-head">
+                <span class="qp-order-origin"><span class="qp-order-flag" role="img" aria-label="新加坡国旗">🇸🇬</span><strong class="qp-order-country">新加坡</strong></span>
+                <span class="qp-order-category">饮料原料</span>
+                <time class="qp-order-updated">1 小时前更新</time>
+              </header>
+              <h3 class="qp-order-product">刺梨浓缩汁</h3>
+              <p class="qp-order-requirement"><span class="qp-order-requirement-label">特殊要求：</span>用于低糖功能饮料，维生素 C ≥ 8 g/L</p>
+              <div class="qp-order-metrics">
+                <div class="qp-order-metric"><span class="qp-order-metric-label">需求量</span><strong class="qp-order-metric-value">6 t</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">目标地</span><strong class="qp-order-metric-value qp-order-target"><span class="qp-order-target-flag" role="img" aria-label="马来西亚国旗">🇲🇾</span>马来西亚</strong></div>
+                <div class="qp-order-metric qp-order-standard"><span class="qp-order-metric-label">生产标准</span><strong class="qp-order-metric-value">HACCP · Halal</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">成交金额（美刀）</span><strong class="qp-order-metric-value qp-order-amount">$39,600</strong></div>
+              </div>
+              <div class="qp-order-more"><span>了解更多</span><span class="qp-order-more-arrow" aria-hidden="true">↗</span></div>
+            </article>
+
+            <article class="qp-order-card">
+              <header class="qp-order-card-head">
+                <span class="qp-order-origin"><span class="qp-order-flag" role="img" aria-label="荷兰国旗">🇳🇱</span><strong class="qp-order-country">荷兰</strong></span>
+                <span class="qp-order-category">茶饮分销</span>
+                <time class="qp-order-updated">2 小时前更新</time>
+              </header>
+              <h3 class="qp-order-product">有机抹茶粉</h3>
+              <p class="qp-order-requirement"><span class="qp-order-requirement-label">特殊要求：</span>全年稳定供货，需提供农残与重金属报告</p>
+              <div class="qp-order-metrics">
+                <div class="qp-order-metric"><span class="qp-order-metric-label">需求量</span><strong class="qp-order-metric-value">800 kg</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">目标地</span><strong class="qp-order-metric-value qp-order-target"><span class="qp-order-target-flag" role="img" aria-label="德国国旗">🇩🇪</span>德国</strong></div>
+                <div class="qp-order-metric qp-order-standard"><span class="qp-order-metric-label">生产标准</span><strong class="qp-order-metric-value">EU Organic · IFS Food</strong></div>
+                <div class="qp-order-metric"><span class="qp-order-metric-label">成交金额（美刀）</span><strong class="qp-order-metric-value qp-order-amount">$24,000</strong></div>
+              </div>
+              <div class="qp-order-more"><span>了解更多</span><span class="qp-order-more-arrow" aria-hidden="true">↗</span></div>
+            </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="qp-demand-board" aria-labelledby="qpDemandTitle">
+          <div class="qp-board-head">
+            <div class="qp-board-title-wrap"><p class="qp-board-live">LIVE · 实时更新</p><h2 class="qp-board-title" id="qpDemandTitle">全球实时采购需求</h2></div>
+            <button class="qp-show-all qp-button" id="qpShowAll" type="button"><span id="qpShowAllText">查看全部</span><span class="qp-show-all-arrow" aria-hidden="true">›</span></button>
+          </div>
+          <div class="qp-demand-viewport" id="qpDemandViewport">
+            <div class="qp-demand-list" id="qpDemandList">
+              <article class="qp-demand-row qp-demand-row-tint">
+                <div><strong class="qp-buyer-name">德国｜食品原料进口</strong><span class="qp-demand-name">采购食品级抹茶原料</span></div>
+                <div><strong class="qp-signal-code">#QP-26841</strong><button class="qp-source-button qp-button" type="button" data-source="企业官网 · 08/29">查看来源</button></div>
+                <div><span class="qp-status qp-status-confirmed">已核验</span></div>
+                <div><strong class="qp-quantity">1,000 kg</strong><time class="qp-time">12 分钟前</time></div>
+              </article>
+              <article class="qp-demand-row">
+                <div><strong class="qp-buyer-name">英国｜健康食品品牌</strong><span class="qp-demand-name">寻找冻干蓝莓粉供应商</span></div>
+                <div><strong class="qp-signal-code">#QP-26796</strong><button class="qp-source-button qp-button" type="button" data-source="采购目录 · 08/29">查看来源</button></div>
+                <div><span class="qp-status qp-status-tracking">跟进中</span></div>
+                <div><strong class="qp-quantity">2.5 t</strong><time class="qp-time">37 分钟前</time></div>
+              </article>
+              <article class="qp-demand-row qp-demand-row-tint">
+                <div><strong class="qp-buyer-name">新加坡｜饮料制造</strong><span class="qp-demand-name">采购刺梨浓缩汁原料</span></div>
+                <div><strong class="qp-signal-code">#QP-26732</strong><button class="qp-source-button qp-button" type="button" data-source="招标公告 · 08/29">查看来源</button></div>
+                <div><span class="qp-status qp-status-verifying">核验中</span></div>
+                <div><strong class="qp-quantity">6 t</strong><time class="qp-time">1 小时前</time></div>
+              </article>
+              <article class="qp-demand-row">
+                <div><strong class="qp-buyer-name">荷兰｜茶饮原料分销</strong><span class="qp-demand-name">寻找有机抹茶长期供应商</span></div>
+                <div><strong class="qp-signal-code">#QP-26688</strong><button class="qp-source-button qp-button" type="button" data-source="企业官网 · 08/29">查看来源</button></div>
+                <div><span class="qp-status qp-status-confirmed">已核验</span></div>
+                <div><strong class="qp-quantity">800 kg</strong><time class="qp-time">2 小时前</time></div>
+              </article>
+              <article class="qp-demand-row qp-demand-row-tint">
+                <div><strong class="qp-buyer-name">法国｜天然饮品品牌</strong><span class="qp-demand-name">采购刺梨果粉与浓缩液</span></div>
+                <div><strong class="qp-signal-code">#QP-26641</strong><button class="qp-source-button qp-button" type="button" data-source="采购平台 · 08/29">查看来源</button></div>
+                <div><span class="qp-status qp-status-verifying">核验中</span></div>
+                <div><strong class="qp-quantity">4 t</strong><time class="qp-time">3 小时前</time></div>
+              </article>
+              <article class="qp-demand-row">
+                <div><strong class="qp-buyer-name">日本｜食品配料贸易</strong><span class="qp-demand-name">寻找贵州抹茶稳定供应商</span></div>
+                <div><strong class="qp-signal-code">#QP-26590</strong><button class="qp-source-button qp-button" type="button" data-source="进口商目录 · 08/29">查看来源</button></div>
+                <div><span class="qp-status qp-status-tracking">跟进中</span></div>
+                <div><strong class="qp-quantity">1.2 t</strong><time class="qp-time">4 小时前</time></div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="qp-core-section" id="core-capabilities" aria-labelledby="qpCoreTitle">
+      <svg class="qp-core-sliced-waves" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path class="qp-core-wave-slice qp-core-wave-tea" d="M-120 160 C120 72 328 86 520 174 C742 276 920 248 1110 150 C1310 47 1490 72 1720 188 L1720 244 C1490 128 1310 103 1110 206 C920 304 742 332 520 230 C328 142 120 128 -120 216 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-green" d="M-120 232 C110 144 332 157 536 247 C756 344 934 322 1126 222 C1325 118 1508 143 1720 257 L1720 301 C1508 187 1325 162 1126 266 C934 366 756 388 536 291 C332 201 110 188 -120 276 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-gold" d="M-120 296 C116 210 340 220 548 310 C768 405 946 384 1140 286 C1338 186 1520 208 1720 316 L1720 346 C1520 238 1338 216 1140 316 C946 414 768 435 548 340 C340 250 116 240 -120 326 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-tea" d="M-120 622 C116 530 346 548 558 645 C776 745 960 716 1152 612 C1350 504 1528 528 1720 641 L1720 701 C1528 588 1350 564 1152 672 C960 776 776 805 558 705 C346 608 116 590 -120 682 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-green" d="M-120 702 C126 610 354 628 570 727 C790 828 970 798 1164 696 C1360 593 1538 616 1720 725 L1720 769 C1538 660 1360 637 1164 740 C970 842 790 872 570 771 C354 672 126 654 -120 746 Z" />
+        <path class="qp-core-wave-slice qp-core-wave-gold" d="M-120 772 C130 682 362 696 582 796 C802 896 984 870 1178 768 C1372 666 1548 688 1720 792 L1720 822 C1548 718 1372 696 1178 798 C984 900 802 926 582 826 C362 726 130 712 -120 802 Z" />
+      </svg>
+      <header class="qp-core-head">
+        <span class="qp-core-kicker">CORE CAPABILITIES</span>
+        <h2 class="qp-core-title" id="qpCoreTitle">连接全球需求与贵州供给</h2>
+        <p class="qp-core-intro">一端发现谁正在买，把真实需求带给贵州企业；一端读懂谁能供，把合适的黔品带给全球买家。</p>
+      </header>
+
+      <div class="qp-network-stage" aria-label="全球买家、黔脉 AI 情报引擎与贵州供给的双向情报网络图">
+        <div class="qp-network-route qp-network-route-demand">
+          <div><strong class="qp-network-route-title">全球需求捕捉</strong><span class="qp-network-route-meta">BUYER → SELLER</span></div>
+          <div class="qp-network-route-flow"><span>买家情报</span><b>→</b><span>需求验证</span><b>→</b><span>匹配贵州卖家</span></div>
+        </div>
+
+        <svg class="qp-network-links" viewBox="0 0 1600 760" preserveAspectRatio="none" aria-hidden="true">
+          <defs><marker id="qpNetworkArrowGold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path fill="#D5A33F" d="M0,0 L0,6 L6,3 z"/></marker><marker id="qpNetworkArrowPale" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path fill="#DCE9E1" d="M0,0 L0,6 L6,3 z"/></marker></defs>
+          <path class="qp-network-link" d="M160 330 C420 330 540 305 690 340 M910 340 C1060 305 1180 330 1440 330"/>
+          <path class="qp-network-link qp-network-link-flow" marker-end="url(#qpNetworkArrowGold)" d="M180 286 C400 286 550 264 698 300 M902 300 C1050 264 1200 286 1420 286"/>
+          <path class="qp-network-link qp-network-link-flow qp-network-link-return" marker-end="url(#qpNetworkArrowPale)" d="M1420 482 C1200 482 1050 500 902 464 M698 464 C550 500 400 482 180 482"/>
+        </svg>
+
+        <section class="qp-network-side qp-network-buyers" aria-labelledby="qpBuyerNetworkTitle">
+          <header class="qp-network-side-head"><span class="qp-network-side-code">GLOBAL BUYER NETWORK</span><h3 class="qp-network-side-title" id="qpBuyerNetworkTitle">全球买家网络</h3><p class="qp-network-question">谁正在买？</p></header>
+          <div class="qp-network-art"><img class="qp-network-world-map" src="assets/qianpulse-world-map.svg" alt="世界国家轮廓地图" /></div>
+          <span class="qp-network-node qp-network-node-us">美国</span><span class="qp-network-node qp-network-node-de">德国</span><span class="qp-network-node qp-network-node-jp">日本</span><span class="qp-network-node qp-network-node-ae">阿联酋</span><span class="qp-network-node qp-network-node-br">巴西</span>
+          <ul class="qp-network-fields" aria-label="买家情报字段"><li>买家</li><li>产品</li><li>规格</li><li>数量</li><li>目的地</li><li>时间</li></ul>
+        </section>
+
+        <section class="qp-network-engine" aria-label="黔脉 AI 情报引擎">
+          <span class="qp-network-engine-orbit" aria-hidden="true"></span>
+          <span class="qp-network-engine-skill qp-network-engine-skill-one">全球信号汇集</span><span class="qp-network-engine-skill qp-network-engine-skill-two">需求真实性验证</span><span class="qp-network-engine-skill qp-network-engine-skill-three">采购主体溯源</span><span class="qp-network-engine-skill qp-network-engine-skill-four">供需匹配</span>
+          <div class="qp-network-engine-core"><img class="qp-network-engine-logo" src="assets/qianpulse-logo.png" alt="黔脉 QianPulse" /></div>
+        </section>
+
+        <section class="qp-network-side qp-network-supply" aria-labelledby="qpSupplyNetworkTitle">
+          <header class="qp-network-side-head"><span class="qp-network-side-code">GUIZHOU SUPPLY NETWORK</span><h3 class="qp-network-side-title" id="qpSupplyNetworkTitle">贵州供给网络</h3><p class="qp-network-question">谁最适合供应？</p></header>
+          <div class="qp-network-art"><img class="qp-network-guizhou-map" src="assets/guizhou-outline.svg" alt="贵州省行政区划轮廓" /></div>
+          <span class="qp-network-node qp-network-node-matcha">抹茶</span><span class="qp-network-node qp-network-node-rosa">刺梨</span><span class="qp-network-node qp-network-node-blue">蓝莓</span>
+          <ul class="qp-network-fields" aria-label="贵州供应情报字段"><li>企业</li><li>产品</li><li>规格</li><li>认证</li><li>产能</li><li>MOQ</li></ul>
+        </section>
+
+        <div class="qp-network-route qp-network-route-expand">
+          <div><strong class="qp-network-route-title">主动商机拓展 <span class="qp-network-phase">PHASE II</span></strong><span class="qp-network-route-meta">SELLER → BUYER</span></div>
+          <div class="qp-network-route-flow"><span>贵州供应情报</span><b>→</b><span>匹配目标市场</span><b>→</b><span>触达全球买家</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="qp-deal-section" id="deal-progression" aria-labelledby="qpDealProgressionTitle">
+      <header class="qp-deal-section-head">
+        <span class="qp-deal-kicker">OPPORTUNITY PROGRESSION</span>
+        <h2 class="qp-deal-title" id="qpDealProgressionTitle">从商机发现到成交推进</h2>
+        <p class="qp-deal-intro">商机被发现后，黔脉继续判断采购时机、匹配贵州供给、识别交易风险，并给出下一步行动建议。</p>
+      </header>
+      <div class="qp-bento-grid" aria-label="商机推进四阶段框架">
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpTimingTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">01 · TIMING</span><h3 class="qp-bento-card-title" id="qpTimingTitle">采购时机判断</h3><p class="qp-bento-card-question">这笔需求，现在还值得跟进吗？</p></header>
+          <p class="qp-op-explain">系统将四类时间信号合并为采购窗口，判断需求是否仍然有效，以及何时必须采取行动。</p>
+          <div class="qp-op-panel qp-op-timing" aria-label="采购时间窗口与四项判断信号">
+            <div class="qp-op-panel-label"><span>采购窗口</span><em>时效分析</em></div>
+            <div class="qp-op-timebar" aria-hidden="true"><span class="qp-op-time-node">发布</span><span class="qp-op-time-node qp-op-time-now">当前</span><span class="qp-op-time-node">截止</span></div>
+            <div class="qp-op-signal-grid"><span>发布时间</span><span>截止时间</span><span>采购频率</span><span>数量变化</span></div>
+          </div>
+        </article>
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpMatchTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">02 · MATCH</span><h3 class="qp-bento-card-title" id="qpMatchTitle">贵州供需匹配</h3><p class="qp-bento-card-question">贵州哪家企业、哪款产品最适合？</p></header>
+          <p class="qp-op-explain">把海外采购条件拆成可核对字段，再与贵州企业的真实供应能力逐项比对，找出最佳候选。</p>
+          <div class="qp-op-panel qp-op-match" aria-label="海外采购要求与贵州供应候选匹配关系">
+            <div class="qp-op-demand-node"><small>海外需求</small><strong>采购要求</strong><div><span>规格</span><span>认证</span><span>数量</span><span>交期</span></div></div>
+            <div class="qp-op-match-bridge" aria-hidden="true"><i></i><i></i><i></i><b>AI<br/>匹配</b></div>
+            <div class="qp-op-supply-pool"><small>贵州供应池</small><span>候选企业</span><span class="qp-op-supply-selected">最适合供应</span><span>候选企业</span></div>
+          </div>
+        </article>
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpRiskTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">03 · RISK</span><h3 class="qp-bento-card-title" id="qpRiskTitle">智能匹配风控</h3><p class="qp-bento-card-question">这家买家和这笔交易可信吗？</p></header>
+          <p class="qp-op-explain">每一项结论都回到主体、证据和交易条件进行核验，避免把单一采购信号误判为真实订单。</p>
+          <div class="qp-op-panel qp-op-risk" aria-label="五项交易风险核验仪表盘">
+            <div class="qp-op-risk-scale"><span>低风险</span><span>需关注</span><span>高风险</span></div>
+            <div class="qp-op-risk-row"><strong>企业主体</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>买家信用</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>采购证据</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>付款条件</strong><i></i><em>待核验</em></div>
+            <div class="qp-op-risk-row"><strong>履约风险</strong><i></i><em>待核验</em></div>
+          </div>
+        </article>
+        <article class="qp-bento-card qp-op-card" tabindex="0" aria-labelledby="qpProgressTitle">
+          <header class="qp-op-card-head"><span class="qp-op-step">04 · ACTION</span><h3 class="qp-bento-card-title" id="qpProgressTitle">商机推进</h3><p class="qp-bento-card-question">下一步应该做什么？</p></header>
+          <p class="qp-op-explain">将前面的判断转成可执行任务，明确每一步的负责人、完成条件与跟进状态。</p>
+          <div class="qp-op-panel qp-op-actions" aria-label="商机推进任务路径">
+            <div class="qp-op-action"><b>01</b><span><strong>需求确认</strong><small>补齐规格与交付要求</small></span><em>准备</em></div>
+            <div class="qp-op-action"><b>02</b><span><strong>供应确认</strong><small>锁定企业与产品能力</small></span><em>匹配</em></div>
+            <div class="qp-op-action qp-op-action-next"><b>03</b><span><strong>买家触达</strong><small>生成首轮沟通建议</small></span><em>下一步</em></div>
+            <div class="qp-op-action"><b>04</b><span><strong>跟进复盘</strong><small>更新反馈与商机状态</small></span><em>持续</em></div>
+            <a class="qp-specular-button" id="qpContactSales" href="#start-hunting">联系销售</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="qp-final-cta" id="start-hunting" aria-labelledby="qpFinalCtaTitle">
+      <img class="qp-final-cta-image" src="assets/qianpulse-mountain-cta.jpg" alt="" />
+      <div class="qp-final-cta-content">
+        <h2 class="qp-final-cta-title" id="qpFinalCtaTitle"><span class="qp-final-cta-title-line">准备好看看，</span><span class="qp-final-cta-title-line">谁正在寻找你的产品了吗？</span></h2>
+        <p class="qp-final-cta-copy">输入一款产品，黔脉即刻从全球信号中发现需求、验证买家，为你筛选值得优先跟进的高潜客户。</p>
+        <a class="qp-glass-button qp-button" id="qpGlassStart" href="#global-demand">
+          <span class="qp-glass-button-text">即刻开始</span>
+          <span class="qp-glass-button-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const qpGallery = document.getElementById('qpProductGallery');
+
+      function qpSyncVisualRatio() {
+        const qpVisualHeight = qpGallery.getBoundingClientRect().width * 1350 / 2940;
+        qpGallery.style.height = `${qpVisualHeight}px`;
+      }
+
+      qpSyncVisualRatio();
+      const qpVisualObserver = new ResizeObserver(qpSyncVisualRatio);
+      qpVisualObserver.observe(qpGallery);
+      window.addEventListener('resize',qpSyncVisualRatio,{passive:true});
+
+      const qpSlides = [...document.querySelectorAll('.qp-product-slide')];
+      let qpSlideIndex = 0;
+      let qpSlideBusy = false;
+      const qpReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function qpNextProduct() {
+        if (qpSlideBusy || qpSlides.length < 2) return;
+        qpSlideBusy = true;
+        const qpCurrent = qpSlides[qpSlideIndex];
+        const qpNextIndex = (qpSlideIndex + 1) % qpSlides.length;
+        const qpNext = qpSlides[qpNextIndex];
+
+        qpNext.classList.add('qp-is-entering');
+        qpNext.setAttribute('aria-hidden','false');
+        qpCurrent.classList.add('qp-is-leaving');
+
+        window.setTimeout(() => {
+          qpCurrent.classList.remove('qp-is-active','qp-is-leaving');
+          qpCurrent.setAttribute('aria-hidden','true');
+          qpNext.classList.remove('qp-is-entering');
+          qpNext.classList.add('qp-is-active');
+          qpSlideIndex = qpNextIndex;
+          qpSlideBusy = false;
+        }, qpReducedMotion ? 20 : 930);
+      }
+
+      window.setInterval(qpNextProduct,3600);
+
+      const qpFeaturedOrders = document.querySelector('.qp-featured-orders');
+      const qpOrderStack = document.querySelector('.qp-order-stack');
+      const qpOrderCards = qpOrderStack ? [...qpOrderStack.querySelectorAll('.qp-order-card')] : [];
+      const qpOrderCardStartRatios = qpOrderStack
+        ? qpOrderCards.map(qpCard => (qpCard.getBoundingClientRect().top - qpOrderStack.getBoundingClientRect().top + qpOrderStack.scrollTop) / qpOrderStack.clientWidth)
+        : [];
+      let qpOrderStackFrame = 0;
+      let qpOrderHintDismissed = false;
+
+      function qpDismissOrderHint() {
+        if (qpOrderHintDismissed) return;
+        qpOrderHintDismissed = true;
+        qpFeaturedOrders?.classList.add('qp-stack-engaged');
+      }
+
+      function qpGetOrderStackLimit() {
+        if (!qpOrderStack || !qpOrderCards.length || window.innerWidth <= 1080) return qpOrderStack?.scrollHeight || 0;
+        const qpLastIndex = qpOrderCards.length - 1;
+        const qpLastPinTop = Number.parseFloat(getComputedStyle(qpOrderCards[qpLastIndex]).top) || 0;
+        return Math.max(0,qpOrderCardStartRatios[qpLastIndex] * qpOrderStack.clientWidth - qpLastPinTop);
+      }
+
+      function qpUpdateOrderStack() {
+        qpOrderStackFrame = 0;
+        if (!qpOrderStack || window.innerWidth <= 1080) {
+          qpOrderCards.forEach(qpCard => qpCard.style.setProperty('--qp-stack-scale','1'));
+          return;
+        }
+
+        const qpStackLimit = qpGetOrderStackLimit();
+        if (qpOrderStack.scrollTop > qpStackLimit) qpOrderStack.scrollTop = qpStackLimit;
+        const qpScrollTop = Math.min(qpOrderStack.scrollTop,qpStackLimit);
+        qpOrderCards.forEach((qpCard,qpIndex) => {
+          const qpPinTop = Number.parseFloat(getComputedStyle(qpCard).top) || 0;
+          const qpTrigger = qpOrderCardStartRatios[qpIndex] * qpOrderStack.clientWidth - qpPinTop;
+          const qpDuration = Math.max(1,qpCard.offsetHeight * .55);
+          const qpProgress = Math.min(1,Math.max(0,(qpScrollTop - qpTrigger) / qpDuration));
+          const qpScaleLoss = Math.max(.018,.06 - qpIndex * .012);
+          const qpScale = qpReducedMotion ? 1 : 1 - qpProgress * qpScaleLoss;
+          qpCard.style.setProperty('--qp-stack-scale',qpScale.toFixed(3));
+        });
+      }
+
+      function qpQueueOrderStackUpdate() {
+        if (qpOrderStackFrame) return;
+        if (qpOrderStack?.scrollTop > 2) qpDismissOrderHint();
+        qpOrderStackFrame = window.requestAnimationFrame(qpUpdateOrderStack);
+      }
+
+      qpOrderStack?.addEventListener('scroll',qpQueueOrderStackUpdate,{passive:true});
+      qpOrderStack?.addEventListener('wheel',qpEvent => {
+        if (qpEvent.deltaY !== 0) qpDismissOrderHint();
+        if (window.innerWidth <= 1080 || qpEvent.deltaY <= 0) return;
+        const qpStackLimit = qpGetOrderStackLimit();
+        if (qpOrderStack.scrollTop >= qpStackLimit - 1) qpEvent.preventDefault();
+      },{passive:false});
+      qpOrderStack?.addEventListener('pointerdown',() => qpOrderStack.focus({preventScroll:true}));
+      qpOrderStack?.addEventListener('keydown',qpEvent => {
+        const qpStackKeys = ['ArrowDown','PageDown','ArrowUp','PageUp','Home','End'];
+        if (!qpStackKeys.includes(qpEvent.key)) return;
+        qpEvent.preventDefault();
+        qpDismissOrderHint();
+        if (qpEvent.key === 'Home') {
+          qpOrderStack.scrollTo({top:0,behavior:qpReducedMotion ? 'auto' : 'smooth'});
+          return;
+        }
+        if (qpEvent.key === 'End') {
+          qpOrderStack.scrollTo({top:qpGetOrderStackLimit(),behavior:qpReducedMotion ? 'auto' : 'smooth'});
+          return;
+        }
+        const qpDirection = qpEvent.key === 'ArrowDown' || qpEvent.key === 'PageDown' ? 1 : -1;
+        const qpDistance = qpEvent.key.startsWith('Page') ? qpOrderStack.clientHeight * .7 : qpOrderStack.clientHeight * .28;
+        const qpTarget = Math.min(qpGetOrderStackLimit(),Math.max(0,qpOrderStack.scrollTop + qpDirection * qpDistance));
+        qpOrderStack.scrollTo({top:qpTarget,behavior:qpReducedMotion ? 'auto' : 'smooth'});
+      });
+      window.addEventListener('resize',qpQueueOrderStackUpdate,{passive:true});
+      qpUpdateOrderStack();
+
+      const qpDemandList = document.getElementById('qpDemandList');
+      const qpDemandViewport = document.getElementById('qpDemandViewport');
+      const qpShowAll = document.getElementById('qpShowAll');
+      const qpShowAllText = document.getElementById('qpShowAllText');
+      let qpExpanded = false;
+      let qpDemandBusy = false;
+
+      function qpScrollDemand() {
+        if (qpExpanded || qpDemandBusy) return;
+        const qpFirstRow = qpDemandList.querySelector('.qp-demand-row');
+        if (!qpFirstRow) return;
+        qpDemandBusy = true;
+        const qpGap = Number.parseFloat(getComputedStyle(qpDemandList).rowGap) || 0;
+        qpDemandList.classList.add('qp-is-scrolling');
+        qpDemandList.style.transform = `translate3d(0,-${qpFirstRow.offsetHeight + qpGap}px,0)`;
+        window.setTimeout(() => {
+          qpDemandList.classList.remove('qp-is-scrolling');
+          qpDemandList.style.transform = 'translate3d(0,0,0)';
+          qpDemandList.appendChild(qpFirstRow);
+          qpDemandBusy = false;
+        }, qpReducedMotion ? 20 : 880);
+      }
+
+      window.setInterval(qpScrollDemand,3000);
+
+      qpShowAll.addEventListener('click',() => {
+        qpExpanded = !qpExpanded;
+        qpDemandBusy = false;
+        qpDemandList.classList.remove('qp-is-scrolling');
+        qpDemandList.style.transform = 'translate3d(0,0,0)';
+        qpDemandList.classList.toggle('qp-is-expanded',qpExpanded);
+        qpDemandViewport.style.overflow = qpExpanded ? 'visible' : 'hidden';
+        qpShowAllText.textContent = qpExpanded ? '继续滚动' : '查看全部';
+      });
+
+      document.querySelectorAll('.qp-source-button').forEach(qpButton => {
+        qpButton.addEventListener('click',() => {
+          qpButton.textContent = qpButton.textContent === '查看来源' ? qpButton.dataset.source : '查看来源';
+        });
+      });
+
+      const qpCoreSection = document.getElementById('core-capabilities');
+      if ('IntersectionObserver' in window && qpCoreSection) {
+        const qpCoreObserver = new IntersectionObserver(qpEntries => {
+          if (!qpEntries[0]?.isIntersecting) return;
+          qpCoreSection.classList.add('qp-core-reveal');
+          qpCoreObserver.disconnect();
+        },{threshold:.28});
+        qpCoreObserver.observe(qpCoreSection);
+      } else {
+        qpCoreSection?.classList.add('qp-core-reveal');
+      }
+
+      document.querySelectorAll('.qp-bento-card').forEach(qpBentoCard => {
+        qpBentoCard.addEventListener('pointermove',qpEvent => {
+          if (qpReducedMotion) return;
+          const qpCardBounds = qpBentoCard.getBoundingClientRect();
+          qpBentoCard.style.setProperty('--qp-bento-x',`${((qpEvent.clientX - qpCardBounds.left) / qpCardBounds.width) * 100}%`);
+          qpBentoCard.style.setProperty('--qp-bento-y',`${((qpEvent.clientY - qpCardBounds.top) / qpCardBounds.height) * 100}%`);
+        });
+        qpBentoCard.addEventListener('pointerenter',() => qpBentoCard.classList.add('qp-bento-is-active'));
+        qpBentoCard.addEventListener('pointerleave',() => qpBentoCard.classList.remove('qp-bento-is-active'));
+        qpBentoCard.addEventListener('focus',() => qpBentoCard.classList.add('qp-bento-is-active'));
+        qpBentoCard.addEventListener('blur',() => qpBentoCard.classList.remove('qp-bento-is-active'));
+      });
+
+      const qpContactSales = document.getElementById('qpContactSales');
+      qpContactSales?.addEventListener('pointermove',qpEvent => {
+        if (qpReducedMotion) return;
+        const qpContactBounds = qpContactSales.getBoundingClientRect();
+        qpContactSales.style.setProperty('--qp-specular-x',`${((qpEvent.clientX - qpContactBounds.left) / qpContactBounds.width) * 100}%`);
+        qpContactSales.style.setProperty('--qp-specular-y',`${((qpEvent.clientY - qpContactBounds.top) / qpContactBounds.height) * 100}%`);
+      });
+
+      const qpOpportunityNavLink = document.querySelector('.qp-nav-link[href="opportunities.html"]');
+      const qpCoreNavLink = document.querySelector('.qp-nav-link[href="#core-capabilities"]');
+      if ('IntersectionObserver' in window && qpCoreSection && qpCoreNavLink && qpOpportunityNavLink) {
+        const qpCoreNavObserver = new IntersectionObserver(qpEntries => {
+          const qpCoreIsCurrent = qpEntries[0]?.isIntersecting;
+          qpOpportunityNavLink.toggleAttribute('aria-current',!qpCoreIsCurrent);
+          if (!qpCoreIsCurrent) qpOpportunityNavLink.setAttribute('aria-current','page');
+          qpCoreNavLink.toggleAttribute('aria-current',qpCoreIsCurrent);
+          if (qpCoreIsCurrent) qpCoreNavLink.setAttribute('aria-current','location');
+        },{threshold:.5});
+        qpCoreNavObserver.observe(qpCoreSection);
+      }
+
+      const qpFinalCta = document.getElementById('start-hunting');
+      const qpGlassStart = document.getElementById('qpGlassStart');
+      if ('IntersectionObserver' in window && qpFinalCta) {
+        const qpFinalCtaObserver = new IntersectionObserver(qpEntries => {
+          if (!qpEntries[0]?.isIntersecting) return;
+          qpFinalCta.classList.add('qp-final-cta-reveal');
+          qpFinalCtaObserver.disconnect();
+        },{threshold:.24});
+        qpFinalCtaObserver.observe(qpFinalCta);
+      } else {
+        qpFinalCta?.classList.add('qp-final-cta-reveal');
+      }
+
+      if (qpGlassStart && window.matchMedia('(hover: hover) and (pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        qpGlassStart.addEventListener('pointermove',qpEvent => {
+          const qpRect = qpGlassStart.getBoundingClientRect();
+          const qpX = qpEvent.clientX - qpRect.left;
+          const qpY = qpEvent.clientY - qpRect.top;
+          const qpNormalizedX = qpX / qpRect.width - .5;
+          const qpNormalizedY = qpY / qpRect.height - .5;
+          qpGlassStart.style.setProperty('--qp-glass-x',`${qpX}px`);
+          qpGlassStart.style.setProperty('--qp-glass-y',`${qpY}px`);
+          qpGlassStart.style.setProperty('--qp-glass-magnet-x',`${qpNormalizedX * 5}px`);
+          qpGlassStart.style.setProperty('--qp-glass-magnet-y',`${qpNormalizedY * 3}px`);
+        });
+        qpGlassStart.addEventListener('pointerleave',() => {
+          qpGlassStart.style.setProperty('--qp-glass-magnet-x','0px');
+          qpGlassStart.style.setProperty('--qp-glass-magnet-y','0px');
+        });
+      }
+
+      document.getElementById('qpLogin').addEventListener('click',() => {
+        const qpLoginText = document.getElementById('qpLoginText');
+        qpLoginText.textContent = qpLoginText.textContent === '登录' ? '演示访客' : '登录';
+      });
+    })();
+  </script>
+</body>
+</html>

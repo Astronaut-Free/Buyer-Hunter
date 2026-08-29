@@ -1,455 +1,473 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>黔脉 QianPulse · 全球商机平台</title><style>
-:root{--g:#126247;--ink:#1d3027;--muted:#718078;--line:#e3e9e4;--bg:#f4f7f4;--paper:#fffefa;--slot:#dfe5df;--red:#b84f43}*{box-sizing:border-box}body{margin:0;background:#d1d0ce;color:var(--ink);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea{font:inherit}.view{display:none}.view.active{display:block}.home{max-width:1900px;margin:auto;padding:28px 34px;background:#d6d5d3;min-height:100vh}.paper{position:relative;width:min(1490px,calc(100% - 150px));margin:0 auto;padding:20px 20px 50px;background:var(--paper);box-shadow:0 14px 38px #142d211c}.hero{height:605px;position:relative;overflow:hidden;border-radius:7px;background:#d8e0da;display:grid;place-items:center;color:#849289;letter-spacing:1.4px}.hero:before{content:"主视觉图片预留区"}.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#123529e8,#1235298c 52%,#12352917)}.nav{position:absolute;z-index:3;left:20px;right:20px;top:19px;height:58px;display:flex;align-items:center;gap:18px;color:#fff;background:#173c2ed9;border-radius:6px;padding:0 18px}.brand{font-weight:800;font-size:19px;white-space:nowrap}.brand small{display:block;color:#c4d8cb;font-size:8px;letter-spacing:1.2px}.links{display:flex;gap:4px;flex:1}.links button,.links a{border:0;background:transparent;color:#dbe8df;padding:8px 10px;text-decoration:none;border-radius:4px}.links button.active,.links a.active{background:#f5f5f0;color:#46534c;font-weight:800}.search{width:220px;border:0;background:#f3f5f1;border-radius:18px;padding:9px 13px}.circle{width:36px;height:36px;border:1px solid #fff6;background:#fff2;border-radius:50%;color:#fff}.intro{position:absolute;z-index:3;left:18px;top:45%;background:#f4f5f2ed;border-radius:7px;padding:20px 24px;width:455px;color:#5c635e;box-shadow:0 8px 18px #0002}.intro small{color:var(--g);font-size:10px;font-weight:800;letter-spacing:1.3px}.intro h1{font-size:33px;line-height:1.22;margin:7px 0}.hero-copy{position:absolute;z-index:3;left:25px;bottom:30px;color:#fff;width:470px}.hero-copy p{color:#e0ebe3;line-height:1.6}.cta{border:0;border-radius:20px;background:#f3e5b3;color:#20372b;padding:10px 16px;font-weight:800}.float{position:absolute;z-index:3;right:34px;bottom:30px;background:#173d2fe8;color:#fff;border:1px solid #fff5;border-radius:7px;padding:14px;width:180px}.float small{color:#ccded3}.float b{display:block;color:#fff2c4;font-size:34px}.float em{font-size:11px;font-style:normal;color:#d3e6da}.section{padding:52px 8px 0}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:16px}.section h2{font-size:26px;margin:0}.section-head p{color:var(--muted);margin:4px 0 0}.filters{display:flex;gap:7px}.filters button{border:1px solid var(--line);background:#fff;border-radius:5px;padding:7px 10px;color:var(--muted)}.filters .active{background:#e7f0e8;color:var(--g);border-color:#b8d2be;font-weight:800}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;cursor:pointer;transition:.2s}.card:hover,.card.selected{transform:translateY(-5px);box-shadow:0 14px 26px #1631261c;border-color:#a8cbb2}.card-image{height:170px;background:var(--slot);display:grid;place-items:center;color:#93a198;font-size:11px;letter-spacing:1px;position:relative}.card-image:before{content:"图片预留"}.status{position:absolute;left:12px;top:12px;background:#fffde5d9;color:var(--g);padding:4px 8px;border-radius:13px;font-size:10px;font-weight:800}.status.risk{color:#a84b40;background:#fdeae5}.status.warn{color:#93691f;background:#fff0d2}.card-score{position:absolute;right:12px;top:12px;border-radius:50%;width:42px;height:42px;background:#fffffff0;color:var(--g);display:grid;place-items:center;font-weight:900}.card-body{padding:13px}.dots{display:flex;gap:5px}.dots i{width:12px;height:12px;border-radius:50%;background:#8ab29e}.dots i:nth-child(2){background:#d9b66a}.dots i:nth-child(3){background:#789386}.card h3{font-size:16px;line-height:1.35;margin:9px 0 5px;min-height:43px}.card p{font-size:12px;color:var(--muted);min-height:36px;margin:0}.card-foot{display:flex;justify-content:space-between;border-top:1px solid var(--line);margin-top:10px;padding-top:9px;align-items:center}.card-foot b{font-size:15px}.card-foot button{border:0;background:var(--g);color:#fff;border-radius:17px;padding:7px 11px}.details{display:none;margin-top:22px;padding:20px;background:#f5f8f3;border:1px solid var(--line);border-radius:7px}.details.show{display:grid;grid-template-columns:1.15fr .85fr;gap:20px}.details h2{margin:4px 0;font-size:24px}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.facts div{background:#fff;border-radius:5px;padding:9px;font-size:11px}.facts small{display:block;color:var(--muted)}.decision{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px}.decision b{font-size:30px;color:var(--g)}.risk-box{background:#fff4db;border:1px solid #eed6a0;padding:9px;border-radius:5px;color:#76591e;font-size:12px;margin:10px 0}.decision button{width:100%;border:0;background:var(--g);color:#fff;padding:10px;border-radius:5px;font-weight:800}.banner-slot{height:280px;margin-top:55px;background:#e3e8e2;display:grid;place-items:center;color:#8a978e;font-size:12px;letter-spacing:1px;position:relative}.banner-slot:before{content:"宽幅叙事图片预留区"}.banner-copy{position:absolute;left:20px;bottom:20px;background:#f5f5f1e8;padding:14px 17px;border-radius:6px;color:#5b635d;font-size:20px;font-weight:800}.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:40px 0}.pillar{background:#f0f1e5;border-radius:7px 35px 35px 7px;padding:20px;font-weight:800}.pillar i{font-style:normal;color:var(--g);font-size:20px;margin-right:12px}
-.workspace{height:100vh;background:var(--bg);display:grid;grid-template-columns:218px 430px minmax(620px,1fr)}.ws-side{background:#123226;color:#d7e6dd;padding:20px 13px;border-right:1px solid #244b3b;position:relative}.ws-brand{font-size:19px;font-weight:800;padding:2px 10px 23px;border-bottom:1px solid #345747}.ws-brand small{display:block;font-size:9px;letter-spacing:1.3px;color:#9fc0b0}.home-link{display:block;color:#bbd5c8;text-decoration:none;margin:15px 6px 0;font-size:11px}.new-task{display:flex;justify-content:center;width:100%;margin:15px 0;border:1px solid #4c7763;background:#1c4a38;color:#fff;border-radius:6px;padding:10px;font-weight:800}.nav-label{font-size:10px;color:#82a395;letter-spacing:1.1px;margin:19px 10px 6px}.ws-side button:not(.new-task){width:100%;border:0;background:transparent;color:#b7cec1;text-align:left;padding:10px;border-radius:5px;margin:2px 0}.ws-side button.active,.ws-side button:not(.new-task):hover{background:#1d4b3a;color:#fff}.task{margin:5px 4px;padding:9px;border:1px solid #315b49;border-radius:6px;background:#193f30;font-size:11px}.task small{display:block;color:#a9c5b7}.side-foot{position:absolute;bottom:18px;color:#91ad9e;font-size:11px;padding:0 10px}.chat,.results{display:flex;flex-direction:column;min-width:0}.chat{background:#fff;border-right:1px solid var(--line)}.chat-head,.result-head{height:66px;border-bottom:1px solid var(--line);padding:0 20px;display:flex;align-items:center;justify-content:space-between}.chat-head b,.result-head b{font-size:15px}.chat-head span,.result-head span{font-size:11px;color:var(--muted)}.messages{flex:1;overflow:auto;padding:20px}.bubble{max-width:92%;border-radius:8px;padding:12px 13px;margin-bottom:13px}.user{margin-left:auto;background:#e7f2eb;color:#275542}.agent{background:#f4f7f4;border:1px solid #e6ebe7}.agent-title{font-size:11px;color:var(--g);font-weight:800;margin-bottom:6px}.parse{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.parse div{background:#fff;border:1px solid var(--line);padding:7px;border-radius:4px}.parse small{display:block;color:var(--muted);font-size:10px}.confirm{display:flex;gap:8px;margin-top:10px}.confirm button{border:0;border-radius:5px;padding:8px 10px;font-weight:800;background:var(--g);color:#fff}.confirm button.secondary{background:#fff;border:1px solid var(--line);color:var(--muted)}.step{display:flex;gap:9px;margin:11px 0;font-size:12px}.step i{width:17px;height:17px;border-radius:50%;background:#e5ebe7;color:#718078;display:grid;place-items:center;font-style:normal;font-size:10px;flex:0 0 auto}.step.done i{background:#d8efdf;color:var(--g)}.step.live i{background:#fff2d4;color:#966e21}.suggestions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.suggestions button{font-size:11px;background:#fff;border:1px solid var(--line);border-radius:15px;padding:6px 9px;color:#557064}.composer{border-top:1px solid var(--line);padding:13px}.composer-box{display:flex;gap:8px;border:1px solid #cfdcd4;border-radius:7px;padding:8px}.composer textarea{border:0;resize:none;outline:0;flex:1;height:42px}.composer button{border:0;background:var(--g);color:#fff;border-radius:5px;width:38px;font-size:18px}.results{background:#fbfcfb}.result-head{background:#fff}.controls{display:flex;align-items:center;gap:8px}.controls button{border:1px solid var(--line);background:#fff;border-radius:5px;padding:6px 9px;color:var(--muted);font-size:11px}.count{background:var(--green-bg,#e5f3eb);color:var(--g);padding:4px 7px;border-radius:4px;font-weight:800}.table-wrap{flex:1;overflow:auto}.table{min-width:820px}.tr{display:grid;grid-template-columns:28px 1.25fr 1.55fr .85fr .7fr .8fr 1fr;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff}.tr.head{position:sticky;top:0;z-index:2;background:#f6f8f6;color:var(--muted);font-size:11px;font-weight:700}.tr:not(.head){font-size:12px;animation:reveal .45s ease both}.tr:hover{background:#f3faf6}.buyer b{display:block;font-size:12px}.buyer small,.demand small{color:var(--muted);font-size:10px}.platform{display:inline-flex;align-items:center;gap:5px}.dot{width:7px;height:7px;background:var(--g);border-radius:50%}.tag{display:inline-block;font-size:10px;border-radius:4px;padding:3px 5px;background:#e8f3eb;color:var(--g);font-weight:800}.tag.wait{background:#fff1d6;color:#916a1e}.tag.block{background:#fdeae7;color:var(--red)}.score2{font-weight:900;color:var(--g);font-size:15px}.action{background:transparent;border:0;color:var(--g);font-size:11px;font-weight:800;cursor:pointer}.empty{padding:28px 18px;color:var(--muted);font-size:12px}@keyframes reveal{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}@media(max-width:1050px){.paper{width:calc(100% - 40px)}.cards{grid-template-columns:repeat(2,1fr)}.workspace{grid-template-columns:185px 385px minmax(560px,1fr)}}@media(max-width:740px){.workspace{display:block;height:auto}.ws-side{display:none}.chat{height:58vh}.results{height:60vh}}@media(max-width:620px){.home{padding:0}.paper{width:100%;margin:0;padding:0 0 35px;box-shadow:none}.hero{height:600px;border-radius:0}.nav{left:12px;right:12px;top:12px}.search,.circle{display:none}.intro{top:150px;left:18px;width:calc(100% - 36px)}.intro h1{font-size:27px}.hero-copy{left:20px;right:20px;width:auto;bottom:22px}.float{right:18px;bottom:18px;width:150px}.section{padding:33px 16px 0}.section-head{display:block}.filters{margin-top:12px;overflow:auto}.cards{grid-template-columns:1fr}.card-image{height:130px}.details{margin:20px 16px 0}.details.show{display:block}.facts,.pillars{grid-template-columns:1fr}.banner-slot{height:230px}.banner-copy{font-size:16px;max-width:80%}}
-</style>
-<style>
-.workspace{min-height:0}.chat,.results{min-height:0}.messages{min-height:0;overscroll-behavior:contain}.chat .composer{flex:0 0 auto}
-.conversation-hint{display:block;margin-top:10px;color:#718078;font-size:11px}
-.handoff{background:#fff0dc;color:#97621b}.intent{color:var(--g);font-weight:800}.chat-handoff{border:1px solid #b9d8c4;background:#eff8f1}.handoff-title{font-size:11px;color:var(--g);font-weight:800;margin-bottom:6px}.handoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px}.handoff-grid div{background:#fff;border-radius:4px;padding:6px}.handoff-grid small{display:block;color:var(--muted);font-size:9px}.handoff-actions{display:flex;gap:7px;margin-top:9px}.handoff-actions button{border:0;border-radius:4px;padding:7px 9px;background:var(--g);color:#fff;font-size:11px;font-weight:800}.handoff-actions button.alt{background:#fff;color:var(--muted);border:1px solid var(--line)}
- </style><style>
-/* AI 初筛 / 人工接管结果列 */
-.table{min-width:1060px}.tr{grid-template-columns:28px 1.05fr 1.4fr .72fr .52fr .52fr .68fr .86fr 1fr;gap:9px}.handoff{background:#fff0dc;color:#97621b}.human{background:#fde7e3;color:#a34235}.nurture{background:#edf3f7;color:#4d6b80}.conversation{font-size:10px;font-weight:800;color:#547064}.conversation small{display:block;color:var(--muted);font-size:9px;font-weight:400}.action.compact{border:1px solid #b8d6c2;border-radius:4px;padding:6px 7px;background:#f7fbf8}
-</style><style>
-/* Business workflow modules: static MVP state, ready to be replaced by API calls. */
-.biz-view{min-height:100vh;background:#f4f7f4;padding:28px}.biz-shell{max-width:1200px;margin:auto}.biz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.biz-top h1{font-size:25px;margin:0}.biz-top p{margin:3px 0;color:var(--muted)}.biz-back,.biz-primary,.biz-secondary{border-radius:5px;padding:9px 12px;font-weight:800;cursor:pointer}.biz-back,.biz-secondary{border:1px solid var(--line);background:#fff;color:#557064}.biz-primary{border:0;background:var(--g);color:#fff}.biz-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{border:1px solid var(--line);background:#fff;border-radius:7px;padding:18px}.panel h2{font-size:16px;margin:0 0 12px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:4px}.field label{font-size:11px;color:var(--muted);font-weight:800}.field input,.field select,.field textarea{border:1px solid #d5e0d8;border-radius:5px;padding:9px;outline-color:var(--g);background:#fff}.field textarea{min-height:75px;resize:vertical}.field.full{grid-column:1/-1}.completeness{padding:12px;background:#edf7ef;border:1px solid #cae2d1;border-radius:6px}.completeness b{color:var(--g);font-size:20px}.progress{height:7px;background:#dce8df;border-radius:5px;overflow:hidden;margin-top:7px}.progress i{display:block;height:100%;background:var(--g);width:0;transition:.25s}.hint{font-size:11px;color:var(--muted);margin:8px 0 0}.evidence{position:fixed;z-index:10;top:0;right:0;width:min(520px,100vw);height:100vh;background:#fff;box-shadow:-10px 0 30px #0002;transform:translateX(105%);transition:.25s;overflow:auto;padding:21px}.evidence.show{transform:none}.drawer-head{display:flex;justify-content:space-between;align-items:start;border-bottom:1px solid var(--line);padding-bottom:14px}.close{border:0;background:#f0f3f0;border-radius:50%;width:30px;height:30px;font-size:17px}.evidence-section{padding:14px 0;border-bottom:1px solid var(--line)}.evidence-section h3{font-size:12px;margin:0 0 8px;color:var(--g)}.quote{padding:10px;background:#f5f8f5;border-left:3px solid #8dbb9b;border-radius:3px;font-size:12px}.fact-row{display:grid;grid-template-columns:100px 1fr;gap:10px;font-size:12px;margin:7px 0}.fact-row small{color:var(--muted)}.fact{color:#246b4b;font-weight:800}.inference{color:#916a1e;font-weight:800}.recommend{color:#466778;font-weight:800}.crm-board{display:grid;grid-template-columns:repeat(5,minmax(215px,1fr));gap:12px;align-items:start;overflow:auto;padding-bottom:18px}.crm-col{min-height:410px;background:#e9efea;border-radius:6px;padding:10px}.crm-col h3{font-size:12px;margin:0 0 10px;display:flex;justify-content:space-between}.crm-card{background:#fff;border:1px solid #dce5de;border-radius:6px;padding:10px;margin-bottom:9px;box-shadow:0 2px 5px #1025160a}.crm-card b{display:block;font-size:12px}.crm-card p{font-size:11px;margin:5px 0;color:var(--muted)}.crm-card footer{display:flex;justify-content:space-between;color:#587466;font-size:10px;border-top:1px solid var(--line);padding-top:7px}.badge{font-size:10px;font-weight:800;padding:3px 5px;border-radius:4px;background:#e5f2e9;color:var(--g)}.empty-card{color:var(--muted);font-size:11px;padding:9px}.biz-actions{display:flex;gap:8px;flex-wrap:wrap}.business-entry{display:flex;gap:8px}.business-entry button{border:1px solid #cfe0d4;background:#f9fcf9;color:var(--g);padding:6px 8px;border-radius:4px;font-size:11px;font-weight:800}@media(max-width:720px){.biz-view{padding:18px}.biz-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.biz-top{align-items:start;gap:12px}.biz-top .biz-actions{justify-content:end}.crm-board{grid-template-columns:repeat(5,230px)}}
-.product-list{display:grid;gap:9px}.product-item{border:1px solid var(--line);border-radius:6px;padding:11px;background:#fbfdfb}.product-item header{display:flex;justify-content:space-between;align-items:start}.product-item b{font-size:13px}.product-item p{font-size:11px;color:var(--muted);margin:5px 0}.product-meta{display:flex;gap:5px;flex-wrap:wrap}.product-meta span{background:#edf5ef;color:#376c50;border-radius:4px;padding:3px 5px;font-size:10px}.product-actions{display:flex;gap:10px;margin-top:9px}.product-actions button{border:0;background:transparent;color:var(--g);font-size:11px;font-weight:800;padding:0;cursor:pointer}.product-status{font-size:10px;padding:3px 6px;border-radius:4px;background:#e5f2e9;color:var(--g);font-weight:800}.product-status.draft{background:#fff0dc;color:#97621b}
-</style>
-<style>
-/* Active business tab follows the visible panel */
-.biz-top .biz-actions>button.active-tab{border-color:var(--g);background:var(--g);color:#fff;box-shadow:0 3px 8px #12624726}
-.biz-top .biz-actions>.biz-primary:not(.active-tab){border:1px solid var(--line);background:#fff;color:#557064;box-shadow:none}
-/* QianPulse V15 information architecture */
-.qianpulse-v15 .hero{min-height:620px;background:linear-gradient(135deg,#dfe7df 0%,#cbd9ce 42%,#aabfae 100%)}
-.qianpulse-v15 .hero:before{content:"品牌主视觉图片预留区";font-size:12px;letter-spacing:2px}
-.qianpulse-v15 .hero:after{background:linear-gradient(90deg,#123529ef 0%,#1235299a 45%,#12352918 100%)}
-.section-index{position:absolute;z-index:4;left:26px;top:24px;color:#f6e8b7;font-size:11px;letter-spacing:2px;font-weight:900}.section-index span{margin-left:10px;color:#d6e5da;font-weight:700;letter-spacing:.5px}.section-index.inline{position:static;color:var(--g);margin-bottom:9px}.section-index.inline span{color:var(--muted)}.section-index.light{color:#f6e8b7}.section-index.light span{color:#e5eee8}
-.qianpulse-v15 .section-head{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:end}.qianpulse-v15 .section-head .section-index{min-width:210px}.qianpulse-v15 .section h2{letter-spacing:-.4px}.qianpulse-v15 .banner-slot{height:320px;overflow:hidden;background:linear-gradient(120deg,#173d30,#527763 52%,#a8baa9)}.qianpulse-v15 .banner-slot:before{content:""}.qianpulse-v15 .v15-overlay{position:absolute;inset:0;padding:32px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,transparent 25%,#102f25d9)}.qianpulse-v15 .v15-overlay h2{font-size:27px;margin:4px 0}.qianpulse-v15 .v15-overlay p{max-width:590px;color:#d8e7dc;margin:0;line-height:1.7}.v15-pillar-head{grid-column:1/-1;display:flex;align-items:end;justify-content:space-between;margin-bottom:5px}.v15-pillar-head p{color:var(--muted);margin:0}.qianpulse-v15 .pillars{grid-template-columns:repeat(3,1fr);margin-top:12px}.qianpulse-v15 .pillar{min-height:100px;display:flex;align-items:center}.agent-teaser{margin-top:42px;padding:28px 30px;background:#173d30;border-radius:8px;color:#fff;display:flex;align-items:end;justify-content:space-between;gap:22px;position:relative;overflow:hidden}.agent-teaser:after{content:"AI";position:absolute;right:25px;top:-35px;font-size:170px;font-weight:900;color:#ffffff0b}.agent-teaser h2{font-size:25px;margin:7px 0}.agent-teaser p{max-width:640px;color:#cfe1d4;margin:0}.agent-teaser .cta{position:relative;z-index:1;white-space:nowrap}.login-link{margin-left:4px;border:1px solid #d4e4d9!important;color:#fff!important;padding:8px 13px!important}
-@media(max-width:740px){.qianpulse-v15 .section-head{display:block}.qianpulse-v15 .section-head .section-index{margin-bottom:12px}.v15-pillar-head{display:block}.v15-pillar-head p{margin-top:8px}.agent-teaser{display:block;padding:25px 20px}.agent-teaser .cta{margin-top:18px}.qianpulse-v15 .banner-slot{height:300px}}
-</style></head><body>
-<style>
-.auth-view{min-height:100vh;background:#f4f7f4;display:grid;place-items:center;padding:24px}.auth-card{width:min(470px,100%);background:#fff;border:1px solid var(--line);border-radius:8px;padding:30px;box-shadow:0 16px 35px #16312618}.auth-card h1{margin:0 0 5px;font-size:25px}.auth-card .auth-sub{color:var(--muted);margin:0 0 22px}.auth-mode{display:flex;gap:6px;margin-bottom:18px}.auth-mode button{flex:1;border:1px solid var(--line);background:#fff;color:var(--muted);padding:9px;border-radius:5px;font-weight:800}.auth-mode button.active{background:#e5f2e9;border-color:#b8d6c2;color:var(--g)}.auth-form{display:grid;gap:11px}.auth-form label{font-size:11px;color:var(--muted);font-weight:800}.auth-form input{width:100%;border:1px solid #d5e0d8;border-radius:5px;padding:10px;outline-color:var(--g)}.auth-form button[type=submit]{margin-top:6px;border:0;border-radius:5px;background:var(--g);color:#fff;padding:11px;font-weight:800}.auth-switch{border:0;background:transparent;color:var(--g);font-weight:800;cursor:pointer}.auth-message{min-height:18px;color:#a34235;font-size:11px;margin:8px 0 0}.auth-back{border:0;background:transparent;color:var(--muted);padding:0;margin-bottom:15px;cursor:pointer}
-.run-timeline{margin:12px 16px;background:#f4f8f5;border:1px solid #dbe8de;border-radius:6px;padding:12px}.run-timeline header{display:flex;justify-content:space-between;align-items:center;color:var(--g);font-weight:800;font-size:12px}.run-timeline ol{list-style:none;padding:0;margin:9px 0 0;display:grid;gap:6px}.run-timeline li{font-size:11px;color:#587466}.run-timeline li.done:before{content:'✓';color:var(--g);font-weight:900;margin-right:7px}.run-timeline li.wait:before{content:'●';color:#a27624;margin-right:7px}.run-timeline button{border:1px solid #b8d6c2;background:#fff;color:var(--g);border-radius:4px;padding:5px 8px;font-size:10px;font-weight:800}
-</style>
-<div id="auth" class="view"><main class="auth-view"><section class="auth-card"><button class="auth-back" onclick="showHome()">← 返回主页</button><h1>黔脉 QianPulse</h1><p class="auth-sub" id="auth-title">登录你的商机工作台</p><div class="auth-mode"><button id="auth-login-mode" class="active" onclick="setAuthMode('login')">登录</button><button id="auth-register-mode" onclick="setAuthMode('register')">注册</button></div><form id="auth-form" class="auth-form" onsubmit="submitAuth(event)"><div><label>邮箱</label><input id="auth-email" type="email" required placeholder="name@company.com"></div><div><label>密码（至少 8 位）</label><input id="auth-password" type="password" minlength="8" required placeholder="请输入密码"></div><div id="auth-role-wrap" style="display:none"><label>注册身份</label><select id="auth-role"><option value="SELLER">我是卖家</option><option value="BUYER">我是买家</option></select></div><div id="auth-company-wrap" style="display:none"><label>公司名称</label><input id="auth-company" placeholder="公司或品牌名称"></div><button type="submit" id="auth-submit">登录</button></form><p class="auth-message" id="auth-message"></p><p style="text-align:center;font-size:11px;color:var(--muted)" id="auth-hint">还没有账号？ <button class="auth-switch" onclick="setAuthMode('register')">立即注册</button></p></section></main></div>
-<div id="home" class="view active"><main class="home"><div class="paper"><section class="hero"><nav class="nav"><div class="brand">买家猎手<small>BUYING MOMENT ENGINE</small></div><div class="links"><button class="active">首页</button><button>机会雷达</button><a href="#workspace" onclick="showWorkspace();return false">AI 工作台</a><button>产品库</button><button>市场准入</button></div><input class="search" placeholder="搜索买家需求…"><button class="circle">⌁</button><button class="circle">◌</button></nav><div class="intro"><small>WHAT WE DO</small><h1>让全球买家需求，<br>直接连接贵州供应商。</h1></div><div class="hero-copy"><p>买家猎手从公开 RFQ、企业新品和交易变化中识别采购窗口，完成规格与准入判断，把“谁值得联系”变成一笔可执行的商机。</p><button class="cta" onclick="document.querySelector('#opps').scrollIntoView({behavior:'smooth'})">探索今日机会　→</button></div><aside class="float"><small>今日采购窗口</small><b>5 条</b><em>3 条高意向需求待跟进</em></aside></section><section class="section"><div class="section-head"><div><h2>高意向采购机会</h2><p>每条需求都有来源、匹配解释和建议动作。</p></div><div class="filters"><button class="active" data-f="all">全部</button><button data-f="matcha">贵州抹茶</button><button data-f="blueberry">蓝莓</button><button data-f="open">窗口打开</button></div></div><div class="cards" id="opps"></div><div class="details" id="details"></div><div class="banner-slot"><div class="banner-copy">从“找得到买家”，到“判断今天是否值得追”。</div></div><div class="pillars"><div class="pillar"><i>⌕</i>可追溯的原始采购证据</div><div class="pillar"><i>◈</i>规格、认证与产能匹配</div><div class="pillar"><i>↗</i>报价、寄样或补证行动</div></div></section></div></main></div>
-<div id="workspace" class="view"><main class="workspace"><aside class="ws-side"><div class="ws-brand">买家猎手<small>BUYING MOMENT ENGINE</small></div><a class="home-link" href="#home" onclick="showHome();return false">← 返回首页</a><button class="new-task" onclick="resetTask()">＋ 新建机会搜索</button><div class="nav-label">工作台</div><button class="active">◈　AI 机会搜索</button><button>◎　历史任务</button><button>♡　我的机会库</button><div class="nav-label">我的供给</div><button>□　产品与能力</button><button>◇　市场准入资料</button><div class="nav-label">最近任务</div><div class="task"><b>美国有机抹茶采购机会</b><small>刚刚 · 5 条高优机会</small></div><div class="task"><b>日本烘焙原料买家</b><small>昨天 · 已完成</small></div><div class="side-foot">贵州产业带 · 18 个 SKU 已接入</div></aside><section class="chat"><header class="chat-head"><div><b>AI 机会搜索</b><br><span>自然语言定义采购目标</span></div><span id="status">等待卖家输入</span></header><div class="messages" id="messages"><div class="bubble agent"><div class="agent-title">黔脉智能体</div>告诉我你想找什么样的买家。我会先整理产品、数量和市场，再请你确认后开始匹配。</div></div><div class="composer"><div class="composer-box"><textarea id="input" placeholder="例如：找美国每月500kg有机抹茶的饮料品牌"></textarea><button onclick="send()">↑</button></div></div></section><section class="results"><header class="result-head"><div><b>采购机会结果</b><br><span>确认任务后显示真实买家需求</span></div><div class="controls"><button>按机会分⌄</button><button>全部平台⌄</button><span class="count" id="count">0 条</span></div></header><div class="table-wrap"><div class="table"><div class="tr head"><span></span><span>买家</span><span>采购需求 / 窗口</span><span>信号来源</span><span>匹配</span><span>准入</span><span>下一步</span></div><div id="rows"><div class="empty">输入采购目标后，AI 会先生成确认卡。</div></div></div></div></section></main></div>
-<div id="business" class="view"><main class="biz-view"><div class="biz-shell"><header class="biz-top"><div><h1>业务工作台</h1><p>完善供给、核验证据并推进真实商机。</p></div><div class="biz-actions"><button class="biz-back" onclick="showWorkspace()">← AI 工作台</button><button class="biz-primary" onclick="showSeller()">卖家供给档案</button><button class="biz-secondary" onclick="showDemand()">发布买家需求</button><button class="biz-secondary" onclick="showCRM()">CRM 接管看板</button></div></header><section id="seller-panel" class="biz-grid"><div class="panel"><h2>卖家入驻 / 供给档案</h2><div class="form-grid"><div class="field"><label>企业名称</label><input id="seller-company" placeholder="例如：贵州黔茶产业有限公司"></div><div class="field"><label>联系人</label><input placeholder="姓名 / 职务"></div><div class="field"><label>产品 SKU</label><input id="seller-sku" placeholder="贵州抹茶粉 · 饮品级"></div><div class="field"><label>规格</label><input placeholder="目数、包装、等级"></div><div class="field"><label>MOQ</label><input placeholder="500 kg"></div><div class="field"><label>月产能</label><input placeholder="10 t"></div><div class="field"><label>样品周期</label><input placeholder="7 天"></div><div class="field"><label>目标国家</label><input placeholder="美国、日本、欧盟"></div><div class="field full"><label>认证与准入资料</label><input placeholder="USDA Organic / FDA / JAS / HACCP"></div></div><div class="biz-actions" style="margin-top:14px"><button class="biz-primary" onclick="saveSeller()">保存档案草稿</button><span class="hint" id="seller-save">可随时补充，保存后参与匹配。</span></div></div><div class="panel"><h2>档案完整度</h2><div class="completeness"><b id="seller-percent">0%</b><div>建议先补齐规格、证书和目标市场，匹配结果会更可靠。</div><div class="progress"><i id="seller-progress"></i></div></div><div class="evidence-section"><h3>匹配会使用的字段</h3><div class="fact-row"><small>能力</small><span>MOQ、月产能、样品周期、交付周期</span></div><div class="fact-row"><small>产品</small><span>等级、目数、包装、OEM 能力</span></div><div class="fact-row"><small>准入</small><span>证书类型、适用市场、有效期</span></div></div></div></section><section id="demand-panel" class="panel" style="display:none"><h2>买家主动发布结构化需求</h2><div class="form-grid"><div class="field"><label>公司名称</label><input id="demand-company" placeholder="公司或品牌名称"></div><div class="field"><label>所在国家</label><input placeholder="美国 / 日本 / 欧盟"></div><div class="field"><label>产品类别</label><input placeholder="抹茶、蓝莓或其他"></div><div class="field"><label>具体规格</label><input placeholder="等级、包装、认证要求"></div><div class="field"><label>预计采购量</label><input placeholder="数量 + 单位 + 周期"></div><div class="field"><label>目标交付时间</label><input placeholder="例如：2026 Q4"></div><div class="field"><label>样品 / OEM</label><select><option>需要样品和 OEM</option><option>仅需要样品</option><option>暂不需要</option></select></div><div class="field"><label>展示方式</label><select><option>仅向匹配供应商展示</option><option>公开需求</option><option>匿名发布</option></select></div><div class="field full"><label>补充说明</label><textarea placeholder="采购用途、预算区间、准入要求或其他信息"></textarea></div></div><div class="biz-actions" style="margin-top:14px"><button class="biz-primary" onclick="publishDemand()">提交需求并生成匹配</button><span class="hint" id="demand-save">提交后 AI 会先标准化字段，再请求买家确认。</span></div></section><section id="crm-panel" style="display:none"><div class="panel" style="margin-bottom:14px"><h2>人工接管 CRM 看板</h2><p class="hint">接管后由负责人推进联系、样品、报价和成交；每次状态变更都应留下记录。</p></div><div class="crm-board" id="crm-board"></div></section></div></main></div><aside id="evidence-drawer" class="evidence"></aside><div class="toast" id="toast">已生成中 / 英 / 日首封跟进邮件</div>
-<script>
-const DATA=[{id:1,c:'matcha',score:94,status:'窗口打开',country:'美国',buyer:'饮料品牌',title:'采购有机抹茶粉，用于新品饮料',qty:'500 kg / 月',tags:['Organic','OEM','800目+'],why:'7天前发布新 RFQ，官网同步上线抹茶新品。',fit:'5 / 6 项满足',access:'补条件',action:'先发样品与认证清单',risk:'USDA Organic 文件待确认；FDA 食品进口要求已覆盖。'},{id:2,c:'matcha',score:87,status:'可进入',country:'日本',buyer:'食品企业',title:'寻找稳定的第二抹茶供应源',qty:'1 t / 季',tags:['食品级','JAS','长期合作'],why:'采购频率提升，并出现第二供应商信号。',fit:'6 / 6 项满足',access:'PASS',action:'切入第二供应源',risk:'预算未披露，建议首轮确认目标价格带。'},{id:3,c:'matcha',score:81,status:'风险',country:'欧盟',buyer:'零售品牌',title:'定制品牌抹茶粉与零售包装',qty:'2,000 units',tags:['Private label','农残','定制包装'],why:'定制需求明确，但农残标准和有机文件待核验。',fit:'4 / 6 项满足',access:'待复核',action:'先做准入核验',risk:'欧盟农残限量、标签声称与有机文件待确认。'},{id:4,c:'blueberry',score:79,status:'窗口打开',country:'韩国',buyer:'烘焙集团',title:'冷冻蓝莓原料年度采购',qty:'20 t / 年',tags:['IQF','冷链','框架采购'],why:'年度采购即将截止，买家正比较第二供应源。',fit:'5 / 6 项满足',access:'PASS',action:'立即报价并寄样',risk:'冷链交付时效需确认。'}];let selected=1,filter='all';const cards=document.querySelector('#opps'),details=document.querySelector('#details');function tone(o){return o.status==='风险'?'risk':o.status==='可进入'?'':'warn'}function draw(){document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===filter));cards.innerHTML=DATA.filter(o=>filter==='all'||o.c===filter||(filter==='open'&&o.status==='窗口打开')).map(o=>`<article class="card ${o.id===selected?'selected':''}" onclick="showHomeDetail(${o.id})"><div class="card-image"><span class="status ${tone(o)}">${o.status}</span><span class="card-score">${o.score}</span></div><div class="card-body"><div class="dots"><i></i><i></i><i></i></div><h3>${o.country} · ${o.buyer}<br>${o.title}</h3><p>${o.why}</p><div class="chips">${o.tags.map(t=>`<span style="font-size:10px;background:#f2f4f0;padding:3px 5px;border-radius:4px;margin-right:4px">${t}</span>`).join('')}</div><div class="card-foot"><b>${o.qty}</b><button>查看　→</button></div></div></article>`).join('')}function showHomeDetail(id){selected=id;draw();const o=DATA.find(x=>x.id===id);details.className='details show';details.innerHTML=`<div><small style="color:var(--g);font-weight:800;letter-spacing:1px">${o.country} · 采购机会详情</small><h2>${o.title}</h2><p>${o.why} 建议下一步：${o.action}。</p><div class="facts"><div><small>原始 RFQ</small><b>需求已采集</b></div><div><small>买家变化</small><b>近期出现新信号</b></div><div><small>供需匹配</small><b>${o.fit}</b></div></div></div><aside class="decision"><small>机会分</small><b>${o.score}</b><p style="font-size:12px">市场准入：${o.access}</p><div class="risk-box">${o.risk}</div><button onclick="mail()">生成首封跟进邮件　→</button></aside>`}function mail(){const t=document.querySelector('#toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300)}document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filter=b.dataset.f;draw()});draw();
-let running=false,shown=0;const messages=document.querySelector('#messages'),rows=document.querySelector('#rows');function line(text,cls='agent'){const d=document.createElement('div');d.className='bubble '+cls;d.innerHTML=cls==='agent'?'<div class="agent-title">买家猎手 AI</div>'+text:text;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;return d}function startScan(){if(running)return;running=true;document.querySelector('#parse-card').querySelector('.confirm').innerHTML='<span style="color:var(--g);font-weight:800">任务已确认，正在扫描公开信号…</span>';document.querySelector('#status').textContent='AI 正在执行';line('<div class="step done"><i>✓</i>已锁定：美国 · 有机饮品级抹茶 · 500kg/月以上</div><div class="step live"><i>…</i>正在扫描公开 RFQ、企业新品和采购变化</div>');const steps=['已读取 36 条可追溯公开信号','正在识别买家主体与采购窗口','正在比对贵州供应能力与出口准入','已完成去重和优先级排序'];let n=0;const timer=setInterval(()=>{if(n<steps.length){line('<div class="step done"><i>✓</i>'+steps[n]+'</div>');if(n===1)appendRow();if(n===2)appendRow();n++}else{clearInterval(timer);appendRow();appendRow();running=false;document.querySelector('#status').textContent='任务已完成';line('扫描完成：从 36 条公开信号中确认 4 条高优机会。其中 1 条可直接报价，2 条需补充 Organic 文件，1 条建议先确认规格。<div class="suggestions"><button onclick="refine(\'只看最近7天\')">只看最近7天</button><button onclick="refine(\'仅可直接报价\')">仅可直接报价</button><button onclick="refine(\'再扩展50条\')">再扩展50条</button></div>')}} ,850)}function appendRow(){if(shown===0)rows.innerHTML='';if(shown>=DATA.length)return;const o=DATA[shown++],tag=o.access==='PASS'?'tag':o.access==='补条件'?'tag wait':'tag block';const r=document.createElement('div');r.className='tr';r.innerHTML=`<input type="checkbox"><div class="buyer"><b>${o.country} · ${o.buyer}</b><small>采购买家</small></div><div class="demand"><b>${o.need||o.title}</b><small>${o.why}</small></div><div class="platform"><i class="dot"></i>公开信号</div><div class="score2">${o.score}</div><div><span class="${tag}">${o.access}</span></div><button class="action" onclick="openAction('${o.buyer}')">${o.action}　→</button>`;rows.appendChild(r);document.querySelector('#count').textContent=shown+' 条'}function refine(text){line(text,'user');line('已应用条件：“'+text+'”。结果表已按当前筛选重新排序。')}function editTask(){line('请直接补充或修改市场、产品、数量、认证、交期等条件。')}function send(){const i=document.querySelector('#input'),v=i.value.trim();if(!v)return;line(v,'user');i.value='';line('已收到追问，我将按新条件更新机会结果。')}function openAction(buyer){line('请为「'+buyer+'」生成下一步行动方案：默认输出样品清单、认证资料清单和英文首封邮件草稿。')}function resetTask(){location.reload()}function showWorkspace(){document.querySelector('#home').classList.remove('active');document.querySelector('#workspace').classList.add('active');location.hash='workspace'}function showHome(){document.querySelector('#workspace').classList.remove('active');document.querySelector('#home').classList.add('active');location.hash='home'}if(location.hash==='#workspace')showWorkspace();
-</script><script>
-/* 演示状态：LLM 只负责理解与提问，接管判断由可解释规则完成。 */
-Object.assign(DATA[0],{fitScore:72,intentScore:81,conversationScore:58,confirmedFields:['用途','月采购量','样品测试'],missingFields:['预算','交付时间'],hardGaps:[],riskTopics:[],conversationStatus:'已确认样品意向'});
-Object.assign(DATA[1],{fitScore:86,intentScore:70,conversationScore:55,confirmedFields:['产品规格','采购周期','第二供应源意向'],missingFields:['目标价格'],hardGaps:[],riskTopics:[],conversationStatus:'已确认合作意向'});
-Object.assign(DATA[2],{fitScore:64,intentScore:75,conversationScore:45,confirmedFields:['包装方式','定制需求'],missingFields:['农残标准','有机证书'],hardGaps:[],riskTopics:[],conversationStatus:'待补准入信息'});
-Object.assign(DATA[3],{fitScore:75,intentScore:78,conversationScore:62,confirmedFields:['年度需求','冷链要求','样品意向'],missingFields:['到货时间'],hardGaps:[],riskTopics:[],conversationStatus:'已确认样品意向'});
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>黔脉 QianPulse｜AI 海外买家猎手</title>
+  <style>
+    :root { --warm-white:#f7f4ec; }
+    * { box-sizing:border-box; }
+    html,body { width:100%; min-height:100%; margin:0; overflow:hidden; }
+    body { color:var(--warm-white); background:#063d31; font-family:"Noto Serif SC","Songti SC",STSong,SimSun,serif; }
+    .hero {
+      position:relative; isolation:isolate; min-height:100svh; overflow:hidden;
+      background:
+        radial-gradient(ellipse 44% 92% at 74% 48%,rgba(6,76,58,.45),transparent 73%),
+        radial-gradient(ellipse 45% 85% at 12% 43%,rgba(18,91,72,.52),transparent 67%),
+        linear-gradient(118deg,#00372d 0%,#004735 48%,#013a2e 100%);
+    }
+    .hero::before {
+      content:""; position:absolute; z-index:-1; inset:0; opacity:.24;
+      background-image:radial-gradient(rgba(231,244,225,.19) .8px,transparent .9px),radial-gradient(rgba(0,11,7,.35) .8px,transparent .9px);
+      background-position:0 0,9px 10px; background-size:16px 16px,21px 21px; mix-blend-mode:soft-light;
+    }
+    .grid-lines {
+      position:absolute; left:-13vw; bottom:-42vh; width:90vw; height:68vh; opacity:.22; transform:rotate(3deg);
+      background:repeating-radial-gradient(ellipse 80% 41% at 50% 100%,transparent 0 19px,rgba(104,180,147,.36) 20px 21px,transparent 22px 39px);
+      mask-image:linear-gradient(to top,#000,transparent 92%); -webkit-mask-image:linear-gradient(to top,#000,transparent 92%);
+    }
+    .lightfall-canvas { position:absolute; z-index:0; inset:58px 0 0; width:100%; height:calc(100% - 58px); display:block; pointer-events:none; opacity:.5; mix-blend-mode:screen; filter:saturate(.78); mask-image:linear-gradient(90deg,#000 0%,#000 13%,rgba(0,0,0,.72) 21%,transparent 37%,transparent 63%,rgba(0,0,0,.72) 79%,#000 87%,#000 100%); -webkit-mask-image:linear-gradient(90deg,#000 0%,#000 13%,rgba(0,0,0,.72) 21%,transparent 37%,transparent 63%,rgba(0,0,0,.72) 79%,#000 87%,#000 100%); }
+    .globe-wrap { --globe-x:50%; --globe-y:89%; --globe-size:99.5vmin; position:absolute; z-index:1; width:min(var(--globe-size),1400px); aspect-ratio:1; left:var(--globe-x); top:var(--globe-y); transform:translate(-50%,-50%); filter:drop-shadow(0 28px 33px rgba(0,20,14,.16)); container-type:inline-size; }
+    .globe-breath-lines { position:absolute; z-index:0; left:50%; top:50%; width:118%; height:118%; overflow:visible; transform:translate(-50%,-50%); pointer-events:none; }
+    .globe-breath-lines path { fill:none; stroke:#f7f4ec; stroke-width:1; stroke-linecap:round; vector-effect:non-scaling-stroke; stroke-dasharray:108 26 54 230; filter:drop-shadow(0 0 4px rgba(247,244,236,.15)); animation:globe-line-breathe 6.8s ease-in-out infinite,globe-line-drift 24s linear infinite; }
+    .globe-breath-lines path:nth-child(2) { animation-delay:-1.7s,-8s; }
+    .globe-breath-lines path:nth-child(3) { animation-delay:-3.4s,-15s; }
+    .globe-breath-lines path:nth-child(4) { animation-delay:-5.1s,-20s; }
+    @keyframes globe-line-breathe { 0%,100% { stroke-opacity:.07; } 50% { stroke-opacity:.22; } }
+    @keyframes globe-line-drift { to { stroke-dashoffset:-418; } }
+    .hero-copy-art { --copy-x:51%; --copy-y:10.6vh; --copy-width:52.5vw; position:absolute; z-index:3; top:var(--copy-y); left:var(--copy-x); width:min(var(--copy-width),1720px); max-width:none; height:auto; transform:translateX(-50%); pointer-events:none; user-select:none; -webkit-user-select:none; }
+    .hero-cta { --cta-x:50.5%; --cta-y:-1.8%; --shine-angle:135deg; --shine-opacity:.45; position:absolute; isolation:isolate; z-index:4; left:var(--cta-x); top:var(--cta-y); transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:7px; width:max-content; min-width:0; height:clamp(34px,4.7cqw,42px); padding:0 5px 0 14px; overflow:hidden; color:#123b32; background:transparent; border:0; border-radius:999px; box-shadow:0 6px 16px rgba(32,24,6,.18); cursor:pointer; user-select:none; -webkit-user-select:none; white-space:nowrap; text-decoration:none; font:400 clamp(13px,2.6cqw,18px)/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.04em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
+    .hero-cta::before { content:""; position:absolute; z-index:-2; inset:-100%; background:conic-gradient(from var(--shine-angle),transparent 0 35%,rgba(255,249,232,.18) 42%,#fff9e8 48%,#d5a33f 52%,#fff9e8 56%,rgba(255,249,232,.18) 62%,transparent 68%); opacity:var(--shine-opacity); transition:opacity .18s ease; }
+    .hero-cta::after { content:""; position:absolute; z-index:-1; inset:1px; border-radius:999px; background:rgba(213,163,63,.96); box-shadow:0 1px 0 rgba(255,255,255,.34) inset; transition:background .24s ease; }
+    .hero-cta__arrow { display:grid; place-items:center; flex:0 0 auto; width:clamp(24px,3.7cqw,29px); height:clamp(24px,3.7cqw,29px); color:#f7f4ec; background:#123b32; border-radius:50%; font-size:clamp(12px,2cqw,15px); line-height:1; transition:color .24s ease,background .24s ease,transform .24s cubic-bezier(.2,.8,.2,1); }
+    .hero-cta:hover { color:#f7f4ec; transform:translate(-50%,calc(-50% - 2px)); box-shadow:0 10px 22px rgba(18,59,50,.28); }
+    .hero-cta:hover::after { background:#123b32; }
+    .hero-cta:hover .hero-cta__arrow { color:#123b32; background:#d5a33f; transform:translate(2px,-1px) rotate(7deg); }
+    .hero-cta:active { transform:translate(-50%,-50%); }
+    .hero-cta:focus-visible { outline:2px solid #f7f4ec; outline-offset:3px; }
+    .guizhou-label { position:absolute; z-index:5; left:50%; top:30%; color:#f0b53c; opacity:0; transform:translate(24px,-135%) scale(.96); transform-origin:left center; pointer-events:none; white-space:nowrap; font:500 clamp(12px,1.9cqw,15px)/1 "Avenir Next","Helvetica Neue",Arial,sans-serif; letter-spacing:.15em; text-shadow:0 0 9px rgba(240,181,60,.38); transition:opacity .38s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+    .guizhou-label::before { content:""; position:absolute; top:50%; right:calc(100% + 2px); width:28px; height:1px; background:linear-gradient(90deg,#f0b53c,rgba(240,181,60,.45)); box-shadow:0 0 5px rgba(240,181,60,.32); transform:rotate(-24deg); transform-origin:right center; }
+    .guizhou-label.is-visible { opacity:1; transform:translate(24px,-135%) scale(1); }
+    #globe { width:100%; height:100%; display:block; }
+    .fallback-globe { display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:right center; clip-path:circle(45% at 50% 50%); }
+    .top-nav { position:absolute; z-index:12; top:0; left:0; right:0; height:58px; display:flex; align-items:center; justify-content:space-between; gap:28px; padding:0 clamp(30px,4.8vw,80px); background:#fff; border:0; border-radius:0 0 6px 6px; box-shadow:0 5px 16px rgba(18,59,50,.18),0 -1px 0 rgba(18,59,50,.06) inset; }
+    .nav-left { display:flex; align-items:center; gap:13px; min-width:0; }
+    .nav-logo { position:relative; flex:0 0 142px; height:44px; display:block; text-decoration:none; overflow:hidden; }
+    .nav-logo__image { position:absolute; left:-3px; top:-8px; display:block; width:140px; height:auto; filter:contrast(1.08) saturate(1.08) drop-shadow(0 2px 2px rgba(18,59,50,.15)); }
+    .top-nav > nav { flex:1; min-width:0; margin-left:auto; }
+    .login-button { --shine-angle:135deg; --shine-opacity:.45; position:relative; isolation:isolate; display:flex; align-items:center; gap:9px; flex:0 0 auto; height:36px; padding:0 7px 0 16px; overflow:hidden; color:#123b32; background:transparent; border:0; border-radius:999px; box-shadow:0 4px 12px rgba(18,59,50,.16); cursor:pointer; font:600 14px/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.1em; transition:color .24s ease,transform .24s ease,box-shadow .24s ease; }
+    .login-button::before { content:""; position:absolute; z-index:-2; inset:-100%; background:conic-gradient(from var(--shine-angle),transparent 0 36%,rgba(213,163,63,.15) 42%,#d5a33f 47%,#fff9e8 50%,#d5a33f 53%,rgba(213,163,63,.15) 58%,transparent 64%); opacity:var(--shine-opacity); transition:opacity .18s ease; }
+    .login-button::after { content:""; position:absolute; z-index:-1; inset:1px; border-radius:999px; background:rgba(247,244,236,.94); box-shadow:0 1px 0 rgba(255,255,255,.75) inset; transition:background .24s ease; }
+    .login-button__arrow { display:grid; place-items:center; width:24px; height:24px; color:#f7f4ec; background:#123b32; border-radius:50%; font-size:14px; letter-spacing:0; transition:color .24s ease,background .24s ease,transform .24s cubic-bezier(.2,.8,.2,1); }
+    .login-button:hover { color:#f7f4ec; transform:translateY(-1px); box-shadow:0 7px 16px rgba(18,59,50,.24); }
+    .login-button:hover::after { background:#123b32; }
+    .login-button:hover .login-button__arrow { color:#123b32; background:#d5a33f; transform:translate(2px,-1px) rotate(7deg); }
+    .login-button:active { transform:translateY(0); }
+    .login-button:focus-visible { outline:2px solid #d5a33f; outline-offset:2px; }
+    .nav-links a,.login-button > span:first-child,.hero-cta > span:first-child { -webkit-text-stroke:.35px rgba(213,163,63,.52); paint-order:stroke fill; text-shadow:0 0 7px rgba(213,163,63,.18); }
+    .nav-links { display:flex; align-items:center; justify-content:flex-end; gap:clamp(18px,2.2vw,38px); margin:0; padding:0; list-style:none; white-space:nowrap; }
+    .nav-links a { position:relative; display:block; padding:21px 0 20px; color:#123b32; text-decoration:none; font:600 clamp(15px,1.1vw,18px)/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.055em; text-shadow:none; transition:color .2s ease; }
+    .nav-links a::after { content:""; position:absolute; left:50%; bottom:9px; width:0; height:2px; background:#d5a33f; transform:translateX(-50%); transition:width .22s ease; }
+    .nav-links a:hover,.nav-links a:focus-visible { color:#d5a33f; outline:none; }
+    .nav-links a:hover::after,.nav-links a:focus-visible::after { width:100%; }
+    .nav-links li:first-child a::after { width:100%; }
+    @media (max-width:720px) {
+      .globe-breath-lines { width:112%; height:112%; opacity:.72; }
+      .lightfall-canvas { inset:52px 0 0; height:calc(100% - 52px); opacity:.34; mask-image:linear-gradient(90deg,#000,transparent 31%,transparent 69%,#000); -webkit-mask-image:linear-gradient(90deg,#000,transparent 31%,transparent 69%,#000); }
+      .globe-wrap { width:var(--globe-size); opacity:.86; }
+      .hero-cta { height:clamp(32px,7cqw,38px); gap:6px; padding:0 5px 0 12px; }
+      .top-nav { top:0; left:0; right:0; height:52px; padding:0 12px; border-radius:0 0 5px 5px; overflow:hidden; }
+      .nav-left { gap:8px; }
+      .nav-logo { flex-basis:110px; height:38px; }
+      .nav-logo__image { left:-2px; top:-6px; width:109px; }
+      .login-button { height:32px; gap:6px; padding:0 5px 0 11px; font-size:12px; }
+      .login-button__arrow { width:22px; height:22px; font-size:12px; }
+      .nav-links { flex:1; justify-content:flex-start; gap:20px; overflow-x:auto; scrollbar-width:none; }
+      .nav-links::-webkit-scrollbar { display:none; }
+      .nav-links a { padding:19px 0; font-size:13px; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      .globe-breath-lines path { animation:none; stroke-opacity:.12; }
+    }
+  </style>
+</head>
+<body>
+  <main class="hero" aria-label="黔脉 QianPulse 首页">
+    <div class="grid-lines" aria-hidden="true"></div>
+    <canvas class="lightfall-canvas" id="lightfallCanvas" aria-hidden="true"></canvas>
+    <header class="top-nav">
+      <div class="nav-left">
+        <a class="nav-logo" href="index.html" aria-label="黔脉 QianPulse 首页"><img class="nav-logo__image" src="assets/qianpulse-logo.png" alt="黔脉 QianPulse" /></a>
+      </div>
+      <nav aria-label="主导航">
+        <ul class="nav-links">
+          <li><a href="opportunities.html#global-demand">全球商机</a></li>
+          <li><a href="opportunities.html#core-capabilities">核心能力</a></li>
+          <li><a href="#active-outreach">主动拓展</a></li>
+          <li><a href="#real-cases">真实案例</a></li>
+          <li><a href="#about-qianpulse">关于黔脉</a></li>
+        </ul>
+      </nav>
+      <a class="login-button" id="loginButton" href="app.html#auth"><span>登录</span><span class="login-button__arrow" aria-hidden="true">↗</span></a>
+    </header>
+    <img class="hero-copy-art" src="assets/qianpulse-hero-copy.png" alt="全球采购商机智能平台——捕捉全球需求脉搏，让贵品出海" />
+    <div class="globe-wrap" id="global-opportunities" aria-label="世界地图从美洲旋转至贵州">
+      <svg class="globe-breath-lines" viewBox="0 0 1000 1000" aria-hidden="true">
+        <path d="M84 474 A424 424 0 0 1 474 84" />
+        <path d="M526 84 A424 424 0 0 1 916 474" />
+        <path d="M916 526 A424 424 0 0 1 526 916" />
+        <path d="M474 916 A424 424 0 0 1 84 526" />
+      </svg>
+      <a class="hero-cta" id="heroCta" href="app.html#workspace"><span>立即寻找商机</span><span class="hero-cta__arrow" aria-hidden="true">↗</span></a>
+      <span class="guizhou-label" id="guizhouLabel">GuiZhou</span>
+      <canvas id="globe"></canvas>
+      <div id="fallback" class="fallback-globe" aria-hidden="true"></div>
+    </div>
+  </main>
+  <script>
+  (() => {
+    const canvas=document.getElementById('lightfallCanvas');
+    if(!canvas)return;
+    const gl=canvas.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:true});
+    if(!gl){canvas.style.display='none';return;}
 
-function getHandoffDecision(o){
-  const hardBlock=(o.hardGaps||[]).some(g=>['产能不足','市场准入阻断','规格不符'].includes(g));
-  const highRisk=(o.riskTopics||[]).some(t=>['价格','报价','合同','付款','独家代理','投诉'].includes(t));
-  if(hardBlock)return{route:'AI_PAUSE',label:'暂停',reason:'存在硬性履约阻断'};
-  if(highRisk)return{route:'HUMAN_REQUIRED',label:'立即人工',reason:'出现高风险商务议题'};
-  if(o.fitScore>=60&&o.intentScore>=60&&o.conversationScore>=50)return{route:'HANDOFF_CANDIDATE',label:'待人工接管',reason:'资格筛选已完成'};
-  return{route:'AI_NURTURING',label:'AI 初筛中',reason:'继续补充采购信息'};
-}
-function routeClass(route){return route==='HANDOFF_CANDIDATE'?'handoff':route==='HUMAN_REQUIRED'?'human':route==='AI_NURTURING'?'nurture':'block'}
-function renderTableHeader(){document.querySelector('.tr.head').innerHTML='<span></span><span>买家</span><span>采购需求 / 窗口</span><span>信号来源</span><span>匹配</span><span>意向</span><span>沟通状态</span><span>人工接管</span><span>下一步</span>'}
-function updateSideCounts(){const candidates=DATA.filter(o=>getHandoffDecision(o).route==='HANDOFF_CANDIDATE').length;const nurturing=DATA.filter(o=>getHandoffDecision(o).route==='AI_NURTURING').length;document.querySelector('.nav-label:nth-of-type(2)').insertAdjacentHTML('afterend','<button id="handoff-nav">◉　待人工接管（'+candidates+'）</button><button id="nurture-nav">◌　AI 初筛中（'+nurturing+'）</button>')}
-function appendRow(){
- if(shown===0)rows.innerHTML='';if(shown>=DATA.length)return;const o=DATA[shown++],d=getHandoffDecision(o),accessTag=o.access==='PASS'?'tag':o.access==='补条件'?'tag wait':'tag block';
- const r=document.createElement('div');r.className='tr';r.dataset.id=o.id;r.innerHTML=`<input type="checkbox"><div class="buyer"><b>${o.country} · ${o.buyer}</b><small>采购买家</small></div><div class="demand"><b>${o.need||o.title}</b><small>${o.why}</small></div><div class="platform"><i class="dot"></i>公开信号</div><div class="score2">${o.fitScore}%</div><div class="intent">${o.intentScore}%</div><div class="conversation">${o.conversationStatus}<small>${o.conversationScore}% 完整度</small></div><div><span class="tag ${routeClass(d.route)}">${o.owner==='HUMAN_OWNED'?'人工已接管':d.label}</span></div><button class="action compact" onclick="openAction(${o.id})">${o.owner==='HUMAN_OWNED'?'查看交接':'处理'}　→</button><button class="action" onclick="openEvidence(${o.id})">证据</button>`;rows.appendChild(r);document.querySelector('#count').textContent=shown+' 条'
-}
-function handoffCard(o,d){line(`<div class="chat-handoff"><div class="handoff-title">AI 初筛完成 · ${d.label}</div><b>${o.country} · ${o.buyer}</b><div class="handoff-grid"><div><small>匹配度</small><b>${o.fitScore}%</b></div><div><small>采购意向</small><b>${o.intentScore}%</b></div><div><small>已确认</small>${o.confirmedFields.join('、')}</div><div><small>待确认</small>${o.missingFields.join('、')||'无'}</div></div><p style="font-size:11px;margin:8px 0 0">建议：${d.reason}；人工确认前不承诺价格、交期或认证。</p><div class="handoff-actions"><button onclick="takeOver(${o.id})">接管并回复</button><button class="alt" onclick="draftReply(${o.id})">编辑 AI 草稿</button><button class="alt" onclick="returnToAI(${o.id})">退回 AI</button></div></div>`)}
-function maybeCreateHandoffCards(){DATA.forEach(o=>{const d=getHandoffDecision(o);if(['HANDOFF_CANDIDATE','HUMAN_REQUIRED'].includes(d.route)&&!o.cardShown){o.cardShown=true;handoffCard(o,d)}})}
-function takeOver(id){const o=DATA.find(x=>x.id===id);o.owner='HUMAN_OWNED';line('已交接给人工：<b>'+o.country+' · '+o.buyer+'</b>。交接摘要已生成；以下内容仅为待确认草稿，不会自动发送。');rerenderRows();}
-function draftReply(id){const o=DATA.find(x=>x.id===id);line('<b>待人工确认的首轮回复草稿</b><br>您好，我们注意到贵方正在寻找'+o.title+'。我们可先准备相关产品资料与样品方案；为便于确认可行性，想请您补充预算区间和目标到货时间。<br><small style="color:#718078">系统不会自动发送；价格、认证、交期均需人工核实后填写。</small>')}
-function returnToAI(id){const o=DATA.find(x=>x.id===id);o.conversationScore=Math.min(49,o.conversationScore);o.conversationStatus='AI 继续确认预算与交期';o.cardShown=true;line('已退回 AI 初筛「'+o.country+' · '+o.buyer+'」。下一轮只询问预算区间与目标交付时间，避免作出任何商务承诺。');rerenderRows();}
-function rerenderRows(){const old=shown;shown=0;rows.innerHTML='';while(shown<old)appendRow()}
-function openAction(id){const o=typeof id==='number'?DATA.find(x=>x.id===id):DATA.find(x=>x.buyer===id);if(!o)return;const d=getHandoffDecision(o);if(d.route==='HANDOFF_CANDIDATE'||d.route==='HUMAN_REQUIRED')handoffCard(o,d);else line('AI 将继续为「'+o.country+' · '+o.buyer+'」补充：'+o.missingFields.join('、')+'。在信息齐全前不触发人工接管。')}
-const originalStartScan=startScan;startScan=function(){originalStartScan();setTimeout(maybeCreateHandoffCards,4050)};
-renderTableHeader();updateSideCounts();
-function showBusiness(panel){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#business').classList.add('active');['seller-panel','demand-panel','crm-panel','product-panel'].forEach(id=>{const el=document.querySelector('#'+id);if(el)el.style.display=id===panel+'-panel'?'':'none'});const tabs=document.querySelectorAll('#business .biz-top .biz-actions button');tabs.forEach(btn=>btn.classList.remove('active-tab'));const active={seller:'卖家供给档案',demand:'发布买家需求',crm:'CRM 接管看板'}[panel];tabs.forEach(btn=>{if(btn.textContent.trim()===active)btn.classList.add('active-tab')});if(panel==='crm')renderCRM();location.hash='business'}
-function showSeller(){showBusiness('seller')};function showDemand(){showBusiness('demand')};function showCRM(){showBusiness('crm')}
-function saveSeller(){const fields=[...document.querySelectorAll('#seller-panel input')];const filled=fields.filter(x=>x.value.trim()).length;const pct=Math.round(filled/fields.length*100);document.querySelector('#seller-percent').textContent=pct+'%';document.querySelector('#seller-progress').style.width=pct+'%';document.querySelector('#seller-save').textContent='已保存草稿 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});}
-function publishDemand(){const company=document.querySelector('#demand-company').value.trim()||'新买家';document.querySelector('#demand-save').textContent='已提交「'+company+'」需求草稿，等待 AI 标准化确认。';line('已收到「'+company+'」的主动需求。下一步：补齐数量、交期和认证后，再进入供应商匹配。');}
-function openEvidence(id){const o=DATA.find(x=>x.id===id);if(!o)return;const d=getHandoffDecision(o);const drawer=document.querySelector('#evidence-drawer');drawer.innerHTML='<div class="drawer-head"><div><small style="color:var(--g);font-weight:800">证据抽屉</small><h2 style="margin:4px 0">'+o.country+' · '+o.buyer+'</h2><span style="font-size:11px;color:var(--muted)">'+o.title+'</span></div><button class="close" onclick="closeEvidence()">×</button></div><div class="evidence-section"><h3>来源信息</h3><div class="fact-row"><small>来源平台</small><span>公开 RFQ / 企业官网</span></div><div class="fact-row"><small>采集时间</small><span>2026-08-28 · 09:40</span></div><div class="fact-row"><small>原始链接</small><span style="color:var(--g)">source.example.com/rfq/'+o.id+'</span></div></div><div class="evidence-section"><h3>原文证据</h3><div class="quote">“'+o.title+'；'+o.qty+'；优先寻找稳定供应源并安排样品测试。”</div></div><div class="evidence-section"><h3>AI 提取与推断</h3><div class="fact-row"><small>事实</small><span class="fact">需求：'+o.title+'，数量 '+o.qty+'</span></div><div class="fact-row"><small>推断</small><span class="inference">'+o.why+'</span></div><div class="fact-row"><small>建议</small><span class="recommend">'+o.action+'</span></div></div><div class="evidence-section"><h3>可信度与接管判断</h3><div class="fact-row"><small>主体核验</small><span>官网与公开信号已交叉验证</span></div><div class="fact-row"><small>字段完整度</small><span>'+o.conversationScore+'%</span></div><div class="fact-row"><small>接管状态</small><span class="badge">'+d.label+'</span></div></div>';drawer.classList.add('show')}
-function closeEvidence(){document.querySelector('#evidence-drawer').classList.remove('show')}
-function renderCRM(){const stages=['待人工接管','已接管','已联系','等待回复','样品 / 报价'];const board=document.querySelector('#crm-board');board.innerHTML=stages.map(stage=>'<div class="crm-col"><h3>'+stage+' <span class="badge">'+DATA.filter(o=>(o.owner==='HUMAN_OWNED'&&stage==='已接管')||(o.owner!=='HUMAN_OWNED'&&getHandoffDecision(o).label===stage)).length+'</span></h3>'+DATA.filter(o=>(o.owner==='HUMAN_OWNED'&&stage==='已接管')||(o.owner!=='HUMAN_OWNED'&&getHandoffDecision(o).label===stage)).map(o=>'<article class="crm-card"><b>'+o.country+' · '+o.buyer+'</b><p>'+o.title+'</p><span class="badge">匹配 '+o.fitScore+'% · 意向 '+o.intentScore+'%</span><footer><span>负责人：待分配</span><span>跟进：今天</span></footer><button class="action" style="margin-top:7px;padding:0" onclick="openEvidence('+o.id+')">查看证据 →</button></article>').join('')||'<div class="empty-card">暂无机会</div></div>').join('')}
-const oldShowWorkspace=showWorkspace;showWorkspace=function(){document.querySelector('#business').classList.remove('active');oldShowWorkspace()};
-const sideButtons=[...document.querySelectorAll('.ws-side button')];sideButtons.find(b=>b.textContent.includes('产品与能力')).onclick=showSeller;sideButtons.find(b=>b.textContent.includes('市场准入资料')).onclick=showSeller;const businessButton=document.createElement('button');businessButton.className='action compact';businessButton.textContent='业务工作台';businessButton.onclick=()=>showBusiness('seller');document.querySelector('.result-head .controls').prepend(businessButton);
-document.querySelectorAll('.tr:not(.head)').forEach(()=>{});
-</script><script>
-/* Local persistence mirrors the future API contract. It keeps this static demo usable between refreshes. */
-const BIZ_STORAGE_KEY='buyer-hunter-mvp-v1';let buyerDemands=[];
-function persistBusiness(){const seller={};document.querySelectorAll('#seller-panel input').forEach((input,index)=>seller[index]=input.value);localStorage.setItem(BIZ_STORAGE_KEY,JSON.stringify({seller,buyerDemands,matches:DATA.map(o=>({id:o.id,owner:o.owner,crmStage:o.crmStage,conversationScore:o.conversationScore,conversationStatus:o.conversationStatus}))}));}
-function hydrateBusiness(){try{const state=JSON.parse(localStorage.getItem(BIZ_STORAGE_KEY)||'null');if(!state)return;Object.entries(state.seller||{}).forEach(([index,value])=>{const input=document.querySelectorAll('#seller-panel input')[Number(index)];if(input)input.value=value});buyerDemands=state.buyerDemands||[];(state.matches||[]).forEach(saved=>{const o=DATA.find(item=>item.id===saved.id);if(o)Object.assign(o,saved)});const filled=[...document.querySelectorAll('#seller-panel input')].filter(input=>input.value.trim()).length;if(filled){const pct=Math.round(filled/document.querySelectorAll('#seller-panel input').length*100);document.querySelector('#seller-percent').textContent=pct+'%';document.querySelector('#seller-progress').style.width=pct+'%';document.querySelector('#seller-save').textContent='已恢复本地草稿';}}catch(error){console.warn('无法恢复本地演示数据',error)}}
-function saveSeller(){const fields=[...document.querySelectorAll('#seller-panel input')];const filled=fields.filter(x=>x.value.trim()).length;const pct=Math.round(filled/fields.length*100);document.querySelector('#seller-percent').textContent=pct+'%';document.querySelector('#seller-progress').style.width=pct+'%';document.querySelector('#seller-save').textContent='已保存本地草稿 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});persistBusiness();}
-function publishDemand(){const inputs=[...document.querySelectorAll('#demand-panel input')];const company=inputs[0].value.trim()||'新买家';buyerDemands.push({id:Date.now(),company,country:inputs[1].value,category:inputs[2].value,quantity:inputs[4].value,status:'待 AI 确认',createdAt:new Date().toISOString()});persistBusiness();document.querySelector('#demand-save').textContent='已保存「'+company+'」需求，本 MVP 将其标记为待 AI 标准化确认。';line('已收到「'+company+'」的主动需求。下一步：补齐数量、交期和认证后，再进入供应商匹配。');}
-function takeOver(id){const o=DATA.find(x=>x.id===id);o.owner='HUMAN_OWNED';o.crmStage='已接管';persistBusiness();line('已交接给人工：<b>'+o.country+' · '+o.buyer+'</b>。交接摘要已生成；以下内容仅为待确认草稿，不会自动发送。');rerenderRows();renderCRM();}
-function returnToAI(id){const o=DATA.find(x=>x.id===id);o.owner='';o.crmStage='';o.conversationScore=Math.min(49,o.conversationScore);o.conversationStatus='AI 继续确认预算与交期';persistBusiness();line('已退回 AI 初筛「'+o.country+' · '+o.buyer+'」。下一轮只询问预算区间与目标交付时间，避免作出任何商务承诺。');rerenderRows();renderCRM();}
-function advanceCRM(id){const stages=['待人工接管','已接管','已联系','等待回复','样品 / 报价'];const o=DATA.find(x=>x.id===id);const current=o.crmStage||'待人工接管';o.crmStage=stages[Math.min(stages.indexOf(current)+1,stages.length-1)];if(o.crmStage!=='待人工接管')o.owner='HUMAN_OWNED';persistBusiness();renderCRM();rerenderRows();}
-function renderCRM(){const stages=['待人工接管','已接管','已联系','等待回复','样品 / 报价'];const board=document.querySelector('#crm-board');board.innerHTML=stages.map(stage=>{const items=DATA.filter(o=>(o.crmStage||getHandoffDecision(o).label)===stage);return '<div class="crm-col"><h3>'+stage+' <span class="badge">'+items.length+'</span></h3>'+items.map(o=>'<article class="crm-card"><b>'+o.country+' · '+o.buyer+'</b><p>'+o.title+'</p><span class="badge">匹配 '+o.fitScore+'% · 意向 '+o.intentScore+'%</span><footer><span>负责人：'+(o.owner==='HUMAN_OWNED'?'人工':'待分配')+'</span><span>跟进：今天</span></footer><div class="biz-actions" style="margin-top:7px"><button class="action" onclick="openEvidence('+o.id+')">证据</button>' +(stage!=='样品 / 报价'?'<button class="action" onclick="advanceCRM('+o.id+')">推进 →</button>':'')+'</div></article>').join('')||'<div class="empty-card">暂无机会</div>'+'</div>'}).join('')}
-hydrateBusiness();
-const PRODUCT_KEY='buyer-hunter-products-v1';let products=JSON.parse(localStorage.getItem(PRODUCT_KEY)||'null')||[
- {id:'sku-matcha-001',name:'贵州抹茶粉 · 饮品级',template:'MATCHA_BEVERAGE_V1',spec:'800目 · 25kg/袋',moq:'500 kg',capacity:'8,000 kg/月',sample:'7天',markets:'US, JP, EU',certs:'HACCP · Organic 文件待核验',status:'待审核'},
- {id:'sku-matcha-002',name:'贵州抹茶粉 · 烘焙级',template:'MATCHA_BAKERY_V1',spec:'200目 · 20kg/袋',moq:'300 kg',capacity:'5,000 kg/月',sample:'5天',markets:'JP, KR',certs:'ISO 22000 · JAS 待确认',status:'草稿'},
- {id:'sku-blueberry-001',name:'贵州蓝莓 · IQF 冷冻',template:'BLUEBERRY_IQF_V1',spec:'整果 12-16mm · 10kg/箱',moq:'1 t',capacity:'20 t/月',sample:'10天',markets:'KR, EU',certs:'HACCP · 冷链方案',status:'已上架'}
-];
-function showProductLibrary(){showBusiness('product');let panel=document.querySelector('#product-panel');if(!panel){panel=document.createElement('section');panel.id='product-panel';panel.className='panel';document.querySelector('.biz-shell').appendChild(panel)}renderProducts()}
-function renderProducts(){const panel=document.querySelector('#product-panel');if(!panel)return;panel.style.display='';panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><div><h2>产品库 · 供给能力快照</h2><p class="hint">已映射 Free 分支的 matching_template 与 seller_capability_profile；产品默认私有，仅用于匹配。</p></div><button class="biz-primary" onclick="addProduct()">＋ 新增 SKU</button></div><div id="product-list" class="product-list" style="margin-top:14px">'+products.map(p=>'<article class="product-item"><header><div><b>'+p.name+'</b><p>'+p.template+' · '+p.spec+'</p></div><span class="product-status '+(p.status==='草稿'?'draft':'')+'">'+p.status+'</span></header><div class="product-meta"><span>MOQ '+p.moq+'</span><span>产能 '+p.capacity+'</span><span>样品 '+p.sample+'</span><span>市场 '+p.markets+'</span><span>'+p.certs+'</span></div><div class="product-actions"><button onclick="editProduct(\''+p.id+'\')">编辑</button><button onclick="toggleProduct(\''+p.id+'\')">'+(p.status==='已上架'?'下架':'上架')+'</button></div></article>').join('')+'</div>'}
-function addProduct(){const name=prompt('产品名称 / SKU');if(!name)return;products.push({id:'sku-'+Date.now(),name,template:'CUSTOM_V1',spec:'待补规格',moq:'待填写',capacity:'待填写',sample:'待填写',markets:'待填写',certs:'待核验',status:'草稿'});localStorage.setItem(PRODUCT_KEY,JSON.stringify(products));renderProducts()}
-function editProduct(id){const p=products.find(x=>x.id===id);if(!p)return;const spec=prompt('规格（等级、目数、包装）',p.spec);if(spec!==null)p.spec=spec;localStorage.setItem(PRODUCT_KEY,JSON.stringify(products));renderProducts()}
-function toggleProduct(id){const p=products.find(x=>x.id===id);if(!p)return;p.status=p.status==='已上架'?'草稿':'已上架';localStorage.setItem(PRODUCT_KEY,JSON.stringify(products));renderProducts()}
-document.querySelectorAll('.biz-top .biz-actions button').forEach(b=>{if(b.textContent.includes('卖家供给档案'))b.onclick=showSeller});
-document.querySelectorAll('.links button').forEach(b=>{if(b.textContent.trim()==='产品库')b.onclick=showProductLibrary});
-function applyQianPulseLayout(){
- const homeBrand=document.querySelector('#home .brand');if(homeBrand){homeBrand.childNodes[0].nodeValue='黔脉 QianPulse';homeBrand.querySelector('small').textContent='GLOBAL OPPORTUNITY ENGINE'}
- const intro=document.querySelector('#home .intro');if(intro){intro.querySelector('small').textContent='黔脉 QianPulse';intro.querySelector('h1').innerHTML='全球采购商机智能平台<br>捕捉全球需求脉搏，让贵品出海。'}
- const heroCopy=document.querySelector('#home .hero-copy');if(heroCopy){heroCopy.querySelector('p').textContent='发现全球真实采购需求，自动开发目标市场客户，持续推进跨境成交。';heroCopy.querySelector('.cta').textContent='立即寻找商机　→'}
- const sectionTitle=document.querySelector('#home .section h2');if(sectionTitle)sectionTitle.textContent='全球实时采购需求';const sectionSub=document.querySelector('#home .section-head p');if(sectionSub)sectionSub.textContent='此刻，全球正有人在找这样的产品。';
- const homeLinks=[...document.querySelectorAll('#home .links button, #home .links a')];['全球商机','核心能力','主动拓展','真实案例','关于黔脉'].forEach((label,i)=>{if(homeLinks[i]){homeLinks[i].textContent=label;homeLinks[i].classList.toggle('active',i===0);}});
- if(homeLinks[0])homeLinks[0].onclick=()=>{document.querySelector('#opps').scrollIntoView({behavior:'smooth'})};
- if(homeLinks[1])homeLinks[1].onclick=()=>{document.querySelector('.pillars').scrollIntoView({behavior:'smooth'})};
- if(homeLinks[2])homeLinks[2].onclick=()=>{showBusiness('seller')};
- if(homeLinks[3])homeLinks[3].onclick=()=>{document.querySelector('#opps').scrollIntoView({behavior:'smooth'})};
- if(homeLinks[4])homeLinks[4].onclick=()=>{document.querySelector('.banner-slot').scrollIntoView({behavior:'smooth'})};
- const wsBrand=document.querySelector('#workspace .ws-brand');if(wsBrand){wsBrand.childNodes[0].nodeValue='黔脉 QianPulse';wsBrand.querySelector('small').textContent='GLOBAL OPPORTUNITY ENGINE'}
- const side=[...document.querySelectorAll('.ws-side button')];if(side[0])side[0].textContent='＋ 新建任务';if(side[1])side[1].textContent='今日商机';if(side[2])side[2].textContent='进行中商机';if(side[3])side[3].textContent='历史任务';
- const labels=[...document.querySelectorAll('#workspace .nav-label')];if(labels[0])labels[0].textContent='商机任务';if(labels[1])labels[1].textContent='企业能力';if(labels[2])labels[2].textContent='最近任务';
- const supply=[...document.querySelectorAll('#workspace .ws-side button')];supply.filter(b=>b.textContent.includes('产品与能力')).forEach(b=>b.textContent='□　产品库');supply.filter(b=>b.textContent.includes('市场准入资料')).forEach(b=>b.textContent='◇　企业能力');
- supply.filter(b=>b.textContent.includes('产品库')).forEach(b=>b.onclick=showProductLibrary);supply.filter(b=>b.textContent.includes('企业能力')).forEach(b=>b.onclick=showSeller);
- const chatTitle=document.querySelector('#workspace .chat-head b');if(chatTitle)chatTitle.textContent='黔脉智能体';
- const resultTitle=document.querySelector('#workspace .result-head b');if(resultTitle)resultTitle.textContent='商机工作区';
- const resultMeta=document.querySelector('#workspace .result-head span');if(resultMeta)resultMeta.textContent='今日 Top 5 · 已按机会分排序 · 所有结论保留证据';
- if(labels[2])labels[2].textContent='今日 Top 5';
- const controls=document.querySelector('#workspace .result-head .controls');
- if(controls && !controls.querySelector('.simulate-buyer')){const btn=document.createElement('button');btn.className='simulate-buyer';btn.textContent='模拟买家回复';btn.onclick=simulateBuyerMessage;controls.prepend(btn);}
- const businessBack=document.querySelector('#business .biz-back');
- if(businessBack){businessBack.textContent='← 返回主页';businessBack.onclick=(event)=>{event.preventDefault();showHome();};}
- const bizButtons=[...document.querySelectorAll('#business .biz-top .biz-actions button')];
- const sellerBtn=bizButtons.find(b=>b.textContent.includes('卖家供给档案'));
- const demandBtn=bizButtons.find(b=>b.textContent.includes('发布买家需求'));
- if(sellerBtn){sellerBtn.id='seller-entry';sellerBtn.onclick=(event)=>{event.preventDefault();showSeller();};}
- if(demandBtn){demandBtn.id='demand-entry';demandBtn.onclick=(event)=>{event.preventDefault();showDemand();};}
- const sideProduct=[...document.querySelectorAll('#workspace .ws-side button')].find(b=>b.textContent.includes('产品库'));
- if(sideProduct)sideProduct.onclick=(event)=>{event.preventDefault();showProductLibrary();};
- if(location.hash==='#business')showBusiness('seller');
-}
-function enhanceV15Layout(){
- const home=document.querySelector('#home'); if(!home)return;
- showHome=function(){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#home').classList.add('active');location.hash='home'};
- showWorkspace=function(){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#workspace').classList.add('active');location.hash='workspace'};
- home.classList.add('qianpulse-v15');
- const hero=document.querySelector('#home .hero');
- if(hero && !hero.querySelector('.section-index')) hero.insertAdjacentHTML('beforeend','<div class="section-index">01<span>品牌首屏</span></div>');
- const section=document.querySelector('#home .section');
- if(section){
-   const head=section.querySelector('.section-head');
-   if(head && !head.querySelector('.section-index')) head.insertAdjacentHTML('afterbegin','<div class="section-index inline">02<span>全球实时采购需求</span></div>');
-   const banner=section.querySelector('.banner-slot');
-   if(banner && !banner.querySelector('.v15-overlay')) banner.insertAdjacentHTML('afterbegin','<div class="v15-overlay"><div class="section-index inline light">03<span>全球商机，从哪里来</span></div><h2>从公开信号，到可验证的采购窗口</h2><p>平台持续汇聚 RFQ、官网动态与行业展会信息，经过清洗、去重和证据核验后，形成可行动的买家机会。</p></div>');
-   const pillars=section.querySelector('.pillars');
-   if(pillars && !pillars.querySelector('.v15-pillar-head')) pillars.insertAdjacentHTML('afterbegin','<div class="v15-pillar-head"><div class="section-index inline">04<span>从商机发现到成交推进</span></div><p>每一步都有明确的下一动作：补齐需求、匹配能力、人工接管、寄样报价。</p></div>');
- if(!section.querySelector('.agent-teaser')) section.insertAdjacentHTML('beforeend','<div class="agent-teaser"><div class="section-index inline light">05<span>黔脉智能体</span></div><div><h2>让 AI 先筛选，让人工更聚焦</h2><p>AI 负责公开需求解析、规格标准化和首轮确认；匹配度达到阈值后，生成交接摘要，由人工确认并推进。</p></div><button class="cta" onclick="showWorkspace()">进入 AI 工作台　→</button></div>');
- }
- const nav=document.querySelector('#home .links');
- if(nav && !nav.querySelector('.login-link')) nav.insertAdjacentHTML('beforeend','<button class="login-link">登录</button><button class="register-link">注册</button>');
-}
-async function simulateBuyerMessage(){
- const content='我们预计第四季度开始采购，首批需要 800kg，并希望确认 FDA 及有机认证。';
- line('买家模拟回复：'+content,'user');
- try{const response=await fetch('/api/v1/opportunities/opp_demo_001/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,source:'simulated',idempotency_key:'demo-buyer-'+Date.now()})});const data=await response.json();line('Agent 已接收买家事件：'+(data.changed_fields||[]).join('、')+'；仅重跑：'+(data.capabilities_called||[]).join('、')+'。当前状态：'+(data.run?.status||'已完成'));}catch(error){line('已在本地演示买家事件：识别到数量、交期和认证变化；将增量重跑供给匹配、准入核验与沟通完整度。');}
-}
-resetTask=function(){running=false;shown=0;latestRun=null;if(rows)rows.innerHTML='<div class="empty">确认新任务后，AI 会在此处写入可行动的采购机会。</div>';if(document.querySelector('#count'))document.querySelector('#count').textContent='0 条';if(document.querySelector('#status'))document.querySelector('#status').textContent='等待新任务';if(messages)messages.innerHTML='<div class="bubble agent"><div class="agent-title">黔脉智能体</div>告诉我你想找什么样的买家。我会先解析采购条件，确认后再开始扫描。</div>';const parse=document.querySelector('#parse-card');if(parse)parse.remove();if(document.querySelector('#input')){document.querySelector('#input').value='';document.querySelector('#input').focus();}line('新任务已创建，请在下方输入采购目标。')};
-applyQianPulseLayout();
-enhanceV15Layout();
-let authMode='login';
-function setAuthMode(mode){authMode=mode;document.querySelector('#auth-login-mode').classList.toggle('active',mode==='login');document.querySelector('#auth-register-mode').classList.toggle('active',mode==='register');document.querySelector('#auth-title').textContent=mode==='login'?'登录你的商机工作台':'创建黔脉账号';document.querySelector('#auth-submit').textContent=mode==='login'?'登录':'注册';document.querySelector('#auth-role-wrap').style.display=mode==='register'?'':'none';document.querySelector('#auth-company-wrap').style.display=mode==='register'?'':'none';document.querySelector('#auth-hint').innerHTML=mode==='login'?'还没有账号？ <button class="auth-switch" onclick="setAuthMode(\'register\')">立即注册</button>':'已有账号？ <button class="auth-switch" onclick="setAuthMode(\'login\')">返回登录</button>';document.querySelector('#auth-message').textContent='';}
-function showAuth(mode='login'){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelector('#auth').classList.add('active');setAuthMode(mode);location.hash=mode==='register'?'register':'login';}
-if(location.hash==='#login')showAuth('login'); if(location.hash==='#register')showAuth('register');
-async function submitAuth(event){event.preventDefault();const message=document.querySelector('#auth-message');message.style.color='var(--muted)';message.textContent=authMode==='login'?'正在登录…':'正在创建账号…';const body={email:document.querySelector('#auth-email').value.trim(),password:document.querySelector('#auth-password').value};if(authMode==='register'){body.role=document.querySelector('#auth-role').value;body.company_name=document.querySelector('#auth-company').value.trim();}try{const response=await fetch('/api/v1/auth/'+authMode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw new Error(data.error||'操作失败');localStorage.setItem('qianpulse-auth-token',data.token);localStorage.setItem('qianpulse-auth-user',JSON.stringify(data.user));message.style.color='var(--g)';message.textContent=authMode==='login'?'登录成功，正在进入工作台':'注册成功，资料稍后可完善';setTimeout(()=>showWorkspace(),300);}catch(error){message.style.color='#a34235';message.textContent=error.message;}}
-const originalApplyQianPulseLayout=applyQianPulseLayout;
-const originalEnhanceV15Layout=enhanceV15Layout;
-setTimeout(()=>{const login=document.querySelector('#home .login-link');if(login)login.onclick=()=>showAuth('login');const register=document.querySelector('#home .register-link');if(register)register.onclick=()=>showAuth('register');},0);
-let latestRun=null;
-function authToken(){return localStorage.getItem('qianpulse-auth-token')||'';}
-function renderRunTimeline(run, extra={}){let box=document.querySelector('#run-timeline');if(!box){box=document.createElement('section');box.id='run-timeline';box.className='run-timeline';document.querySelector('#workspace .results').prepend(box);}const steps=[['Event received',true],['Opportunity resolved',true],['Context loaded',true],['Capabilities executed',Boolean(run.capabilities_called?.length)],['Decision refreshed',Boolean(run.decision_after)],['Checkpoint saved',Boolean(extra.checkpoint_id)],['Waiting approval',run.status==='WAITING_APPROVAL']];box.innerHTML='<header><span>Agent Run · '+run.run_id+'</span>'+(run.status==='WAITING_EVIDENCE'||run.status==='FAILED'?'<button onclick="resumeLatestRun()">从 Checkpoint 恢复</button>':'')+'</header><ol>'+steps.map(([label,done])=>'<li class="'+(done?'done':'wait')+'">'+label+(label==='Capabilities executed'&&run.capabilities_called?.length?'：'+run.capabilities_called.join('、'):'')+'</li>').join('')+'</ol><div style="font-size:10px;color:var(--muted);margin-top:7px">状态：'+run.status+' · 版本：'+(run.agent_version||'qianpulse-agent')+'</div>'}
-async function runAgent(payload){const token=authToken();if(!token){showAuth('login');throw new Error('请先登录');}const response=await fetch('/api/v1/agent/runs',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});const data=await response.json();if(!response.ok)throw new Error(data.error||'Agent 运行失败');latestRun=data.run;renderRunTimeline(data.run,data);return data;}
-startScan=async function(){if(running)return;running=true;const confirm=document.querySelector('#parse-card .confirm');if(confirm)confirm.innerHTML='<span style="color:var(--g);font-weight:800">Agent 正在创建 Run…</span>';document.querySelector('#status').textContent='Agent 正在执行';try{const data=await runAgent({event_type:'SYSTEM_NEW_SIGNAL',opportunity_id:'opp_demo_001',idempotency_key:'scan-'+Date.now()});line('AgentRun 已完成：'+data.decision.label+'。已调用：'+(data.capabilities_called||[]).join('、'));shown=0;while(shown<DATA.length)appendRow();document.querySelector('#status').textContent='Agent Run '+data.run.status;}catch(error){line(error.message);document.querySelector('#status').textContent='需要登录或修复服务';}finally{running=false;}};
-send=async function(){const input=document.querySelector('#input'),content=input.value.trim();if(!content)return;line(content,'user');input.value='';try{const data=await runAgent({event_type:'SELLER_QUERY',opportunity_id:'opp_demo_001',message:content,idempotency_key:'seller-'+Date.now()});line('Seller Event 已处理。Agent 状态：'+data.run.status+'；当前决策：'+data.decision.label);}catch(error){line(error.message);}};
-async function resumeLatestRun(){if(!latestRun)return;try{const token=authToken();const response=await fetch('/api/v1/agent/runs/'+latestRun.run_id+'/resume',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({idempotency_key:'resume-'+Date.now()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'恢复失败');latestRun=data.run;renderRunTimeline(data.run,data);line('已从最近 Checkpoint 恢复 AgentRun：'+data.run.status);}catch(error){line(error.message);}}
-simulateBuyerMessage=async function(){const content='我们预计第四季度开始采购，首批需要 800kg，并希望确认 FDA 及有机认证。';line('买家模拟回复：'+content,'user');try{const token=authToken();if(!token){showAuth('login');return;}const response=await fetch('/api/v1/opportunities/opp_demo_001/messages',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({content,source:'simulated',idempotency_key:'demo-buyer-'+Date.now()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'买家事件处理失败');latestRun=data.run;renderRunTimeline(data.run,data);line('Buyer Message Event 已持久化。变化字段：'+(data.changed_fields||[]).join('、')+'；增量能力：'+(data.capabilities_called||[]).join('、'));}catch(error){line(error.message);}};
-</script><script>
-// Load the Free-branch buyer opportunities into the homepage cards.
-(async function loadFreeBranchCards(){
-  try{
-    const response=await fetch('/api/public/opportunities');
-    if(!response.ok)return;
-    const imported=await response.json();
-    if(!Array.isArray(imported)||!imported.length)return;
-    DATA.splice(0,DATA.length,...imported.map(item=>({
-      id:item.id,
-      c:item.fields?.product?.includes('抹茶')?'matcha':'other',
-      score:item.fit_score||0,
-      status:item.status||'待确认',
-      country:item.buyer?.market||'海外',
-      buyer:item.buyer?.name||'未命名买家',
-      title:item.fields?.product||'采购需求',
-      qty:item.fields?.quantity||'待确认',
-      tags:item.tags||['Free 分支数据'],
-      why:item.why_now||'来自 Free 分支的公开采购需求。',
-      fit:(item.fit_score||0)+' / 100',
-      access:item.fields?.certification?'待核验':'待补充',
-      action:'查看证据并确认下一步',
-      risk:'请在证据抽屉中核验认证、数量和交期。'
-    })));
-    selected=DATA[0]?.id;
-    draw();
-  }catch(error){console.warn('Free 分支机会加载失败',error)}
-})();
-</script><script>
-// Final workspace flow: seller input -> confirmation -> matching -> real opportunities.
-(function installWorkspaceFlow(){
-  const workspace=document.querySelector('#workspace');
-  if(!workspace)return;
-  const internalTestButton=document.querySelector('.simulate-buyer');
-  if(internalTestButton)internalTestButton.style.display='none';
-  let pendingDemand=null;
-  renderRunTimeline=function(run, extra={}){
-    let box=document.querySelector('#run-timeline');
-    if(!box){box=document.createElement('section');box.id='run-timeline';box.className='run-timeline';document.querySelector('#workspace .results').prepend(box);}
-    const steps=[['已收到任务',true],['已定位商机',true],['已加载上下文',true],['已执行匹配',Boolean(run.capabilities_called?.length)],['已刷新判断',Boolean(run.decision_after)],['已保存检查点',Boolean(extra.checkpoint_id)]];
-    if(run.status==='WAITING_APPROVAL')steps.push(['等待人工审批',false]);
-    const resume=(run.status==='WAITING_EVIDENCE'||run.status==='FAILED')?'<button onclick="resumeLatestRun()">从检查点恢复</button>':'';
-    box.innerHTML='<header><span>Agent 运行记录</span>'+resume+'</header><ol>'+steps.map(([label,done])=>'<li class="'+(done?'done':'wait')+'">'+(done?'✓ ':'')+label+(label==='已执行匹配'&&run.capabilities_called?.length?'：'+run.capabilities_called.join('、'):'')+'</li>').join('')+'</ol><div style="font-size:10px;color:var(--muted);margin-top:7px">状态：'+(run.status==='COMPLETED'?'已完成':run.status)+'</div>';
-  };
-  function esc(value){return String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function parseDemand(text){
-    const product=(text.match(/(抹茶|蓝莓|咖啡|茶叶|辣椒|蜂蜜|茶粉)/i)||[])[1]||'未指定产品';
-    const qty=(text.match(/(\d+(?:\.\d+)?\s*(?:kg|吨|t|万件|件|箱)(?:\s*\/\s*(?:月|季|年))?)/i)||[])[1]||'未指定';
-    const moq=(text.match(/(?:MOQ|起订量|最小起订量)[：:\s]*(\d+(?:\.\d+)?\s*(?:kg|吨|t|件|箱))/i)||[])[1]||'未指定';
-    const markets=['美国','日本','德国','英国','澳大利亚','韩国','欧盟','加拿大'];
-    const market=markets.find(m=>text.includes(m))||'全球买家';
-    const buyer=(text.match(/(饮料|奶茶|食品|零售|烘焙|品牌|贸易商)[^，。；,。]*/)||[])[0]||'未指定';
-    const cert=(text.match(/(有机|Organic|FDA|JAS|HACCP|ISO)[^，。；,。]*/i)||[])[0]||'未指定';
-    return {raw:text,product,quantity:qty,capacity:qty,moq,market,buyer:buyer||'未指定',certification:cert};
-  }
-  window.parseDemandForRefine=parseDemand;
-  function renderConfirm(d){
-    pendingDemand=d;
-    const old=document.querySelector('#parse-card'); if(old)old.remove();
-    const card=document.createElement('div'); card.className='bubble agent'; card.id='parse-card';
-    const missing=[]; if(d.product==='未指定产品')missing.push('产品'); if(d.quantity==='未指定')missing.push('月产能'); if(d.moq==='未指定')missing.push('MOQ'); if(d.market==='全球买家')missing.push('目标市场'); if(d.buyer==='未指定')missing.push('目标买家类型'); if(d.certification==='未指定')missing.push('已有认证');
-    const questions={产品:'你目前主推哪一种产品，具体是什么规格或等级？',月产能:'你的月产能大约是多少？',MOQ:'最小起订量（MOQ）是多少？',目标市场:'你希望优先开发哪个国家或地区？',目标买家类型:'你更希望对接哪类买家，例如品牌方、食品工厂、贸易商还是零售商？',已有认证:'你目前有哪些可用于出口的认证或检测资料？'};
-    const prompt=missing.length?'为了帮你找到真正匹配产能的买家，我先确认一下：'+questions[missing[0]]:'关键信息已经比较完整，请确认后开始匹配买家。';
-    if(missing.length){line('我先记下了：'+d.product+'，目标市场：'+d.market+'。'+prompt);document.querySelector('#status').textContent='等待你的回答';return;}
-    const action=missing.length?'':'<button type="button" id="confirm-demand">确认并开始匹配</button>';
-    card.innerHTML='<div class="agent-title">我先帮你整理一下</div><p style="margin:0;color:#4f6359">'+prompt+'</p><div class="parse">'+
-      [['产品',d.product],['月产能',d.capacity],['MOQ',d.moq],['目标市场',d.market],['目标买家类型',d.buyer],['已有认证',d.certification]].map(x=>'<div><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>').join('')+
-      '</div>'+(action?'<div class="confirm">'+action+'</div>':'');
-    messages.appendChild(card); messages.scrollTop=messages.scrollHeight;
-    card.querySelector('#confirm-demand')?.addEventListener('click',()=>startScan());
-    document.querySelector('#input')?.focus();
-    card.querySelector('#edit-demand')?.addEventListener('click',()=>{document.querySelector('#input').focus();});
-  }
-  window.renderConfirmForRefine=renderConfirm;
-  function renderWorkspaceRows(items){
-    const list=Array.isArray(items)&&items.length?items:DATA;
-    rows.innerHTML=''; shown=0; list.forEach(o=>{const tag=o.access==='PASS'?'tag':o.access==='补条件'?'tag wait':'tag block';const qty=o.qty||o.quantity||o.fields?.quantity||'公开资料未明确';const r=document.createElement('div');r.className='tr';r.innerHTML='<input type="checkbox"><div class="buyer"><b>'+esc(o.country||o.buyer?.market)+' · '+esc(o.buyer?.name||o.buyer)+'</b><small>公开买家需求</small></div><div class="demand"><b>'+esc(o.title||o.fields?.product||'采购需求')+'</b><small>采购量：'+esc(qty)+'</small><small>'+esc(o.why||o.why_now||'已完成需求清洗与标准化')+'</small></div><div class="platform"><i class="dot"></i>公开信号</div><div class="score2">'+(o.score||o.fit_score||0)+'</div><div><span class="'+tag+'">'+esc(o.access||'待核验')+'</span></div><button class="action" onclick="openAction(\''+esc(o.buyer?.name||o.buyer||'买家')+'\')">查看下一步　→</button>';rows.appendChild(r);shown++;});document.querySelector('#count').textContent=shown+' 条';
-  }
-  send=async function(){const input=document.querySelector('#input'),text=input.value.trim();if(!text)return;line(text,'user');input.value='';pendingDemand=parseDemand(text);window.pendingDemandForRefine=pendingDemand;line('我识别到一个采购目标，请你确认关键信息。');renderConfirm(pendingDemand);document.querySelector('#status').textContent='等待卖家确认';};
-  startScan=async function(){if(running||!pendingDemand){line('请先告诉我你的产品和供给能力，我会先整理后再匹配买家。');return;}running=true;const card=document.querySelector('#parse-card');if(card){card.querySelector('.confirm').innerHTML='<span style="color:var(--g);font-weight:800">已确认供给条件，Agent 正在匹配公开买家需求…</span>';};document.querySelector('#status').textContent='Agent 正在匹配';line('<div class="step done"><i>✓</i>已确认供给：'+esc(pendingDemand.product)+' · 月产能 '+esc(pendingDemand.capacity)+'</div><div class="step live"><i>…</i>正在比对买家需求、MOQ、规格与市场准入</div>');try{const data=await runAgent({event_type:'SYSTEM_NEW_SIGNAL',opportunity_id:'opp_demo_001',message:pendingDemand.raw,idempotency_key:'scan-'+Date.now()});latestRun=data.run;renderRunTimeline(data.run,data);line('匹配完成。我已筛出与你供给能力更匹配的公开买家需求，并按匹配度排序。');let imported=[];try{const response=await fetch('/api/public/opportunities');if(response.ok)imported=await response.json();}catch(e){}renderWorkspaceRows(imported);document.querySelector('#status').textContent='已展示买家商机';}catch(error){const message=error instanceof TypeError?'无法连接 Agent 服务。请确认终端仍显示 QianPulse Agent API: http://localhost:5173，然后刷新页面重试。':'匹配暂时失败：'+error.message;line(message);document.querySelector('#status').textContent='等待服务连接';}finally{running=false;}};
-  resetTask=function(){running=false;pendingDemand=null;window.pendingDemandForRefine=null;latestRun=null;shown=0;rows.innerHTML='<div class="empty">告诉我你的产品和供给能力，AI 会通过对话逐步收集信息。</div>';document.querySelector('#count').textContent='0 条';document.querySelector('#status').textContent='等待卖家输入';messages.innerHTML='<div class="bubble agent"><div class="agent-title">黔脉智能体</div>你想开发什么市场、寻找哪类买家？我会结合你的产品规格、MOQ、产能和认证情况，逐步帮你筛选。</div>';document.querySelector('#input').value='';document.querySelector('#input').focus();};
-  if(location.hash==='#workspace'&&!document.querySelector('#parse-card')){document.querySelector('#status').textContent='等待卖家输入';}
-})();
-</script><script>
-// Allow the packaged file to talk to the local Agent API when opened directly.
-(function configureLocalApi(){
-  const nativeFetch=window.fetch.bind(window);
-  window.fetch=function(input,init){
-    if(location.protocol==='file:' && typeof input==='string' && input.startsWith('/api/')) input='http://localhost:5173'+input;
-    if(location.protocol==='file:' && init && init.headers && init.headers['Content-Type']==='application/json') init={...init,headers:{...init.headers,'Content-Type':'text/plain'}};
-    return nativeFetch(input,init);
-  };
-})();
-</script><script>
-// Contextual buyer Q&A: follow-up messages stay attached to the selected opportunity.
-(function installBuyerConversation(){
-  let currentOpportunity=null, contextKey='';
-  const formatAgentAnswer=(text)=>{const escaped=String(text||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const lines=escaped.split(/\n+/).map(s=>s.trim()).filter(Boolean);let html='';let list=[];const flush=()=>{if(list.length){html+='<ul>'+list.map(x=>'<li>'+x+'</li>').join('')+'</ul>';list=[];}};for(const raw of lines){const line=raw.replace(/^[-*]\s+/,'');if(/^[-*]\s+/.test(raw)||/^\d+[.、]\s+/.test(raw)){list.push(line.replace(/^\d+[.、]\s+/,''));continue;}flush();const match=line.match(/^\*\*(.+?)\*\*[:：]?\s*(.*)$/);if(match){html+='<section><h4>'+match[1]+'</h4><p>'+match[2]+'</p></section>';}else html+='<p>'+line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'</p>';}flush();return '<div class="ai-answer">'+html+'</div>';};
-  if(!document.querySelector('#ai-answer-style')){const style=document.createElement('style');style.id='ai-answer-style';style.textContent='.ai-answer p{margin:6px 0;line-height:1.7}.ai-answer section{margin:8px 0;padding:8px 10px;background:#fff;border:1px solid #e2ebe5;border-radius:6px}.ai-answer h4{margin:0 0 4px;color:var(--g);font-size:12px}.ai-answer ul{margin:7px 0 4px;padding-left:20px}.ai-answer li{margin:5px 0;line-height:1.55}';document.head.appendChild(style);}
-  const opportunityId=o=>o?.id||'';
-  const buyerName=o=>o?.buyer?.name||o?.buyer||'买家';
-  const buyerMarket=o=>o?.buyer?.market||o?.country||'海外市场';
-  window.selectOpportunity=function(o){
-    const name=buyerName(o), market=buyerMarket(o);
-    const nextKey=market+'|'+name;
-    currentOpportunity=o;
-    if(contextKey===nextKey)return;
-    contextKey=nextKey;
-    document.querySelector('#status').textContent='正在分析 '+name;
-    let context=document.querySelector('#buyer-context');
-    if(!context){context=document.createElement('div');context.id='buyer-context';context.style.cssText='margin:10px 20px 0;padding:9px 11px;border:1px solid #cfe2d6;border-radius:6px;background:#f0f8f2;color:#275542;font-size:11px';document.querySelector('#messages').prepend(context);}
-    context.innerHTML='<b>当前对话对象：'+market+' · '+name+'</b><br><span style="color:#718078">你接下来可以询问认证、规格、成交条件或跟进策略</span>';
-    line('已切换到「'+name+'」的买家档案。你可以直接问我这个买家的成交条件。');
-  };
-  window.openAction=function(name){
-    const row=[...document.querySelectorAll('#rows .tr:not(.head)')].find(item=>item.querySelector('.buyer')?.innerText.includes(name));
-    if(row){const cells=row.children;window.selectOpportunity({id:row.dataset.oppId||'opp_demo_001',buyer:name,title:cells[2]?.querySelector('b')?.innerText||'该买家的采购需求',quantity:cells[2]?.innerText||'公开资料未明确',score:cells[4]?.innerText||'待计算',risk:'认证、交期或目标价格仍需进一步核验'});return;}
-    window.selectOpportunity({id:'opp_demo_001',buyer:name,title:'该买家的采购需求',quantity:'公开资料未明确',score:'待计算',risk:'认证、交期或目标价格仍需进一步核验'});
-  };
-  const originalRender=window.renderWorkspaceRows;
-  if(typeof originalRender==='function'){
-    window.renderWorkspaceRows=function(items){originalRender(items);document.querySelectorAll('#rows .tr:not(.head)').forEach((row,index)=>{const list=Array.isArray(items)&&items.length?items:window.DATA;const o=list[index];const target=row.querySelector('.buyer');if(target&&o)target.onclick=()=>window.selectOpportunity(o);});};
-  }
-  const rowsBox=document.querySelector('#rows');
-  if(rowsBox){
-    const bindRows=()=>rowsBox.querySelectorAll('.tr:not(.head)').forEach(row=>{if(row.dataset.contextBound)return;row.dataset.contextBound='1';const buyer=row.querySelector('.buyer');if(!buyer)return;buyer.onclick=()=>{const text=buyer.innerText.split('\n')[0];window.openAction(text.replace(/^公开买家需求$/,''));};});
-    new MutationObserver(bindRows).observe(rowsBox,{childList:true}); bindRows();
-  }
-  const oldSend=window.send;
-  window.send=async function(){
-    const input=document.querySelector('#input'), text=input.value.trim(); if(!text)return;
-    if(!currentOpportunity){oldSend();return;}
-    line(text,'user'); input.value='';
-    if(opportunityId(currentOpportunity)){
-      try{const response=await fetch('/api/v1/agent/chat',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({opportunity_id:opportunityId(currentOpportunity),message:text})});const data=await response.json();if(response.ok&&data.answer){line(formatAgentAnswer(data.answer));document.querySelector('#status').textContent=data.provider==='deepseek'?'DeepSeek 已回答':'已完成买家分析';return;}}catch(error){console.warn('AI chat unavailable',error);}
+    const vertex=`
+      attribute vec2 position;
+      varying vec2 vUv;
+      void main(){vUv=position*.5+.5;gl_Position=vec4(position,0.0,1.0);}
+    `;
+    const fragment=`
+      precision highp float;
+      uniform vec3 iResolution;
+      uniform float iTime;
+      uniform vec3 uColor0;
+      uniform vec3 uColor1;
+      uniform vec3 uColor2;
+      uniform float uSpeed;
+      uniform float uStreakWidth;
+      uniform float uStreakLength;
+      uniform float uGlow;
+      uniform float uDensity;
+      uniform float uTwinkle;
+      uniform float uZoom;
+      varying vec2 vUv;
+
+      vec3 palette(float h){
+        if(h<.48)return uColor0;
+        if(h<.78)return uColor1;
+        return uColor2;
+      }
+      vec3 tanhv(vec3 x){vec3 e=exp(-2.0*x);return(1.0-e)/(1.0+e);}
+      vec2 sceneC(vec2 frag,vec2 r){
+        vec2 P=(frag+frag-r)/r.x;
+        float z=0.0,d=1e3;
+        vec4 O=vec4(0.0);
+        for(int k=0;k<39;k++){
+          if(d<=1e-4)break;
+          O=z*normalize(vec4(P,uZoom,0.0))-vec4(0.0,4.0,1.0,0.0)/4.5;
+          d=1.0-sqrt(length(O*O));
+          z+=d;
+        }
+        return vec2(O.x,atan(O.z,O.y));
+      }
+      void mainImage(out vec4 o,vec2 C){
+        vec2 r=iResolution.xy;
+        float screenX=C.x/r.x;
+        float T=.1*iTime*uSpeed+9.0;
+        float angRings=max(1.0,floor(6.28318530718*max(uDensity,.05)+.5));
+        vec2 Y=vec2(5e-3,6.28318530718/angRings);
+        vec2 c0=sceneC(C,r);
+        vec2 cdx=sceneC(C+vec2(1.0,0.0),r);
+        vec2 cdy=sceneC(C+vec2(0.0,1.0),r);
+        vec2 dCx=cdx-c0,dCy=cdy-c0;
+        dCx.y-=6.28318530718*floor(dCx.y/6.28318530718+.5);
+        dCy.y-=6.28318530718*floor(dCy.y/6.28318530718+.5);
+        vec2 fw=abs(dCx)+abs(dCy);
+        C=c0;
+        vec4 O=vec4(0.0);
+        float zr=5e-4*uStreakWidth;
+        vec2 rr=vec2(max(length(fw),1e-5));
+        float tail=19.0/max(uStreakLength,.05);
+        for(int m=0;m<3;m++){
+          float jf=float(m)+1.0;
+          float ic=fract(sin(dot(vec2(jf,floor(C.x/Y.x+.5)),vec2(7.0,11.0))*73.0));
+          vec2 Pp=C-(T+T*ic)*vec2(0.0,1.0);
+          Pp-=floor(Pp/Y+.5)*Y;
+          float h=fract(8663.0*ic);
+          vec3 col=palette(h);
+          float weight=mix(1.25,.88+sin(T+7.0*h+4.0),uTwinkle);
+          if(m==2)weight*=mix(.44,.12,smoothstep(.12,.88,screenX));
+          vec2 inner=vec2(length(max(Pp,vec2(-1.0,0.0))),length(Pp)-zr)-zr;
+          vec2 sm=vec2(1.0)-smoothstep(-rr,rr,inner);
+          O.rgb+=dot(sm,vec2(exp(tail*Pp.y),2.45))*col*weight;
+          C.x+=Y.x/8.0;
+        }
+        vec3 colr=sqrt(tanhv(max(O.rgb*uGlow-vec3(.04,.08,.02),0.0)));
+        o=vec4(colr,.78);
+      }
+      void main(){vec4 color;mainImage(color,vUv*iResolution.xy);gl_FragColor=color;}
+    `;
+    function compile(type,source){
+      const shader=gl.createShader(type);gl.shaderSource(shader,source);gl.compileShader(shader);
+      if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(shader)||'Lightfall shader error');
+      return shader;
     }
-    line('DeepSeek 暂时没有返回这条消息。请检查 API Key、网络连接和终端服务后重试。');
-    document.querySelector('#status').textContent='等待 DeepSeek 响应';
-    return;
-    const o=currentOpportunity, name=buyerName(o), market=buyerMarket(o), title=o.title||o.fields?.product||'当前产品';
-    let answer;
-    if(/多少|多大|多大的量|数量|采购量|需求量|吨|kg|公斤|volume|quantity/i.test(text)) { const raw=o.quantity||''; const found=raw.match(/\d+(?:[,.]\d+)?\s*(?:kg|公斤|吨|t|件|箱|万件)(?:\s*\/\s*(?:月|季|年))?/i); answer='「'+name+'」目前公开的采购信息是：'+(found?found[0]:raw.replace(/^.*采购量：/,'').split('\n')[0]||'公开资料未明确采购数量')+'。如果公开证据没有给出首批数量，我不会猜测，建议人工确认月度需求、首批量和交付节奏。'; }
-    else if(/认证|证书|准入|FDA|JAS|有机|标准/i.test(text)) answer='关于「'+name+'」的认证要求：目前公开需求重点是食品级合规、产品检测和稳定供货。建议准备有机或食品安全证书、规格书、检测报告和目标市场准入资料；尚未被公开信息确认的部分会标记为“待人工核验”。';
-    else if(/成交|条件|需要满足|要求|适合|能不能做|匹配/i.test(text)) answer='我看了一下「'+name+'」：它的需求是「'+title+'」，当前匹配度约 '+(o.score||o.fit_score||'待计算')+'%。主要优势是采购方向和窗口比较明确；主要风险是 '+(o.risk||'认证、交期或目标价格还没有完全确认')+'。建议先补齐资料，再由人工确认报价和交期。';
-    else if(/邮件|联系|回复|怎么说|话术/i.test(text)) answer='可以。我建议首轮先确认三件事：目标规格、预计采购量和交付时间。邮件草稿应先说明可提供样品与资料，价格、认证有效性和交期留给人工核实后填写。';
-    else if(/下一步|跟进|推进/i.test(text)) answer='建议下一步：1）核验原始需求证据；2）准备 '+title+' 的规格书和样品；3）补齐 '+market+' 市场所需证书；4）由人工发送经过确认的首封邮件。';
-    else answer='你的问题是在问「'+name+'」这条买家机会。我可以继续帮你分析它的采购规格、认证准入、成交条件或下一步跟进。你也可以直接问“这个买家需要哪些证书？”';
-    setTimeout(()=>{line(formatAgentAnswer(answer));document.querySelector('#status').textContent='已完成买家分析';},180);
-  };
-})();
-</script><script>
-(function refineWorkspaceNavigation(){
-  const apiFetch=(url,options)=>Promise.race([fetch(url,options),new Promise((_,reject)=>setTimeout(()=>reject(new Error('AI 服务响应超时')),4500))]);
-  const nurture=document.querySelector('#nurture-nav'); if(nurture)nurture.remove();
-  const handoff=document.querySelector('#handoff-nav'); if(handoff)handoff.textContent='自动化商机';
-  const originalSend=window.send;
-  window.send=async function(){
-    const input=document.querySelector('#input'), text=input?.value.trim(); if(!text)return;
-    const status=document.querySelector('#status')?.textContent||'';
-    if(window.pendingDemandForRefine && /等待卖家确认|等待确认|等待你的回答/.test(status)){
-      line(text,'user'); input.value='';
-      const previous=window.pendingDemandForRefine; const missingField=previous.quantity==='未指定'?'capacity':previous.moq==='未指定'?'moq':previous.market==='全球买家'?'market':previous.buyer==='未指定'?'buyer':previous.certification==='未指定'?'certification':'done';
-      const answerText=missingField==='moq'?'MOQ：'+text:missingField==='capacity'?'月产能：'+text:missingField==='market'?'目标市场：'+text:missingField==='buyer'?'买家类型：'+text:missingField==='certification'?'认证：'+text:text;
-      window.pendingDemandForRefine.raw+='；'+answerText;
-      const d=window.parseDemandForRefine(window.pendingDemandForRefine.raw); window.pendingDemandForRefine=d;
-      const missing=/未指定/.test(JSON.stringify(d))||d.market==='全球买家'||d.buyer==='未指定';
-      if(missing){try{const response=await apiFetch('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({message:'卖家信息收集对话：'+window.pendingDemandForRefine.raw})});const data=await response.json();if(response.ok&&data.answer){line(data.answer);document.querySelector('#status').textContent='DeepSeek 正在对话';return;}line('DeepSeek 暂时没有返回，请检查 API Key 或网络后重试。');}catch(error){line('DeepSeek 暂时无法连接，请检查终端服务和 API Key。');} return;}
-      window.renderConfirmForRefine(d); return;
+    let program;
+    try{
+      program=gl.createProgram();
+      gl.attachShader(program,compile(gl.VERTEX_SHADER,vertex));
+      gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragment));
+      gl.linkProgram(program);
+      if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program)||'Lightfall link error');
+    }catch(error){console.warn(error);canvas.style.display='none';return;}
+    gl.useProgram(program);
+    const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const position=gl.getAttribLocation(program,'position');
+    gl.enableVertexAttribArray(position);gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
+    const uniform=name=>gl.getUniformLocation(program,name);
+    const resolution=uniform('iResolution'),time=uniform('iTime');
+    const rgb=hex=>{const n=parseInt(hex.slice(1),16);return[((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255];};
+    gl.uniform3fv(uniform('uColor0'),rgb('#68B493'));
+    gl.uniform3fv(uniform('uColor1'),rgb('#F7F4EC'));
+    gl.uniform3fv(uniform('uColor2'),rgb('#D5A33F'));
+    gl.uniform1f(uniform('uSpeed'),.42);
+    gl.uniform1f(uniform('uStreakWidth'),.34);
+    gl.uniform1f(uniform('uStreakLength'),.9);
+    gl.uniform1f(uniform('uGlow'),.72);
+    gl.uniform1f(uniform('uDensity'),.22);
+    gl.uniform1f(uniform('uTwinkle'),.46);
+    gl.uniform1f(uniform('uZoom'),3.7);
+    function resize(){
+      const rect=canvas.getBoundingClientRect(),scale=.68;
+      const width=Math.max(1,Math.round(rect.width*scale)),height=Math.max(1,Math.round(rect.height*scale));
+      if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;gl.viewport(0,0,width,height);gl.uniform3f(resolution,width,height,1);}
     }
-    if(!window.pendingDemandForRefine){
-      line(text,'user'); input.value=''; window.pendingDemandForRefine=window.parseDemandForRefine(text);
-      try{const response=await apiFetch('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({message:text})});const data=await response.json();if(response.ok&&data.answer){line(data.answer);document.querySelector('#status').textContent='DeepSeek 正在对话';return;}line('DeepSeek 暂时没有返回，请检查 API Key 或网络后重试。');}catch(error){line('DeepSeek 暂时无法连接，请检查终端服务和 API Key。');}
-      return;
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let last=0,raf=0;
+    function draw(now){
+      raf=requestAnimationFrame(draw);
+      if(document.hidden||(!reduced&&now-last<33))return;
+      last=now;resize();gl.uniform1f(time,reduced?12:now*.001);gl.drawArrays(gl.TRIANGLES,0,3);
     }
-    return originalSend();
-  };
-  const input=document.querySelector('#input');
-  if(input&&!input.dataset.enterBound){input.dataset.enterBound='1';input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.send();}});}
-})();
-</script><script>
-// Seller intake state machine: keep one pending field and never duplicate ambiguous values.
-(function installSellerIntakeState(){
-  const state={profile:{product:'',specification:'',capacity:'',moq:'',markets:'',buyer_type:'',certifications:''},history:[],pendingField:null};
-  const ask=(url,opts)=>Promise.race([fetch(url,opts),new Promise((_,reject)=>setTimeout(()=>reject(new Error('DeepSeek 请求超时')),20000))]);
-  const inferField=answer=>{if(/月产能|产能/.test(answer))return 'capacity';if(/MOQ|起订量/.test(answer))return 'moq';if(/认证|证书|检测/.test(answer))return 'certifications';if(/市场|国家|地区/.test(answer))return 'markets';if(/买家类型|品牌方|工厂|贸易商/.test(answer))return 'buyer_type';if(/规格|等级|目数|包装/.test(answer))return 'specification';if(/产品/.test(answer))return 'product';return null;};
-  const fieldFromText=(text,pending)=>{if(pending)return pending;if(/MOQ|起订量/.test(text))return 'moq';if(/产能|每月|月产/.test(text))return 'capacity';if(/认证|证书|HACCP|FDA|有机|ISO/.test(text))return 'certifications';if(/美国|日本|德国|英国|欧盟|韩国|市场|国家/.test(text))return 'markets';if(/品牌方|食品工厂|工厂|贸易商|零售商/.test(text))return 'buyer_type';if(/抹茶|蓝莓|咖啡|茶叶|辣椒|蜂蜜/.test(text))return 'product';return null;};
-  window.send=async function(){const input=document.querySelector('#input'),text=input?.value.trim();if(!text)return;line(text,'user');input.value='';const field=fieldFromText(text,state.pendingField);if(field){state.profile[field]=state.profile[field]?state.profile[field]+'；'+text:text;}state.history.push({role:'user',content:text,pending_field:state.pendingField});document.querySelector('#status').textContent='DeepSeek 正在理解';try{const response=await ask('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({message:text,profile:state.profile,history:state.history})});const data=await response.json();if(!response.ok||!data.answer)throw new Error(data.error||'DeepSeek 没有返回');line(data.answer);state.history.push({role:'assistant',content:data.answer});state.pendingField=inferField(data.answer);document.querySelector('#status').textContent='等待你的回答';}catch(error){line('DeepSeek 暂时无法回复：'+error.message);document.querySelector('#status').textContent='等待服务恢复';}};
-})();
-</script><script>
-// Unified seller intake flow: structured facts drive questions and matching.
-(function installUnifiedSellerFlow(){
-  const input=document.querySelector('#input'), messagesEl=document.querySelector('#messages'), statusEl=document.querySelector('#status');
-  if(!input||!messagesEl)return;
-  const labels={product:'产品',specification:'规格 / 等级',capacity:'月产能',moq:'MOQ',markets:'目标市场',buyer_type:'目标买家类型',certifications:'已有认证'};
-  const required=Object.keys(labels);
-  const flow=window.__sellerFlow||{profile:Object.fromEntries(required.map(k=>[k,{value:'',status:'missing'}])),history:[],pending:null,busy:false,matched:false};
-  window.__sellerFlow=flow;
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function ensureTable(){
-    let box=document.querySelector('#seller-fact-table');
-    if(!box){box=document.createElement('div');box.id='seller-fact-table';box.className='bubble agent';box.style.cssText='margin:0 20px 10px;max-width:none;padding:10px 12px';messagesEl.parentNode.insertBefore(box,messagesEl);}
-    box.innerHTML='<div class="agent-title">卖家供给信息</div><div class="parse">'+required.map(k=>{const f=flow.profile[k];const state=f.status==='confirmed'?'已确认':f.status==='ambiguous'?'待澄清':'待补充';const color=f.status==='confirmed'?'#23734d':f.status==='ambiguous'?'#a46b15':'#718078';return '<div><small>'+labels[k]+' <span style="float:right;color:'+color+'">'+state+'</span></small><b>'+esc(f.value||'未填写')+'</b></div>';}).join('')+'</div>';
-  }
-  function setFact(field,value,status='confirmed'){if(!field||!value)return;flow.profile[field]={value:String(value).trim(),status};ensureTable();}
-  function textField(text){
-    if(/MOQ|起订量|最小起订量/i.test(text))return 'moq';
-    if(/月产能|产能|每月生产|每月可供/i.test(text))return 'capacity';
-    if(/认证|证书|检测|HACCP|FDA|JAS|ISO|有机|Organic/i.test(text))return 'certifications';
-    if(/目标市场|出口到|销往|美国|日本|韩国|德国|英国|欧盟|加拿大|澳大利亚|澳洲/i.test(text))return 'markets';
-    if(/品牌方|食品工厂|饮料厂|贸易商|零售商|餐饮|买家类型/i.test(text))return 'buyer_type';
-    if(/规格|等级|目数|包装|粒径|粉末|饮品级|烘焙级/i.test(text))return 'specification';
-    if(/抹茶|蓝莓|咖啡|茶叶|辣椒|蜂蜜|产品|SKU/i.test(text))return 'product';
-    return null;
-  }
-  function extract(text,pending){
-    const t=String(text||'').trim();
-    if(pending && /^(?:\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)(?:\s*(?:\/|每)?\s*(?:月|季|年))?)$/i.test(t))return {field:pending,value:t,ambiguous:false};
-    const explicit=(rx,field)=>{const m=t.match(rx);return m?{field,value:m[1].trim(),ambiguous:false}:null;};
-    const quantity=t.match(/(\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)(?:\s*(?:\/|每)?\s*(?:月|季|年))?)/i)?.[1];
-    if(/MOQ|起订量|最小起订量/i.test(t)&&quantity)return {field:'moq',value:quantity,ambiguous:false};
-    if(/月产能|产能|每月可供/i.test(t)&&quantity)return {field:'capacity',value:quantity,ambiguous:false};
-    const product=t.match(/(抹茶(?:粉)?|蓝莓|咖啡|茶叶|辣椒|蜂蜜)/i)?.[1];
-    if(product)return {field:'product',value:product,ambiguous:false};
-    const market=t.match(/(美国|日本|韩国|德国|英国|欧盟|加拿大|澳大利亚|澳洲|东南亚|欧洲|北美)/)?.[1];
-    if(market)return {field:'markets',value:market,ambiguous:false};
-    const buyer=t.match(/(品牌方|食品工厂|饮料厂|贸易商|零售商|餐饮)/)?.[1];
-    if(buyer)return {field:'buyer_type',value:buyer,ambiguous:false};
-    const cert=t.match(/(HACCP|FDA|JAS|ISO\s*22000|有机|Organic)/i)?.[1];
-    if(cert)return {field:'certifications',value:cert,ambiguous:false};
-    return (pending&&textField(t)===pending)?{field:pending,value:t,ambiguous:false}:null;
-  }
-  function extractMany(text,pending){
-    const t=String(text||''), out=[];
-    const add=(field,value)=>{if(value&&!out.some(x=>x.field===field))out.push({field,value:value.trim(),ambiguous:false});};
-    const qty=t.match(/(\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)(?:\s*(?:\/|每)?\s*(?:月|季|年))?)/i)?.[1];
-    if(/MOQ|起订量|最小起订量/i.test(t)&&qty)add('moq',qty);
-    if(/月产能|产能|每月可供/i.test(t)&&qty)add('capacity',qty);
-    const product=t.match(/(抹茶(?:粉)?|蓝莓|咖啡|茶叶|辣椒|蜂蜜)/i)?.[1];if(product)add('product',product);
-    const spec=t.match(/(\d+\s*目|饮品级|烘焙级|食品级|整果\s*\d+[-至]\d+mm|\d+\s*kg\s*\/\s*(?:袋|箱))/i)?.[1];if(spec)add('specification',spec);
-    const market=t.match(/(美国|日本|韩国|德国|英国|欧盟|加拿大|澳大利亚|澳洲|东南亚|欧洲|北美)/)?.[1];if(market)add('markets',market);
-    const buyer=t.match(/(品牌方|食品工厂|饮料厂|贸易商|零售商|餐饮)/)?.[1];if(buyer)add('buyer_type',buyer);
-    const cert=t.match(/(HACCP|FDA|JAS|ISO\s*22000|有机|Organic)/i)?.[1];if(cert)add('certifications',cert);
-    if(!out.length){const one=extract(t,pending);if(one)out.push(one);}return out;
-  }
-  function questionField(answer){const t=String(answer||'');if(/MOQ|起订量|最小起订量/.test(t))return 'moq';if(/月产能|产能/.test(t))return 'capacity';if(/认证|证书|检测/.test(t))return 'certifications';if(/目标市场|国家|地区|出口/.test(t))return 'markets';if(/买家类型|品牌方|工厂|贸易商|零售商/.test(t))return 'buyer_type';if(/规格|等级|目数|包装/.test(t))return 'specification';if(/产品|SKU/.test(t))return 'product';return null;}
-  function complete(){return required.every(k=>flow.profile[k].status==='confirmed');}
-  function profilePayload(){return Object.fromEntries(required.map(k=>[k,flow.profile[k].value]));}
-  async function safeJson(response){const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{}if(!response.ok)throw new Error(data.error||'服务暂时不可用');if(!data.answer)throw new Error(data.error||'AI 暂时没有返回完整回复');return data;}
-  async function askAI(text){
-    const response=await fetch('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+(typeof authToken==='function'?authToken():'')},body:JSON.stringify({message:text,profile:profilePayload(),history:flow.history})});
-    return safeJson(response);
-  }
-  function showFriendlyError(error){line('AI 暂时没有收到完整回复，请稍后重试。你的信息已保留。','agent');statusEl.textContent='等待服务恢复';}
-  async function unifiedSend(){
-    const text=input.value.trim();if(!text||flow.busy)return;flow.busy=true;line(text,'user');input.value='';
-    const extracted=extractMany(text,flow.pending);
-    if(extracted.length){extracted.forEach(f=>setFact(f.field,f.value,'confirmed'));flow.pending=null;}
-    else if(/^\d+(?:\.\d+)?\s*(?:kg|公斤|吨|t|件|箱)$/i.test(text)){setFact('capacity',text,'ambiguous');setFact('moq',text,'ambiguous');flow.pending=null;}
-    flow.history.push({role:'user',content:text,field:extracted.map(f=>f.field)});ensureTable();statusEl.textContent='DeepSeek 正在理解';
-    try{const data=await askAI(text);line(data.answer,'agent');flow.history.push({role:'assistant',content:data.answer});flow.pending=questionField(data.answer);if(complete()){statusEl.textContent='信息已完整，正在匹配';await unifiedStartScan();}else statusEl.textContent=flow.pending?'等待你的回答':'继续补充信息';}
-    catch(error){showFriendlyError(error);}finally{flow.busy=false;}
-  }
-  async function unifiedStartScan(){
-    if(flow.matched||flow.busy&&flow.matched)return;flow.matched=true;
-    const p=profilePayload();window.pendingDemand={raw:flow.history.map(x=>x.content).join('；'),product:p.product||'未指定产品',capacity:p.capacity||'未指定',quantity:p.capacity||'未指定',moq:p.moq||'未指定',market:p.markets||'全球买家',buyer:p.buyer_type||'未指定',certification:p.certifications||'未指定'};
-    line('<div class="step live"><i>…</i>信息已确认，正在匹配公开买家需求</div>');
-    try{const data=await runAgent({event_type:'SYSTEM_NEW_SIGNAL',opportunity_id:'opp_demo_001',message:window.pendingDemand.raw,idempotency_key:'scan-'+Date.now()});if(typeof renderRunTimeline==='function')renderRunTimeline(data.run,data);const response=await fetch('/api/public/opportunities');const items=await response.json();if(typeof renderWorkspaceRows==='function')renderWorkspaceRows(items);line('匹配完成。右侧已展示与你供给能力相关的买家需求。');statusEl.textContent='已展示买家商机';}
-    catch(error){flow.matched=false;line('匹配暂时失败，请稍后重试。你的供给信息已保存。');statusEl.textContent='等待重试';}
-  }
-  window.send=unifiedSend;window.startScan=unifiedStartScan;
-  window.resetTask=function(){flow.profile=Object.fromEntries(required.map(k=>[k,{value:'',status:'missing'}]));flow.history=[];flow.pending=null;flow.matched=false;flow.busy=false;messagesEl.innerHTML='<div class="bubble agent"><div class="agent-title">黔脉智能体</div>请告诉我你的产品和供给能力，我会逐项确认后匹配买家。</div>';document.querySelector('#seller-fact-table')?.remove();if(typeof rows!=='undefined')rows.innerHTML='<div class="empty">输入供给信息后，匹配结果会显示在这里。</div>';if(document.querySelector('#count'))document.querySelector('#count').textContent='0 条';statusEl.textContent='等待卖家输入';ensureTable();input.focus();};
-  ensureTable();
-})();
-</script></body></html>
+    raf=requestAnimationFrame(draw);
+    addEventListener('resize',resize,{passive:true});
+  })();
+  </script>
+  <script>
+  (() => {
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function addLivingShine(button,speed=.34){
+      if(!button)return;
+      let pointerAngle=null,proximity=0,angle=2.4,idle=2.4,last=performance.now();
+      addEventListener('pointermove',e=>{
+        const rect=button.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+        const dx=Math.max(rect.left-e.clientX,0,e.clientX-rect.right),dy=Math.max(rect.top-e.clientY,0,e.clientY-rect.bottom);
+        const distance=Math.hypot(dx,dy),nx=(e.clientX-cx)/(rect.width/2),ny=(cy-e.clientY)/(rect.height/2);
+        pointerAngle=distance===0?Math.atan2(2/rect.height,-2/rect.width)+nx*.3+ny*.15:Math.atan2(cy-e.clientY,e.clientX-cx);
+        const t=Math.max(0,1-distance/240);proximity=t*t*(3-2*t);
+      },{passive:true});
+      function frame(now){
+        const dt=Math.min((now-last)/1000,.05);last=now;
+        if(!reduced)idle+=speed*dt;
+        const target=pointerAngle!==null&&proximity>0?pointerAngle:idle;
+        const diff=((target-angle+Math.PI*3)%(Math.PI*2))-Math.PI;angle+=diff*(1-Math.exp(-dt*7));
+        button.style.setProperty('--shine-angle',`${angle}rad`);
+        button.style.setProperty('--shine-opacity',String(.24+proximity*.76));
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+    addLivingShine(document.getElementById('loginButton'));
+    addLivingShine(document.getElementById('heroCta'),.46);
+  })();
+  </script>
+  <script>
+  (() => {
+    const DATA_URL='assets/countries-50m.json';
+    const FALLBACK_DATA_URL='assets/countries-110m.json';
+    const CHINA_POV_URL='assets/china-pov-10m.geojson';
+    const canvas=document.getElementById('globe'), ctx=canvas.getContext('2d');
+    const guizhouLabel=document.getElementById('guizhouLabel');
+    const fallback=document.getElementById('fallback');
+    const dpr=Math.min(devicePixelRatio||1,2), reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const guizhou=[106.71,26.58];
+    const southChinaSeaIslands=[
+      [116.72,20.70],[112.25,16.84],[111.62,16.50],[112.72,16.05],[114.30,15.75],[115.80,15.10],
+      [112.22,10.25],[113.80,10.02],[114.30,9.72],[115.52,10.78],[116.18,9.62],[112.92,8.62],
+      [114.12,8.88],[115.82,7.82],[113.72,6.32],[116.88,5.52],[111.68,7.90],[117.05,11.05]
+    ];
+    const hubs=[[-74,40],[2,49],[13,52],[55,25],[77,28],guizhou,[121,31],[139,35],[151,-33],[-46,-23],[-99,19],[31,-1]];
+    const routes=[[0,5],[1,5],[2,5],[3,5],[4,5],[5,6],[5,7],[5,8],[5,9],[5,10],[5,11],[1,8],[0,9],[2,7]];
+    const maskW=1440,maskH=720;
+    let landPixels=null, chinaPolygons=[], start=0, ready=false;
+
+    function decodeTopology(topology){
+      const cache=new Map(), tr=topology.transform;
+      function arc(index){
+        const reverse=index<0, key=reverse?~index:index;
+        if(!cache.has(key)){
+          let x=0,y=0;
+          cache.set(key,topology.arcs[key].map(([dx,dy])=>{
+            x+=dx;y+=dy; return [x*tr.scale[0]+tr.translate[0],y*tr.scale[1]+tr.translate[1]];
+          }));
+        }
+        const points=cache.get(key); return reverse?[...points].reverse():points;
+      }
+      function ring(ids){
+        const out=[]; ids.forEach((id,i)=>{const a=arc(id);out.push(...(i?a.slice(1):a));}); return out;
+      }
+      function polygons(g){
+        if(g.type==='Polygon') return [g.arcs.map(ring)];
+        if(g.type==='MultiPolygon') return g.arcs.map(poly=>poly.map(ring));
+        return [];
+      }
+      return topology.objects.countries.geometries.map(g=>({id:String(g.id),polygons:polygons(g)}));
+    }
+    function chinaPovPolygons(geojson){
+      if(!geojson||!Array.isArray(geojson.features))return [];
+      const polygons=[];
+      const simplifyRing=ring=>{
+        if(ring.length<=900)return ring;
+        const step=Math.ceil(ring.length/900),simplified=[];
+        for(let i=0;i<ring.length;i+=step)simplified.push(ring[i]);
+        const last=ring[ring.length-1];if(simplified[simplified.length-1]!==last)simplified.push(last);
+        return simplified;
+      };
+      const simplifyPolygon=polygon=>polygon.map(simplifyRing);
+      for(const feature of geojson.features){
+        const properties=feature.properties||{};
+        if(properties.SOVEREIGNT!=='China'&&properties.ADMIN!=='China')continue;
+        const geometry=feature.geometry;if(!geometry)continue;
+        if(geometry.type==='Polygon')polygons.push(simplifyPolygon(geometry.coordinates));
+        if(geometry.type==='MultiPolygon')polygons.push(...geometry.coordinates.map(simplifyPolygon));
+      }
+      return polygons;
+    }
+    function unwrap(ring){
+      if(!ring.length)return ring;
+      const out=[[ring[0][0],ring[0][1]]];
+      for(let i=1;i<ring.length;i++){
+        let lon=ring[i][0],prev=out[i-1][0];
+        while(lon-prev>180)lon-=360; while(lon-prev<-180)lon+=360;
+        out.push([lon,ring[i][1]]);
+      }
+      return out;
+    }
+    function prepare(countries,preferredChinaPolygons=[]){
+      const land=document.createElement('canvas');land.width=maskW;land.height=maskH;
+      const m=land.getContext('2d');m.fillStyle='#fff';
+      function paintPolygons(polygons){for(const poly of polygons){
+        for(const shift of [-360,0,360]){
+          m.beginPath();
+          for(const rawRing of poly){
+            const ring=unwrap(rawRing);
+            ring.forEach(([lon,lat],i)=>{
+              const x=(lon+shift+180)/360*maskW,y=(90-lat)/180*maskH;
+              i?m.lineTo(x,y):m.moveTo(x,y);
+            });
+            m.closePath();
+          }
+          m.fill('evenodd');
+        }
+      }}
+      for(const country of countries)paintPolygons(country.polygons);
+      if(preferredChinaPolygons.length)paintPolygons(preferredChinaPolygons);
+      landPixels=m.getImageData(0,0,maskW,maskH).data;
+      // 中国大陆、台湾、香港和澳门均使用同一强调轮廓。
+      const chinaIds=new Set(['156','158','344','446']);
+      chinaPolygons=preferredChinaPolygons.length?preferredChinaPolygons:countries.filter(c=>chinaIds.has(c.id)).flatMap(c=>c.polygons);
+    }
+    function project(lon,lat,center,R,cx,cy){
+      const lam=(lon-center)*Math.PI/180,phi=lat*Math.PI/180;
+      return {x:cx+R*Math.cos(phi)*Math.sin(lam),y:cy-R*Math.sin(phi),z:Math.cos(phi)*Math.cos(lam)};
+    }
+    function globeLine(points,center,R,cx,cy,color,width=1){
+      ctx.beginPath();let pen=false;
+      for(const p of points){const q=project(p[0],p[1],center,R,cx,cy);if(q.z<=.01){pen=false;continue;}if(!pen){ctx.moveTo(q.x,q.y);pen=true;}else ctx.lineTo(q.x,q.y);}
+      ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
+    }
+    function route(a,b,center,R,cx,cy){
+      const pts=[];
+      for(let i=0;i<=48;i++){
+        const t=i/48,lon=a[0]+(b[0]-a[0])*t,lat=a[1]+(b[1]-a[1])*t+Math.sin(Math.PI*t)*18;
+        pts.push([lon,lat]);
+      }
+      ctx.setLineDash([2,5]);globeLine(pts,center,R,cx,cy,'rgba(209,215,136,.67)',1.1);ctx.setLineDash([]);
+    }
+    function drawSouthChinaSeaIslands(center,R,cx,cy){
+      ctx.save();ctx.fillStyle='rgba(224,230,165,.96)';ctx.strokeStyle='rgba(213,163,63,.62)';ctx.lineWidth=.65;
+      southChinaSeaIslands.forEach(([lon,lat],index)=>{
+        const q=project(lon,lat,center,R,cx,cy);if(q.z<=.02)return;
+        const size=Math.max(1.15,R*(index<6?.0038:.0031))*Math.max(.72,q.z);
+        ctx.beginPath();ctx.ellipse(q.x,q.y,size,size*.62,(index%4-.5)*.18,0,Math.PI*2);ctx.fill();ctx.stroke();
+      });
+      ctx.restore();
+    }
+    function draw(now){
+      if(!ready)return;
+      if(!start)start=now;
+      const rect=canvas.getBoundingClientRect();
+      canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
+      const W=rect.width,H=rect.height,R=Math.min(W,H)*.445,cx=W*.5,cy=H*.5;
+      const elapsed=now-start;
+      let p=1,center=106.71,resting=true;
+      if(!reduce){
+        if(elapsed<3500){
+          resting=false;const raw=Math.min(1,elapsed/3500);p=1-Math.pow(1-raw,3);center=-92+198.71*p;
+        }else{
+          const cycle=(elapsed-3500)%8500;
+          if(cycle>=5000){
+            resting=false;const raw=(cycle-5000)/3500;p=1-Math.pow(1-raw,3);center=106.71+360*p;
+          }
+        }
+      }
+      const glow=ctx.createRadialGradient(cx,cy,R*.1,cx,cy,R*1.18);
+      glow.addColorStop(0,'rgba(72,141,101,.12)');glow.addColorStop(.72,'rgba(5,54,39,.1)');glow.addColorStop(1,'rgba(2,37,28,0)');
+      ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,R*1.05,0,Math.PI*2);ctx.fill();
+      ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.clip();
+      // 在球面屏幕坐标中反投影取样，海岸线和所有岛屿来自真实地图蒙版。
+      const step=Math.max(3.5,R/112);
+      for(let sy=-R;sy<=R;sy+=step){
+        const span=Math.sqrt(Math.max(0,R*R-sy*sy));
+        for(let sx=-span;sx<=span;sx+=step){
+          const nx=sx/R,ny=sy/R,z=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+          let lon=center+Math.atan2(nx,z)*180/Math.PI;
+          lon=((lon+180)%360+360)%360-180;
+          const lat=-Math.asin(ny)*180/Math.PI;
+          const mx=Math.min(maskW-1,Math.max(0,Math.floor((lon+180)/360*maskW)));
+          const my=Math.min(maskH-1,Math.max(0,Math.floor((90-lat)/180*maskH)));
+          if(landPixels[(my*maskW+mx)*4+3]<128)continue;
+          const size=.9+1.35*z;ctx.fillStyle=`rgba(207,220,154,${.22+.64*z})`;ctx.fillRect(cx+sx-size/2,cy+sy-size/2,size,size);
+        }
+      }
+      routes.forEach(([a,b])=>route(hubs[a],hubs[b],center,R,cx,cy));
+      chinaPolygons.forEach(poly=>poly.forEach(r=>globeLine(r,center,R,cx,cy,'rgba(224,230,165,.92)',1.35)));
+      drawSouthChinaSeaIslands(center,R,cx,cy);
+      hubs.forEach((h,i)=>{const q=project(h[0],h[1],center,R,cx,cy);if(q.z<=0)return;ctx.beginPath();ctx.arc(q.x,q.y,i===5?6:4.5,0,Math.PI*2);ctx.fillStyle=i===5?'#efb33f':'#dce9cf';ctx.fill();});
+      const g=project(guizhou[0],guizhou[1],center,R,cx,cy);
+      if(g.z>0){
+        guizhouLabel.style.left=`${g.x}px`;guizhouLabel.style.top=`${g.y}px`;
+        const signal=Math.max(0,(p-.72)/.28);ctx.save();ctx.translate(g.x,g.y);
+        for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(0,0,16+i*8+signal*9,0,Math.PI*2);ctx.strokeStyle=`rgba(213,163,63,${.65-i*.11})`;ctx.lineWidth=1.2;ctx.stroke();}
+        ctx.beginPath();ctx.arc(0,0,8.5,0,Math.PI*2);ctx.fillStyle='#f0b53c';ctx.fill();ctx.restore();
+      }
+      guizhouLabel.classList.toggle('is-visible',resting&&g.z>0);
+      ctx.restore();ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(187,214,166,.16)';ctx.stroke();
+      if(!reduce)requestAnimationFrame(draw);
+    }
+    const fetchJson=url=>fetch(url).then(r=>{if(!r.ok)throw Error(r.status);return r.json();});
+    const worldData=fetchJson(DATA_URL).catch(()=>fetchJson(FALLBACK_DATA_URL));
+    const chinaPov=fetchJson(CHINA_POV_URL).then(chinaPovPolygons).catch(()=>[]);
+    worldData.then(data=>{
+      const countries=decodeTopology(data);prepare(countries);ready=true;requestAnimationFrame(draw);
+      chinaPov.then(preferredChinaPolygons=>{if(preferredChinaPolygons.length)prepare(countries,preferredChinaPolygons);});
+    }).catch(()=>{
+      canvas.style.display='none';fallback.style.display='block';
+      guizhouLabel.style.left='75%';guizhouLabel.style.top='53%';guizhouLabel.classList.add('is-visible');
+    });
+  })();
+  </script>
+</body>
+</html>
