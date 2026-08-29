@@ -267,6 +267,13 @@ export function createLiveA2A6Runtime({
         refreshedCapabilities: payload.refreshed_capabilities || []
       });
       const envelope = progression.envelope;
+      const dependencyExecutions = progression.dependency_refresh?.executions || [];
+      run.capabilities_called = [
+        ...new Set([
+          ...dependencyExecutions.map(item => item.capability_id).filter(Boolean),
+          'qianpulse.a6.opportunity_progression'
+        ])
+      ];
       run.status = agentStatus(progression.run_status);
       run.state_after = { status: progression.opportunity.status, stage: progression.opportunity.stage || 'CONTACTED' };
       run.decision_after = envelope?.domain_result?.next_action || null;
@@ -280,10 +287,29 @@ export function createLiveA2A6Runtime({
         content: typeof messageContent === 'string' ? messageContent : messageContent.content || ''
       };
 
+      dependencyExecutions.forEach((result, index) => {
+        const dependencyStep = {
+          step_id: id('step'),
+          run_id: run.run_id,
+          sequence: index + 1,
+          step_type: 'CAPABILITY',
+          capability_id: result.capability_id,
+          capability_version: result.capability_version || '1.0.0',
+          input_hash: hash({ opportunity_id: opportunity.id, event_id: event.event_id, capability_id: result.capability_id }),
+          output_hash: hash(result),
+          status: result.run_status,
+          started_at: run.started_at,
+          completed_at: run.completed_at,
+          evidence_refs: result.evidence_refs || [],
+          result
+        };
+        state.steps[dependencyStep.step_id] = dependencyStep;
+      });
+
       const step = {
         step_id: id('step'),
         run_id: run.run_id,
-        sequence: 1,
+        sequence: dependencyExecutions.length + 1,
         step_type: 'CAPABILITY',
         capability_id: 'qianpulse.a6.opportunity_progression',
         capability_version: '1.0.0',
@@ -321,7 +347,7 @@ export function createLiveA2A6Runtime({
         checkpoint_id: id('cp'),
         run_id: run.run_id,
         opportunity_id: opportunity.id,
-        step: 1,
+        step: step.sequence,
         state: run.status,
         input_hash: step.input_hash,
         output_hash: step.output_hash,
@@ -334,6 +360,8 @@ export function createLiveA2A6Runtime({
         event,
         opportunity: progression.opportunity,
         envelope,
+        dependency_refresh: progression.dependency_refresh || null,
+        structured_field_extraction: progression.structured_field_extraction || null,
         approval,
         checkpoint_id: checkpoint.checkpoint_id
       };
