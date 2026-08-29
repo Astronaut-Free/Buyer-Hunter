@@ -7,7 +7,7 @@ import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypt
 import { decideHandoff, calculateMatch, evaluateMarketAccess } from './decision-engine.js';
 import { withRetry } from './capability-adapter.js';
 import { guardBuyerOutput } from './output-guard.js';
-import { loadFreeOpportunities, mergeFreeOpportunities, buildAgentOutcomesEntries } from './repository.js';
+import { loadFreeOpportunities, mergeFreeOpportunities, buildAgentOutcomesEntries, linkBridgedBuyers } from './repository.js';
 import { createApolloProvider } from '../providers/apollo.js';
 import { createTrademoProvider } from '../providers/trademo.js';
 import { createSmartleadProvider } from '../providers/smartlead.js';
@@ -721,6 +721,11 @@ loadState = async function() {
       state.opportunities[opportunity.id] = existing
         ? mergeFreeOpportunities(existing, opportunity)
         : opportunity;
+    }
+    // A2↔A1 convergence: bind A2 targets to bridged Free buyers on domain match.
+    for (const [key, ref] of linkBridgedBuyers(state.opportunities)) {
+      state.external_refs ||= {};
+      state.external_refs[key] = ref;
     }
     state.free_data_source = 'origin/Free';
   } catch (error) {

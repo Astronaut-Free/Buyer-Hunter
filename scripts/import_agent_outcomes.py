@@ -9,6 +9,8 @@ Free decision store:
     exist in `opportunity` — bridged Free opportunities; A2-only ids are skipped)
   - A2 discovered targets                -> `agent_discovered_target` (upserted
     idempotently on `seed_key`)
+  - domain entity resolution             -> targets whose domain matches a Free
+    buyer get matched_free_buyer_id + a buyer_alias + an AUTO_MERGE audit row
 
     python scripts/import_agent_outcomes.py [--db PATH] [--in PATH] [--verbose]
 
@@ -169,6 +171,62 @@ def apply(conn: sqlite3.Connection, outcome_rows: list[dict[str, Any]], target_r
     return {"deal_outcome_inserted": inserted_outcomes, "target_upserted": inserted_targets}
 
 
+def resolve_entities(conn: sqlite3.Connection, target_rows: list[dict[str, Any]]) -> int:
+    """Domain entity resolution (contract v2 candidate #2).
+
+    Casefold-match each A2 target's domain against Free `buyer.domain`; on a hit
+    record the link (matched_free_buyer_id), an alias row and an AUTO_MERGE audit
+    row. Idempotent (stable ids, OR IGNORE). Activates as buyer domains populate.
+    """
+    buyers: dict[str, dict[str, Any]] = {}
+    for row in conn.execute(
+        "SELECT id, canonical_name, domain FROM buyer WHERE domain IS NOT NULL AND domain != ''"
+    ):
+        buyers[row[2].casefold()] = {"id": row[0], "canonical_name": row[1]}
+
+    links = 0
+    for target in target_rows:
+        domain = (target.get("domain") or "").strip()
+        free_buyer = buyers.get(domain.casefold()) if domain else None
+        if not free_buyer:
+            continue
+        conn.execute(
+            "UPDATE agent_discovered_target SET matched_free_buyer_id = ? WHERE seed_key = ?",
+            (free_buyer["id"], target["seed_key"]),
+        )
+        alias_normalized = (target.get("buyer_name") or "").strip().casefold() or target["seed_key"]
+        conn.execute(
+            "INSERT OR IGNORE INTO buyer_alias "
+            "(id, buyer_id, alias_raw, alias_normalized, evidence_id, created_at) "
+            "VALUES (?, ?, ?, ?, NULL, ?)",
+            (
+                _sha(f"alias|{free_buyer['id']}|{alias_normalized}"),
+                free_buyer["id"],
+                target.get("buyer_name"),
+                alias_normalized,
+                _now(),
+            ),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO entity_merge_audit "
+            "(id, kept_buyer_id, merged_buyer_id, score, feature_json, decision, decided_by, created_at) "
+            "VALUES (?, ?, ?, ?, ?, 'AUTO_MERGE', 'reverse-bridge-v2', ?)",
+            (
+                _sha(f"merge|{free_buyer['id']}|{target['buyer_id']}|reverse-bridge-v2"),
+                free_buyer["id"],
+                target["buyer_id"],
+                1.0,
+                json.dumps(
+                    {"domain_match": domain, "alias": target.get("buyer_name")},
+                    ensure_ascii=False,
+                ),
+                _now(),
+            ),
+        )
+        links += 1
+    return links
+
+
 def load_payload(in_path: Path) -> dict[str, Any] | None:
     if not in_path.exists():
         return None
@@ -190,10 +248,12 @@ def import_outcomes(db_path: Path, in_path: Path) -> dict[str, Any]:
     target_rows = build_target_rows(entries)
     with sqlite3.connect(db_path) as conn:
         counts = apply(conn, outcome_rows, target_rows)
+        entity_links = resolve_entities(conn, target_rows)
     return {
         "skipped": False,
         "a6_outcomes_read": len(entries.get("a6_outcomes", []) or []),
         "a2_targets_read": len(entries.get("a2_targets", []) or []),
+        "entity_links": entity_links,
         **counts,
     }
 

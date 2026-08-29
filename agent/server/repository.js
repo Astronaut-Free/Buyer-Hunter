@@ -65,3 +65,39 @@ export function buildAgentOutcomesEntries(opportunities = {}, now = () => new Da
   }
   return { a6_outcomes: a6Outcomes, a2_targets: a2Targets };
 }
+
+// A2↔A1 convergence (contract v2 candidate #2): an A2-discovered company whose
+// domain matches a bridged Free buyer is the same company. Additive only —
+// buyer.free_buyer_id + external_refs; ids and ranking stay untouched. Returns
+// [key, ref] pairs for the caller to merge into the state-level external_refs
+// index. Activates as buyer domains populate (none of today's 51 Free buyers
+// carry a domain yet).
+export function linkBridgedBuyers(opportunities = {}, now = () => new Date().toISOString()) {
+  const domainToFreeBuyer = {};
+  for (const opportunity of Object.values(opportunities || {})) {
+    const domain = opportunity.buyer?.domain;
+    if (opportunity.source === 'FREE_PIPELINE' && domain) {
+      domainToFreeBuyer[String(domain).toLowerCase()] = opportunity.buyer;
+    }
+  }
+  const refs = [];
+  for (const opportunity of Object.values(opportunities || {})) {
+    if (opportunity.source !== 'A2_PROACTIVE_BUYER_DEVELOPMENT') continue;
+    const domain = opportunity.buyer?.domain;
+    const freeBuyer = domain ? domainToFreeBuyer[String(domain).toLowerCase()] : null;
+    if (!freeBuyer) continue;
+    opportunity.buyer.free_buyer_id = freeBuyer.id;
+    const key = `free:buyer:${freeBuyer.id}`;
+    const ref = {
+      opportunity_id: opportunity.id,
+      provider: 'free',
+      kind: 'buyer',
+      external_id: freeBuyer.id,
+      metadata: { linked_by: 'domain' },
+      updated_at: now()
+    };
+    opportunity.external_refs = { ...(opportunity.external_refs || {}), [key]: ref };
+    refs.push([key, ref]);
+  }
+  return refs;
+}

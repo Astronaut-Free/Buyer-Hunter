@@ -128,12 +128,28 @@ Idempotency: `deal_outcome.id = sha256(opportunity_id | stage | reported_at)`;
 - A2-only opportunity ids have no row in Free's `opportunity` table, so their
   outcomes are deliberately skipped (FK) — the A2 opportunity lives in
   `agent_discovered_target` instead.
-- Not per-seller yet: every bridged row is still owned by the demo seller
-  profile (v2 candidate #3 remains open).
+
+## v2 (implemented) — entity resolution on domain
+
+A2 targets whose `buyer.domain` casefold-matches a Free `buyer.domain` are the
+same company:
+
+- **Free side** (import script): `agent_discovered_target.matched_free_buyer_id`
+  is set, plus a `buyer_alias` row (alias_normalized = casefold) and an
+  `entity_merge_audit` row (`AUTO_MERGE`, score 1.0, decided_by
+  `reverse-bridge-v2`). Idempotent via stable ids.
+- **Agent side** (boot, `linkBridgedBuyers`): the A2 opportunity gets
+  `buyer.free_buyer_id` and an external ref `free:buyer:<id>` — additive only,
+  ids and ranking untouched.
+
+**Honest status**: none of the current 51 Free buyers carries a domain (all
+`QUALIFIED_PENDING_ENTITY`), so live data does not exercise this yet. The
+mechanism is proven by tests and activates automatically as A1 entity parsing
+populates domains.
 
 ## v2 candidates
 
 - ~~Reverse channel: A6 `outcome` / A2 buying signals → append to the Free store.~~ (implemented above)
-- Entity resolution bridging `buyer.domain` ↔ `target_account.domain` so a
-  targeted company that later posts an RFQ is auto-linked and promoted.
+- ~~Entity resolution bridging `buyer.domain` ↔ `target_account.domain` so a
+  targeted company that later posts an RFQ is auto-linked and promoted.~~ (implemented above; activates as domains populate)
 - Per-seller projection driven by `seller_capability_profile`.

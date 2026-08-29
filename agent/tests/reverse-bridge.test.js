@@ -5,7 +5,7 @@ import { readFile, writeFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mergeFreeOpportunities, buildAgentOutcomesEntries } from '../server/repository.js';
+import { mergeFreeOpportunities, buildAgentOutcomesEntries, linkBridgedBuyers } from '../server/repository.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = 3401;
@@ -83,6 +83,35 @@ test('mergeFreeOpportunities preserves runtime mutations, refreshes scores', () 
   assert.equal(merged.fit_score, 88);               // scores refresh
   assert.equal(merged.opportunity_score, 91);
   assert.deepEqual(merged.evidence_ids, ['old-ev', 'https://new-ev']);
+});
+
+test('linkBridgedBuyers binds A2 targets to Free buyers on domain match', () => {
+  const opportunities = {
+    free_1: {
+      id: 'opp-free-1',
+      seed_key: 'bridge:free:opp-free-1',
+      source: 'FREE_PIPELINE',
+      buyer: { id: 'buyer_free_1', name: 'Acme', domain: 'Acme.de' }
+    },
+    a2_1: {
+      id: 'opp_a2_1',
+      seed_key: 'a2:demo:company-1',
+      source: 'A2_PROACTIVE_BUYER_DEVELOPMENT',
+      buyer: { id: 'buyer_company_1', name: 'ACME Imports GmbH', domain: 'acme.DE' }
+    },
+    a2_2: {
+      id: 'opp_a2_2',
+      seed_key: 'a2:demo:company-2',
+      source: 'A2_PROACTIVE_BUYER_DEVELOPMENT',
+      buyer: { id: 'buyer_company_2', name: 'Nobody Ltd', domain: 'nobody.us' }
+    }
+  };
+  const refs = linkBridgedBuyers(opportunities, () => 'fixed-now');
+  assert.equal(refs.length, 1);
+  assert.equal(refs[0][0], 'free:buyer:buyer_free_1');
+  assert.equal(opportunities.a2_1.buyer.free_buyer_id, 'buyer_free_1');
+  assert.equal(opportunities.a2_1.external_refs['free:buyer:buyer_free_1'].provider, 'free');
+  assert.equal(opportunities.a2_2.buyer.free_buyer_id, undefined); // no match, untouched
 });
 
 test('server persist writes agent-outcomes.json and meta', async () => {
