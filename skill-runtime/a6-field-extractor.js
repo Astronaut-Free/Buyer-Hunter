@@ -19,7 +19,7 @@ export function extractA6FieldUpdates(content = '', explicitUpdates = {}) {
   if (quantityMatch) extracted.quantity = `${quantityMatch[1]} ${quantityMatch[2]}`;
 
   const destination = firstMatch(text, [
-    /\b(?:ship|shipping|deliver|delivery|send)(?:\s+\w+){0,3}\s+to\s+([A-Z][A-Za-z .'-]{1,48}?)(?=\s+(?:by|before|in|for|with|and)\b|[,.;!?]|$)/i,
+    /\b(?:ship(?:ped|ping)?|deliver(?:ed|ing)?|delivery|send|sent)(?:\s+\w+){0,3}\s+to\s+([A-Z][A-Za-z .'-]{1,48}?)(?=\s+(?:by|before|in|for|with|and)\b|[,.;!?]|$)/i,
     /\bdestination\s+(?:is|will be|:)\s*([A-Z][A-Za-z .'-]{1,48}?)(?=\s+(?:by|before|in|for|with|and)\b|[,.;!?]|$)/i,
     /(?:发到|运到|送到|目的地(?:是|为)?)\s*([\u4e00-\u9fa5A-Za-z· .'-]{2,24}?)(?=，|。|；|,|\s*(?:交期|之前|以前|$))/i
   ]);
