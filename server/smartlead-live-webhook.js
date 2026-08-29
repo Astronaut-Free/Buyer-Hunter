@@ -10,8 +10,7 @@ function parseBody(rawBody, body) {
 export function createSmartleadLiveWebhookHandler({
   liveRuntime,
   signingSecret,
-  replyMapper = mapSmartleadReply,
-  systemActor = { id: 'smartlead-webhook', role: 'SYSTEM' }
+  replyMapper = mapSmartleadReply
 } = {}) {
   if (!liveRuntime?.opportunityStore || !liveRuntime?.runBuyerMessage) throw new Error('liveRuntime required');
 
@@ -64,6 +63,10 @@ export function createSmartleadLiveWebhookHandler({
       };
     }
 
+    const buyerActor = {
+      id: opportunity.buyer?.id || mapped.lead_email || `smartlead-lead-${mapped.external_lead_id}`,
+      role: 'BUYER'
+    };
     const result = liveRuntime.runBuyerMessage({
       opportunity_id: opportunity.id,
       idempotency_key: idempotencyKey,
@@ -72,11 +75,9 @@ export function createSmartleadLiveWebhookHandler({
       evidence_ref: mapped.evidence_ref || `smartlead:request:${normalized.request_id}`,
       timestamp: mapped.timestamp || normalized.created_at,
       source: 'smartlead',
-      actor_role: 'BUYER',
-      actor_id: opportunity.buyer?.id || mapped.lead_email || null,
       transport: mapped.transport || null,
       provider_event_type: normalized.event_type
-    }, systemActor);
+    }, buyerActor);
 
     if (result.status >= 500) return result;
     if (result.status >= 400) return result;
