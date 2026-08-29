@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateA2OutreachDraft } from '../skill-runtime/a2-outreach.js';
-import { enrichA6Envelope } from '../skill-runtime/a6-enrichment.js';
+import { runA6Skill } from '../skill-runtime/a6.js';
+import { composeReply } from '../services/reply-composer.js';
 
 test('A2 outreach requires buyer evidence and why_fit', () => {
   const result = generateA2OutreachDraft({ seller: { company_name: 'Guizhou Tea', product_name: 'Matcha' }, buyerCompany: { legal_or_display_name: 'Buyer Inc' }, buyerFit: {}, contact: {} });
@@ -22,40 +23,41 @@ test('A2 outreach generates a low-friction evidence-grounded email', () => {
   assert.equal(result.draft.prohibited_claims_checked, true);
 });
 
-function baseEnvelope(intent, action) {
+function a6Input(content, skillResults = {}) {
   return {
-    capability_id: 'qianpulse.a6.opportunity_progression',
-    capability_version: '1.0.0',
-    run_status: 'DONE',
-    changed_fields: [],
-    missing_evidence: [],
-    evidence_refs: ['ev-msg'],
-    human_review_required: true,
-    domain_result: {
-      buyer_reply: { intent: { primary: intent, secondary: [] } },
-      next_action: { action, reason: 'test', prerequisites: [] },
-      execution_mode: 'APPROVAL',
-      reply_draft: null,
-      human_review_required: true
-    }
+    opportunity_id: 'opp1',
+    evaluated_at: '2026-08-29T00:00:00Z',
+    trigger_event: { event_id: 'evt1', event_type: 'BUYER_MESSAGE', timestamp: '2026-08-29T00:00:00Z', evidence_ref: 'ev-msg' },
+    conversation_context: { latest_message: { content, evidence_ref: 'ev-msg' } },
+    opportunity_state: { status: 'ACTIVE', stage: 'QUALIFYING', fields: {} },
+    skill_results: skillResults,
+    seller_execution_policy: {},
+    field_updates: {}
   };
 }
 
 test('A6 asks seller for evidence instead of inventing MOQ', () => {
-  const result = enrichA6Envelope(baseEnvelope('MOQ_SPEC_REQUEST', 'ANSWER_WITH_EVIDENCE'), { sellerContext: {}, opportunityState: {} });
+  const result = runA6Skill(a6Input('What is your MOQ?'));
   assert.equal(result.run_status, 'MORE_EVIDENCE');
   assert.equal(result.domain_result.next_action.action, 'REQUEST_MORE_EVIDENCE');
-  assert.equal(result.domain_result.key_question.audience, 'SELLER');
+  assert.equal(result.domain_result.communication_brief, null);
 });
 
-test('A6 can draft verified MOQ answer when seller fact exists', () => {
-  const result = enrichA6Envelope(baseEnvelope('MOQ_SPEC_REQUEST', 'ANSWER_WITH_EVIDENCE'), { sellerContext: { moq: '500 kg' }, opportunityState: {} });
-  assert.match(result.domain_result.reply_draft.content, /500 kg/);
-  assert.equal(result.domain_result.reply_draft.prohibited_claims_checked, true);
+test('Reply Composer drafts only from A6 verified MOQ communication brief', () => {
+  const a4 = {
+    capability_id: 'qianpulse.a4.supply_match', run_status: 'DONE', evidence_refs: ['seller:capacity:1'],
+    domain_result: { verified_facts: { capacity_or_moq: '500 kg' } }
+  };
+  const result = runA6Skill(a6Input('What is your MOQ?', { a4 }));
+  const draft = composeReply({ communicationBrief: result.domain_result.communication_brief });
+  assert.match(draft.content, /500 kg/);
+  assert.equal(draft.prohibited_claims_checked, true);
+  assert.equal(result.domain_result.reply_draft, undefined);
 });
 
 test('A6 interested buyer gets one key qualification question', () => {
-  const result = enrichA6Envelope(baseEnvelope('INTERESTED', 'ASK_KEY_QUESTION'), { sellerContext: {}, opportunityState: {} });
+  const result = runA6Skill(a6Input('We are interested.'));
+  const draft = composeReply({ communicationBrief: result.domain_result.communication_brief });
   assert.equal(result.domain_result.key_question.audience, 'BUYER');
-  assert.match(result.domain_result.reply_draft.content, /purchase quantity/i);
+  assert.match(draft.content, /purchase quantity/i);
 });

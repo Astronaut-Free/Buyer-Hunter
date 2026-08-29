@@ -89,7 +89,7 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
             reply_details: {
               message_id: 'buyer-reply-1',
               time: '2026-08-29T03:10:00.000Z',
-              reply_email_body: 'What is your MOQ?'
+              reply_email_body: 'What is your delivery lead time?'
             }
           }]
         }],
@@ -101,7 +101,7 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
       const body = JSON.parse(raw || '{}');
       assert.equal(body.email_stats_id, '7788');
       assert.equal(body.reply_message_id, 'buyer-reply-1');
-      assert.match(body.email_body, /MOQ: 500 kg/);
+      assert.match(body.email_body, /Lead time: 20 days/);
       res.writeHead(200, { 'content-type': 'application/json' });
       return res.end(JSON.stringify({ success: true, message: 'Reply sent successfully' }));
     }
@@ -126,7 +126,8 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
         id: 'opp_http_001',
         seller: { id: 'seller1', name: 'Guizhou Tea' },
         buyer: { id: 'buyer1', name: 'US Buyer', country: 'US' },
-        seller_context: { moq: '500 kg' },
+        product: { id: 'matcha-1', name: 'MATCHA' },
+        seller_context: { delivery: '20 days', evidence_refs: ['seller:delivery-policy:1'] },
         stage: 'CONTACTED',
         status: 'ACTIVE',
         evidence_ids: ['ev-seed'],
@@ -185,7 +186,7 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
       lead_id: 789,
       lead: { id: 789, email: 'buyer@example.com' },
       reply: {
-        body: 'What is your MOQ?',
+        body: 'What is your delivery lead time?',
         message_id: 'buyer-reply-1',
         received_at: '2026-08-29T03:10:00.000Z'
       }
@@ -206,7 +207,7 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
     assert.equal(webhookResult.status, 'PROCESSED');
     assert.equal(webhookResult.opportunity_id, 'opp_http_001');
     assert.ok(webhookResult.approval?.approval_id);
-    assert.match(webhookResult.approval.payload.draft.content, /MOQ: 500 kg/);
+    assert.match(webhookResult.approval.payload.draft.content, /Lead time: 20 days/);
 
     const workspaceResponse = await fetch(`http://127.0.0.1:${qianpulsePort}/api/v1/opportunities/opp_http_001/workspace`, {
       headers: { authorization: `Bearer ${internalToken}` }
@@ -215,7 +216,7 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
     assert.equal(workspaceResponse.status, 200);
     assert.equal(workspace.workspace_version, '1.0.0');
     assert.equal(workspace.opportunity.id, 'opp_http_001');
-    assert.equal(workspace.a6.buyer_intent.primary, 'MOQ_SPEC_REQUEST');
+    assert.equal(workspace.a6.buyer_intent.primary, 'DELIVERY_REQUEST');
     assert.equal(workspace.integration.smartlead_bound, true);
     assert.equal(workspace.approvals[0].status, 'PENDING');
     assert.equal(workspace.next_action.action, 'REVIEW_APPROVAL');

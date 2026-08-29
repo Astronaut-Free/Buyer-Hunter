@@ -76,7 +76,7 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
         product_id: 'p1',
         company_name: 'Guizhou Tea',
         product_name: 'Matcha',
-        seller_context: { moq: '500 kg' }
+        seller_context: { delivery: '20 days', evidence_refs: ['seller:delivery-policy:1'] }
       },
       target: { countries: ['US'], product_keywords: ['matcha'] },
       buyer_profile: { company_types: ['importer'], buyer_roles: ['Procurement Manager'] },
@@ -88,7 +88,7 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
   assert.equal(a2.status, 201);
   assert.equal(a2.body.outreach_approvals.length, 1);
   const opportunity = a2.body.opportunities[0];
-  assert.equal(opportunity.seller_context.moq, '500 kg');
+  assert.equal(opportunity.seller_context.delivery, '20 days');
   const firstApproval = a2.body.outreach_approvals[0];
 
   const firstOutreach = createA2FirstOutreachExecutor({
@@ -117,7 +117,7 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
     campaign_id: 123,
     lead_id: 789,
     reply: {
-      body: 'What is your MOQ?',
+      body: 'What is your delivery lead time?',
       message_id: 'buyer-reply-1',
       received_at: '2026-08-29T03:10:00Z'
     },
@@ -130,7 +130,7 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
   assert.equal(inbound.body.status, 'PROCESSED');
   assert.equal(inbound.body.opportunity_id, opportunity.id);
   assert.ok(inbound.body.approval);
-  assert.match(inbound.body.approval.payload.draft.content, /MOQ: 500 kg/);
+  assert.match(inbound.body.approval.payload.draft.content, /Lead time: 20 days/);
 
   const replied = await approve({
     approvalId: inbound.body.approval.approval_id,
@@ -144,6 +144,6 @@ test('A2 approval → Smartlead queue → signed buyer reply → A6 approval →
   assert.equal(sentReplies[0].campaignId, 123);
   assert.equal(sentReplies[0].leadId, 789);
   assert.equal(sentReplies[0].replyMessageId, 'buyer-reply-1');
-  assert.match(sentReplies[0].emailBody, /MOQ: 500 kg/);
-  assert.equal(runtime.opportunityStore.get(opportunity.id).a6.buyer_reply.intent.primary, 'MOQ_SPEC_REQUEST');
+  assert.match(sentReplies[0].emailBody, /Lead time: 20 days/);
+  assert.equal(runtime.opportunityStore.get(opportunity.id).a6.buyer_reply.intent.primary, 'DELIVERY_REQUEST');
 });

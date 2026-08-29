@@ -86,7 +86,7 @@ test('Agent State store applies A6 result into the existing Opportunity record',
   assert.equal(updated.stage, 'CONTACTED');
   assert.equal(updated.fields.quantity, '20 tons');
   assert.deepEqual(updated.a6.applied_field_updates, { quantity: '20 tons' });
-  assert.deepEqual(updated.a6.pending_structured_extraction, ['destination']);
+  assert.deepEqual(updated.a6.pending_structured_extraction, []);
   assert.ok(updated.evidence_ids.includes('ev_reply'));
   assert.deepEqual(updated.a6.dependency_refresh.required, ['qianpulse.a4.supply_match']);
 });
