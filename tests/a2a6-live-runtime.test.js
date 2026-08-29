@@ -122,7 +122,16 @@ test('buyer reply enters A6 AgentRun and waits for invalidated dependency refres
   assert.equal(result.body.opportunity.status, 'WAITING_EVIDENCE');
   assert.ok(result.body.envelope.domain_result.dependency_refresh.required.includes('qianpulse.a4.supply_match'));
   assert.ok(result.body.opportunity.evidence_ids.includes('email:mail-001'));
-  assert.equal(Object.values(state.steps).at(-1).capability_id, 'qianpulse.a6.opportunity_progression');
+  assert.deepEqual(result.body.run.capabilities_called, [
+    'qianpulse.a4.supply_match',
+    'qianpulse.a3.purchase_timing',
+    'qianpulse.a6.opportunity_progression'
+  ]);
+  const runSteps = Object.values(state.steps)
+    .filter(step => step.run_id === result.body.run.run_id)
+    .sort((left, right) => left.sequence - right.sequence);
+  assert.deepEqual(runSteps.map(step => step.capability_id), result.body.run.capabilities_called);
+  assert.equal(runSteps.at(-1).capability_id, 'qianpulse.a6.opportunity_progression');
 });
 
 test('A6 verified low-risk answer creates a Human Gate approval with evidence-safe draft', async () => {
