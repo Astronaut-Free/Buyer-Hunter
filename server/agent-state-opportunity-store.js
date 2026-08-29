@@ -97,6 +97,21 @@ export function createAgentStateOpportunityStore({
     if (!opportunity) throw new Error('Opportunity not found');
     if (!envelope?.domain_result) throw new Error('A6 envelope domain_result required');
     const result = envelope.domain_result;
+    const changedBusinessFields = result.changed_business_fields || [];
+    const appliedFieldUpdates = {};
+    const pendingStructuredExtraction = [];
+    opportunity.fields ||= {};
+
+    for (const change of changedBusinessFields) {
+      if (!change?.field) continue;
+      if (change.needs_structured_extraction) {
+        pendingStructuredExtraction.push(change.field);
+        continue;
+      }
+      if (!Object.prototype.hasOwnProperty.call(change, 'after') || change.after === null || change.after === undefined) continue;
+      opportunity.fields[change.field] = change.after;
+      appliedFieldUpdates[change.field] = change.after;
+    }
 
     opportunity.a6 = {
       run_status: envelope.run_status,
@@ -105,6 +120,8 @@ export function createAgentStateOpportunityStore({
       execution_mode: result.execution_mode || null,
       dependency_refresh: result.dependency_refresh || null,
       outcome: result.outcome || null,
+      applied_field_updates: appliedFieldUpdates,
+      pending_structured_extraction: unique(pendingStructuredExtraction),
       updated_at: at
     };
     opportunity.evidence_ids = unique([
