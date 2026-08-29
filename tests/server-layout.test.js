@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 
 const requiredFiles = [
+  'server/bootstrap.js',
   'server/index.js',
   'server/decision-engine.js',
   'server/capability-adapter.js',
@@ -12,9 +13,10 @@ const requiredFiles = [
   'db/schema.sql'
 ];
 
-test('npm start points to an existing runtime entry', async () => {
+test('npm start points to an existing runtime bootstrap', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(pkg.scripts.start, 'node server/index.js');
+  assert.equal(pkg.scripts.start, 'node server/bootstrap.js');
+  await access(new URL('../server/bootstrap.js', import.meta.url));
   await access(new URL('../server/index.js', import.meta.url));
 });
 
