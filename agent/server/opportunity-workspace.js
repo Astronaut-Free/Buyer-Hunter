@@ -1,4 +1,5 @@
 const WORKSPACE_VERSION = '1.0.0';
+import { A2_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
 function array(value) {
   return Array.isArray(value) ? value : [];
@@ -53,11 +54,11 @@ function externalActionsForApprovals(state, approvals) {
 }
 
 function latestA2Run(runs) {
-  return runs.find(run => array(run.capabilities_called).includes('qianpulse.a2.proactive_buyer_development')) || null;
+  return runs.find(run => array(run.capabilities_called).includes(A2_CAPABILITY_ID)) || null;
 }
 
 function latestA6Run(runs) {
-  return runs.find(run => array(run.capabilities_called).includes('qianpulse.a6.opportunity_progression')) || null;
+  return runs.find(run => array(run.capabilities_called).includes(A6_CAPABILITY_ID)) || null;
 }
 
 function pendingApproval(approvals) {

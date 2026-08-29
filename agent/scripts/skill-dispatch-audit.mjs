@@ -18,13 +18,18 @@ import {
   QIANPULSE_EVENT_ROUTING,
   resolveQianPulseSkillCapabilities,
   runA2Skill,
-  runA3PurchaseTiming,
-  runA4SupplyMatch,
-  runA5TradeRisk,
   runA6Skill,
   validateCapabilityEnvelope,
   validateA2Envelope,
+  validateA3Envelope,
+  validateA4Envelope,
+  validateA5Envelope,
   validateA6Envelope,
+  A2_CAPABILITY_ID,
+  A3_CAPABILITY_ID,
+  A4_CAPABILITY_ID,
+  A5_CAPABILITY_ID,
+  A6_CAPABILITY_ID,
 } from '../skill-runtime/index.js';
 import { createLiveA2A6Runtime } from '../server/a2a6-live-runtime.js';
 import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../skill-runtime/python-capability-runners.mjs';
@@ -70,23 +75,25 @@ const A2_INPUT = {
 };
 const DEP_INPUT = {
   opportunity_id: 'opp-audit',
+  evaluated_at: '2026-08-29T00:00:00Z',
   latest_buyer_message: { content: 'We need 20 tons shipped to Los Angeles by Q1 2026, organic certified.' },
   field_updates: { quantity: '20 tons', destination: 'Los Angeles' },
   changed_fields: ['quantity', 'destination', 'certification', 'delivery_date'],
   opportunity_state: { stage: 'QUALIFYING', fields: {} },
   seller_context: { capacity: '8000 kg/mo', delivery: '20 days', certifications: ['USDA Organic'], allowed_markets: ['Los Angeles', 'US'] },
 };
+const capabilityRunners = createPythonDependencyRunners();
 const cases = [
-  ['qianpulse.a2.proactive_buyer_development', () => runA2Skill(A2_INPUT), validateA2Envelope],
-  ['qianpulse.a3.purchase_timing', () => runA3PurchaseTiming(DEP_INPUT), validateCapabilityEnvelope],
-  ['qianpulse.a4.supply_match', () => runA4SupplyMatch(DEP_INPUT), validateCapabilityEnvelope],
-  ['qianpulse.a5.trade_risk', () => runA5TradeRisk(DEP_INPUT), validateCapabilityEnvelope],
-  ['qianpulse.a6.opportunity_progression', () => runA6Skill(DEP_INPUT), validateA6Envelope],
+  [A2_CAPABILITY_ID, () => runA2Skill(A2_INPUT), validateA2Envelope],
+  [A3_CAPABILITY_ID, () => capabilityRunners[A3_CAPABILITY_ID](DEP_INPUT), validateA3Envelope],
+  [A4_CAPABILITY_ID, () => capabilityRunners[A4_CAPABILITY_ID](DEP_INPUT), validateA4Envelope],
+  [A5_CAPABILITY_ID, () => capabilityRunners[A5_CAPABILITY_ID](DEP_INPUT), validateA5Envelope],
+  [A6_CAPABILITY_ID, () => runA6Skill(DEP_INPUT), validateA6Envelope],
 ];
 for (const [id, run, validate] of cases) {
   const record = { capability_id: id, dispatched: false, envelope_valid: false, run_status: null, step_recorded: false };
   try {
-    const env = run();
+    const env = await run();
     record.dispatched = true;
     record.run_status = env.run_status;
     const v = validate(env);
@@ -105,7 +112,7 @@ if (!jsonOnly) console.log('\n[4] live runtime dispatch (A2 -> reply -> A6)');
 let counter = 0;
 const state = { opportunities: {}, users: {}, sessions: {}, runs: {}, steps: {}, checkpoints: {}, approvals: {}, events: {} };
 const user = { id: 'seller-audit', role: 'SELLER', profile: { company_name: 'Guizhou Tea' } };
-const e2ePythonOn = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() !== 'off' && pythonCapabilitiesAvailable();
+const e2ePythonOn = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() !== 'off' && await pythonCapabilitiesAvailable();
 const runtime = createLiveA2A6Runtime({
   getState: () => state,
   onMutate: () => {},
@@ -128,11 +135,26 @@ try {
   const oppId = a2.body.generated_opportunity_ids[0];
   if (!oppId) throw new Error('A2 produced no opportunity');
   const a2Steps = Object.values(state.steps).filter((s) => s.run_id === a2.body.run.run_id).map((s) => s.capability_id);
-  const a2rec = report.capabilities.find((c) => c.capability_id === 'qianpulse.a2.proactive_buyer_development');
-  a2rec.step_recorded = a2Steps.includes('qianpulse.a2.proactive_buyer_development');
+  const a2rec = report.capabilities.find((c) => c.capability_id === A2_CAPABILITY_ID);
+  a2rec.step_recorded = a2Steps.includes(A2_CAPABILITY_ID);
   pass(`A2 dispatched -> opportunity ${oppId}, steps: ${a2Steps.join(', ')}`);
 
-  const reply = runtime.runBuyerMessage({
+  for (const [eventType, capabilityId, suffix] of [
+    ['PURCHASE_TIMING_REFRESH', A3_CAPABILITY_ID, 'a3'],
+    ['SUPPLY_MATCH_REFRESH', A4_CAPABILITY_ID, 'a4'],
+    ['TRADE_RISK_REFRESH', A5_CAPABILITY_ID, 'a5'],
+  ]) {
+    const direct = await runtime.runCapabilityRefresh({
+      event_type: eventType, opportunity_id: oppId, idempotency_key: `audit-${suffix}`,
+      evaluated_at: '2026-08-29T00:00:00Z', field_updates: { product: 'MATCHA', destination: 'JP' }
+    }, user);
+    if (direct.status !== 201) throw new Error(`${eventType} status ${direct.status}`);
+    const rec = report.capabilities.find(item => item.capability_id === capabilityId);
+    rec.step_recorded = Object.values(state.steps).some(step => step.run_id === direct.body.run.run_id && step.capability_id === capabilityId);
+    pass(`${eventType} -> ${capabilityId} Agent Step recorded`);
+  }
+
+  const reply = await runtime.runBuyerMessage({
     opportunity_id: oppId, idempotency_key: 'audit-reply',
     message: 'Thanks. We would need 20 tons per year shipped to Los Angeles. What is your lead time?',
     source_message_id: 'm1', evidence_ref: 'email:m1', seller_context: { delivery: '20 days', capacity: '8000 kg/mo' },
@@ -141,35 +163,39 @@ try {
   const called = reply.body.run.capabilities_called || [];
   const replySteps = Object.values(state.steps).filter((s) => s.run_id === reply.body.run.run_id).map((s) => s.capability_id);
   for (const rec of report.capabilities) {
-    if (rec.capability_id === 'qianpulse.a2.proactive_buyer_development') continue;
+    if (rec.capability_id === A2_CAPABILITY_ID) continue;
     if (replySteps.includes(rec.capability_id)) rec.step_recorded = true;
   }
   const cpCount = Object.keys(state.checkpoints).length;
-  if (!replySteps.includes('qianpulse.a6.opportunity_progression')) throw new Error('A6 step not recorded');
+  const requiredReplySteps = [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID, A6_CAPABILITY_ID];
+  const missingReplySteps = requiredReplySteps.filter(capabilityId => !replySteps.includes(capabilityId));
+  if (missingReplySteps.length) throw new Error(`same-run trace missing: ${missingReplySteps.join(', ')}`);
   if (cpCount < 2) throw new Error(`expected >=2 checkpoints, got ${cpCount}`);
   pass(`A6 dispatched -> ${reply.body.envelope.run_status}, capabilities_called: ${called.join(', ')}`);
   pass(`checkpoints recorded: ${cpCount}`);
   if (e2ePythonOn) {
-    const a4Step = Object.values(state.steps).find((s) => s.run_id === reply.body.run.run_id && s.capability_id === 'qianpulse.a4.supply_match');
+    const a4Step = Object.values(state.steps).find((s) => s.run_id === reply.body.run.run_id && s.capability_id === A4_CAPABILITY_ID);
     const src = a4Step?.result?.domain_result?.source;
     if (src !== 'python') throw new Error(`A4 refresh step source=${src}, expected python`);
     pass(`A4 refresh in live cycle used Free's Python implementation (source: ${src})`);
     report.summary_e2e_a4_source = src;
   }
   report.checks.e2e = true;
+  report.checks.same_run_a345a6 = true;
 } catch (err) {
   fail(`e2e: ${err.message}`);
   report.checks.e2e = false;
+  report.checks.same_run_a345a6 = false;
 }
 
 // ---- 5. python capability delegation --------------------------------
 if (!jsonOnly) console.log('\n[5] python capability delegation (A3/A4/A5 -> Free)');
 const pyForcedOff = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() === 'off';
-const pyAvailable = !pyForcedOff && pythonCapabilitiesAvailable();
+const pyAvailable = !pyForcedOff && await pythonCapabilitiesAvailable();
 report.python = { available: pyAvailable, capabilities: {} };
 try {
   const pyCtx = {
-    opportunity_id: 'opp-py', changed_fields: ['quantity', 'destination'],
+    opportunity_id: 'opp-py', evaluated_at: '2026-08-29T00:00:00Z', changed_fields: ['quantity', 'destination'],
     opportunity_state: { stage: 'QUALIFYING', fields: { product: 'MATCHA', demand_title: 'bulk matcha', quantity: '500 kg', destination: 'US', age_days: '6' } },
     field_updates: { quantity: '2 tons', destination: 'US' },
     seller_context: { capacity: '8000 kg/mo', allowed_markets: ['US'] },
@@ -178,9 +204,9 @@ try {
   const runners = pyAvailable
     ? createPythonDependencyRunners()
     : createPythonDependencyRunners({ pythonBin: 'python-disabled-for-audit' });
-  const expected = pyAvailable ? 'python' : 'node-fallback';
-  for (const id of ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk']) {
-    const env = runners[id](pyCtx);
+  const expected = 'python';
+  for (const id of [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID]) {
+    const env = await runners[id](pyCtx);
     const src = env.domain_result?.source;
     report.python.capabilities[id] = { source: src, run_status: env.run_status };
     if (src !== expected) fail(`${id} source=${src}, expected ${expected}`);
@@ -188,10 +214,10 @@ try {
   }
   // when python is on, prove A4 carries Free's per-SKU verdict
   if (pyAvailable) {
-    const a4 = runners['qianpulse.a4.supply_match'](pyCtx);
-    const ok = ['HAS_MATCH', 'CONDITIONAL_ONLY', 'NO_MATCH'].includes(a4.domain_result?.supply_pool_status);
-    if (!ok) fail('A4 python result missing supply_pool_status from Free supply_demand_fit');
-    else pass(`A4 python verdict: ${a4.domain_result.supply_pool_status} / ${a4.domain_result.best_verdict}`);
+    const a4 = await runners[A4_CAPABILITY_ID](pyCtx);
+    const ok = ['FIT', 'CONDITIONAL_FIT', 'NOT_FIT', 'NEED_MORE_DATA'].includes(a4.domain_result?.recommendation);
+    if (!ok) fail('A4 python result missing recommendation from supply_demand_fit');
+    else pass(`A4 python recommendation: ${a4.domain_result.recommendation}`);
   }
   report.checks.python = report.ok;
 } catch (err) {

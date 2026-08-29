@@ -1,4 +1,5 @@
 const OBSERVABILITY_VERSION = '1.0.0';
+import { A2_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
 function values(object) {
   return Object.values(object || {});
@@ -50,8 +51,8 @@ export function createRuntimeObservability(state = {}, { now = () => new Date().
   const externalRefs = values(state.external_refs);
 
   const inboundOpportunityIds = relevantOpportunityIdsFromMessages(messages);
-  const a2Runs = runs.filter(run => hasCapability(run, 'qianpulse.a2.proactive_buyer_development'));
-  const a6Runs = runs.filter(run => hasCapability(run, 'qianpulse.a6.opportunity_progression'));
+  const a2Runs = runs.filter(run => hasCapability(run, A2_CAPABILITY_ID));
+  const a6Runs = runs.filter(run => hasCapability(run, A6_CAPABILITY_ID));
   const failedRuns = runs.filter(run => run.status === 'FAILED');
   const failedActions = executionFailures(actions);
   const pendingApprovals = approvals.filter(approval => approval.status === 'PENDING');

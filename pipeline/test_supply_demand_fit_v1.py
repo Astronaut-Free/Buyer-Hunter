@@ -32,7 +32,9 @@ def rfq(**over):
 class DemandParsingTests(unittest.TestCase):
     def test_quantity_units_normalise_to_kg(self):
         self.assertEqual(fit.parse_demand(rfq(quantity_raw="2 tons")).quantity_kg, 2000)
-        self.assertEqual(fit.parse_demand(rfq(quantity_raw="1 container")).quantity_kg, 18000)
+        container = fit.parse_demand(rfq(quantity_raw="1 container"))
+        self.assertIsNone(container.quantity_kg)
+        self.assertEqual(container.quantity_precision, "NON_WEIGHT_UNIT")
         self.assertIsNone(fit.parse_demand(rfq(quantity_raw="", description_raw="need matcha")).quantity_kg)
 
     def test_grade_and_cert_and_oem_are_detected(self):

@@ -29,6 +29,37 @@ export function validateA2Envelope(envelope = {}) {
   return { valid: errors.length === 0, errors };
 }
 
+export function validateA3Envelope(envelope = {}) {
+  const base = validateCapabilityEnvelope(envelope);
+  const errors = [...base.errors];
+  const result = envelope.domain_result || {};
+  if (!['OPEN', 'MONITOR', 'CLOSED', 'UNKNOWN'].includes(result.window_status)) errors.push('domain_result.window_status invalid');
+  if (!result.evaluated_at) errors.push('domain_result.evaluated_at required');
+  if (!result.ruleset_version) errors.push('domain_result.ruleset_version required');
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateA4Envelope(envelope = {}) {
+  const base = validateCapabilityEnvelope(envelope);
+  const errors = [...base.errors];
+  const result = envelope.domain_result || {};
+  if (!['FIT', 'CONDITIONAL_FIT', 'NOT_FIT', 'NEED_MORE_DATA'].includes(result.recommendation)) errors.push('domain_result.recommendation invalid');
+  if (!Number.isInteger(result.eligible_sku_count)) errors.push('domain_result.eligible_sku_count must be integer');
+  if (!Array.isArray(result.eligible_skus)) errors.push('domain_result.eligible_skus must be array');
+  if (!result.evaluated_at) errors.push('domain_result.evaluated_at required');
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateA5Envelope(envelope = {}) {
+  const base = validateCapabilityEnvelope(envelope);
+  const errors = [...base.errors];
+  const result = envelope.domain_result || {};
+  if (!['PASS', 'CONDITIONAL', 'BLOCK', 'UNKNOWN'].includes(result.access_status)) errors.push('domain_result.access_status invalid');
+  if (!Array.isArray(result.risk_items)) errors.push('domain_result.risk_items must be array');
+  if (!result.evaluated_at) errors.push('domain_result.evaluated_at required');
+  return { valid: errors.length === 0, errors };
+}
+
 export function validateA6Envelope(envelope = {}) {
   const base = validateCapabilityEnvelope(envelope);
   const errors = [...base.errors];

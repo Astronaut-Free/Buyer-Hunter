@@ -64,24 +64,24 @@ test('A2 → Opportunity → Smartlead reply → A6 runs on one Opportunity', as
 
   const body = { type: 'EMAIL_REPLY', created_at: '2026-08-29T02:31:00Z', data: { lead_id: 99, message_id: 'm-1', campaign_id: 7, reply_text: 'We need 20 tons. What is your delivery lead time?' } };
   const rawBody = JSON.stringify(body);
-  const first = controller.ingestSmartleadWebhook({ rawBody, headers: signedHeaders(rawBody, 'req-e2e-1', 'secret'), sellerContext: { delivery: '20 days' } });
+  const first = await controller.ingestSmartleadWebhook({ rawBody, headers: signedHeaders(rawBody, 'req-e2e-1', 'secret'), sellerContext: { delivery: '20 days' } });
   assert.equal(first.status, 'PROCESSED');
   assert.equal(first.routed.event.opportunity_id, opportunity.id);
   assert.equal(first.progression.run_status, 'MORE_EVIDENCE');
   assert.equal(store.get(opportunity.id).status, 'WAITING_EVIDENCE');
   assert.ok(store.get(opportunity.id).evidence_ids.includes('smartlead:m-1'));
 
-  const duplicate = controller.ingestSmartleadWebhook({ rawBody, headers: signedHeaders(rawBody, 'req-e2e-1', 'secret') });
+  const duplicate = await controller.ingestSmartleadWebhook({ rawBody, headers: signedHeaders(rawBody, 'req-e2e-1', 'secret') });
   assert.equal(duplicate.status, 'DUPLICATE');
   assert.equal(store.list().length, 1);
 });
 
-test('Smartlead ingress rejects invalid signature before routing', () => {
+test('Smartlead ingress rejects invalid signature before routing', async () => {
   const store = createMemoryOpportunityStore();
   const orchestrator = createQianPulseSkillOrchestrator({ opportunityStore: store });
   const controller = createQianPulseRuntimeController({ orchestrator, webhookSecret: 'secret', extractSmartleadReply: extractor });
   const rawBody = JSON.stringify({ type: 'EMAIL_REPLY', data: { lead_id: 1, reply_text: 'Hello' } });
-  const result = controller.ingestSmartleadWebhook({ rawBody, headers: { 'x-request-id': 'req-bad', 'x-smartlead-signature': 'sha256=bad' } });
+  const result = await controller.ingestSmartleadWebhook({ rawBody, headers: { 'x-request-id': 'req-bad', 'x-smartlead-signature': 'sha256=bad' } });
   assert.equal(result.status, 'BLOCKED');
   assert.equal(result.code, 'SIGNATURE_INVALID');
 });

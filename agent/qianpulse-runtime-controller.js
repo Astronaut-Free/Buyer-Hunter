@@ -32,7 +32,7 @@ export function createQianPulseRuntimeController({
     });
   }
 
-  function ingestSmartleadWebhook({ rawBody, body, headers = {}, sellerContext = {}, sellerExecutionPolicy = {}, dependencyResults = {} } = {}) {
+  async function ingestSmartleadWebhook({ rawBody, body, headers = {}, sellerContext = {}, sellerExecutionPolicy = {}, dependencyResults = {}, refreshedCapabilities = [] } = {}) {
     if (!webhookSecret) return { status: 'BLOCKED', code: 'SMARTLEAD_WEBHOOK_SECRET_REQUIRED' };
     const verification = verifySmartleadWebhook({ rawBody, headers, signingSecret: webhookSecret });
     if (!verification.valid) return { status: 'BLOCKED', code: verification.reason };
@@ -50,12 +50,13 @@ export function createQianPulseRuntimeController({
       return { status: 'DUPLICATE', idempotency_key: routed.idempotency_key, result: webhookIdempotencyStore.get(routed.idempotency_key) };
     }
 
-    const result = orchestrator.runBuyerProgression({
+    const result = await orchestrator.runBuyerProgression({
       opportunityId: routed.opportunity.id,
       event: routed.event,
       sellerContext,
       sellerExecutionPolicy,
-      dependencyResults
+      dependencyResults,
+      refreshedCapabilities
     });
     webhookIdempotencyStore.set(routed.idempotency_key, result);
     return { status: 'PROCESSED', idempotency_key: routed.idempotency_key, routed, progression: result };

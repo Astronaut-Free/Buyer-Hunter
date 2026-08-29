@@ -83,7 +83,7 @@ test('Agent State store applies A6 result into the existing Opportunity record',
   });
 
   assert.equal(updated.status, 'WAITING_EVIDENCE');
-  assert.equal(updated.stage, 'CONTACTED');
+  assert.equal(updated.stage, 'REPLIED');
   assert.equal(updated.fields.quantity, '20 tons');
   assert.deepEqual(updated.a6.applied_field_updates, { quantity: '20 tons' });
   assert.deepEqual(updated.a6.pending_structured_extraction, []);

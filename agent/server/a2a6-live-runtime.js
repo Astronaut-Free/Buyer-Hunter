@@ -1,12 +1,14 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { createQianPulseSkillOrchestrator } from '../qianpulse-skill-orchestrator.js';
 import { composeReply } from '../services/reply-composer.js';
-import { A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 import { createAgentStateOpportunityStore } from './agent-state-opportunity-store.js';
 import { createA2OutreachApprovals } from './a2-outreach-approval.js';
+import { resolveQianPulseSkillCapabilities } from '../skill-runtime/routing-policy.js';
 import { applyA2EmailEvent, decideA2Followup } from '../skill-runtime/a2-state-machine.js';
+import { A2_CAPABILITY_ID, A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
 const A2_EVENT_TYPES = new Set(['SELLER_PROACTIVE_DEVELOPMENT', 'SYSTEM_NEW_PROSPECT_SIGNAL', 'PRE_REPLY_FOLLOWUP_DUE']);
+const DIRECT_CAPABILITIES = new Set([A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID]);
 
 function defaultId(prefix) {
   return `${prefix}_${Date.now()}_${randomBytes(4).toString('hex')}`;
@@ -76,9 +78,9 @@ export function createLiveA2A6Runtime({
   if (typeof getState !== 'function') throw new Error('getState required');
 
   const opportunityStore = createAgentStateOpportunityStore({ getState, onMutate, now });
-  // dependencyRunners is optional: when omitted the orchestrator falls back to the
-  // bundled Node A3/A4/A5 refresh runners (unchanged behaviour). server/index.js
-  // injects Python-delegating runners when Free's capability CLI is available.
+  // dependencyRunners is optional: when omitted, A3/A4/A5 are reported as
+  // structured runtime-unavailable errors. Domain semantics stay in Python;
+  // server/index.js injects Python-delegating runners when the CLI is available.
   const orchestrator = createQianPulseSkillOrchestrator({
     providers, opportunityStore, clock: now,
     ...(dependencyRunners ? { dependencyRunners } : {})
@@ -138,7 +140,7 @@ export function createLiveA2A6Runtime({
       completed_at: null,
       state_before: null,
       state_after: null,
-      capabilities_called: ['qianpulse.a2.proactive_buyer_development'],
+      capabilities_called: [A2_CAPABILITY_ID],
       decision_before: null,
       decision_after: null,
       agent_version: agentVersion
@@ -146,12 +148,7 @@ export function createLiveA2A6Runtime({
     state.runs[run.run_id] = run;
 
     try {
-      const rawInput = payload.input || payload;
-      const campaignId = payload.campaign_id || rawInput.execution?.campaign_id || null;
-      const input = {
-        ...rawInput,
-        execution: { ...(rawInput.execution || {}), campaign_id: campaignId }
-      };
+      const input = payload.input || payload;
       const seller = sellerFromAuthenticatedUser(user, input.seller || payload.seller || {});
       const result = await orchestrator.runProactiveDevelopment({
         input: { ...input, seller },
@@ -171,7 +168,7 @@ export function createLiveA2A6Runtime({
         run_id: run.run_id,
         sequence: 1,
         step_type: 'CAPABILITY',
-        capability_id: 'qianpulse.a2.proactive_buyer_development',
+        capability_id: A2_CAPABILITY_ID,
         capability_version: '1.0.0',
         input_hash: hash({ event_id: event.event_id, seller_id: user.id, input }),
         output_hash: hash(result.envelope),
@@ -183,6 +180,7 @@ export function createLiveA2A6Runtime({
       };
       state.steps[step.step_id] = step;
 
+      const campaignId = payload.campaign_id || input.execution?.campaign_id || null;
       const approvals = campaignId ? createA2OutreachApprovals({
         state,
         run,
@@ -229,7 +227,69 @@ export function createLiveA2A6Runtime({
     }
   }
 
-  function runBuyerMessage(payload = {}, user) {
+  async function runCapabilityRefresh(payload = {}, user) {
+    const idem = requireIdempotency(payload);
+    if (!idem) return { status: 400, body: { code: 'IDEMPOTENCY_KEY_REQUIRED', error: '必须提供 idempotency_key' } };
+    const cached = replay(idem);
+    if (cached) return cached;
+    const state = currentState();
+    const opportunity = opportunityStore.get(payload.opportunity_id);
+    if (!opportunity) return { status: 422, body: { code: 'NEEDS_CONTEXT', error: '无法可靠绑定 Opportunity' } };
+    if (!authorizeOpportunity(user, opportunity, 'read')) return { status: 403, body: { code: 'FORBIDDEN', error: '无权访问这笔 Opportunity' } };
+    const capabilities = resolveQianPulseSkillCapabilities(payload.event_type)
+      .filter(capabilityId => DIRECT_CAPABILITIES.has(capabilityId));
+    if (!capabilities.length) return { status: 422, body: { code: 'CAPABILITY_ROUTE_NOT_FOUND', error: '事件未路由到 A3/A4/A5' } };
+
+    const event = {
+      event_id: id('evt'), event_type: payload.event_type, actor_role: user?.role || 'SYSTEM', actor_id: user?.id || null,
+      opportunity_id: opportunity.id, payload, source: payload.source || 'api',
+      timestamp: payload.evaluated_at || payload.timestamp || now(), evidence_ref: payload.evidence_ref || null,
+      evidence_refs: payload.evidence_refs || [], idempotency_key: idem, created_at: now()
+    };
+    state.events[event.event_id] = event;
+    const run = {
+      run_id: id('run'), opportunity_id: opportunity.id, trigger_event_id: event.event_id,
+      status: 'RUNNING', started_at: now(), completed_at: null,
+      state_before: { status: opportunity.status, stage: opportunity.stage || 'CONTACTED' }, state_after: null,
+      capabilities_called: capabilities, decision_before: null, decision_after: null, agent_version: agentVersion
+    };
+    state.runs[run.run_id] = run;
+    const result = await orchestrator.runCapabilityRefresh({
+      opportunityId: opportunity.id, capabilities, event, sellerContext: payload.seller_context || {}
+    });
+    for (const execution of result.executions) {
+      opportunityStore.applyCapabilityEnvelope({ opportunityId: opportunity.id, envelope: execution, at: now() });
+    }
+    run.status = agentStatus(result.run_status);
+    run.state_after = {
+      status: opportunity.status, stage: opportunity.stage || 'CONTACTED',
+      refreshed_capabilities: result.executions.map(item => item.capability_id)
+    };
+    run.completed_at = now();
+    result.executions.forEach((execution, index) => {
+      const step = {
+        step_id: id('step'), run_id: run.run_id, sequence: index + 1, step_type: 'CAPABILITY',
+        capability_id: execution.capability_id, capability_version: execution.capability_version,
+        input_hash: hash({ opportunity_id: opportunity.id, event_id: event.event_id, capability_id: execution.capability_id }),
+        output_hash: hash(execution), status: execution.run_status, started_at: run.started_at, completed_at: run.completed_at,
+        evidence_refs: execution.evidence_refs || [], result: execution
+      };
+      state.steps[step.step_id] = step;
+      state.traces.push({ trace_id: id('trace'), run_id: run.run_id, span_type: 'CapabilitySpan',
+        payload: { capability_id: execution.capability_id, run_status: execution.run_status }, timestamp: now() });
+    });
+    const checkpoint = {
+      checkpoint_id: id('cp'), run_id: run.run_id, opportunity_id: opportunity.id,
+      step: result.executions.length, state: run.status, input_hash: hash(payload), output_hash: hash(result), created_at: now()
+    };
+    state.checkpoints[checkpoint.checkpoint_id] = checkpoint;
+    const response = { run, event, executions: result.executions, checkpoint_id: checkpoint.checkpoint_id };
+    state.idempotency[idem] = response;
+    onMutate();
+    return { status: 201, body: response };
+  }
+
+  async function runBuyerMessage(payload = {}, user) {
     const idem = requireIdempotency(payload);
     if (!idem) return { status: 400, body: { code: 'IDEMPOTENCY_KEY_REQUIRED', error: '必须提供 idempotency_key' } };
     const cached = replay(idem);
@@ -283,7 +343,7 @@ export function createLiveA2A6Runtime({
     state.runs[run.run_id] = run;
 
     try {
-      const progression = orchestrator.runBuyerProgression({
+      const progression = await orchestrator.runBuyerProgression({
         opportunityId: opportunity.id,
         event,
         sellerContext: payload.seller_context || {},
@@ -443,7 +503,9 @@ export function createLiveA2A6Runtime({
     opportunityStore,
     orchestrator,
     isA2EventType: eventType => A2_EVENT_TYPES.has(eventType),
+    isCapabilityRefreshEvent: eventType => resolveQianPulseSkillCapabilities(eventType).some(item => DIRECT_CAPABILITIES.has(item)),
     runProactive,
+    runCapabilityRefresh,
     runBuyerMessage,
     runPreReplyFollowup,
     handleA2EmailEvent

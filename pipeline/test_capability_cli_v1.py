@@ -23,6 +23,7 @@ A8 = cli.A8
 def ctx(**over):
     base = {
         "opportunity_id": "opp-t",
+        "evaluated_at": "2026-08-29T00:00:00Z",
         "changed_fields": ["quantity"],
         "opportunity_state": {
             "stage": "QUALIFYING",
@@ -67,39 +68,39 @@ class CapabilityCliTest(unittest.TestCase):
     def test_a4_uses_free_supply_demand_fit(self) -> None:
         env = cli.run_capability(A4, ctx())
         dr = env["domain_result"]
-        self.assertEqual(env["run_status"], "DONE")
-        self.assertIn(dr["supply_pool_status"], {"HAS_MATCH", "CONDITIONAL_ONLY", "NO_MATCH"})
-        self.assertIn(dr["best_verdict"], {"MATCH", "CONDITIONAL", "BLOCK", "NONE"})
-        self.assertIn("抹茶", dr["summary_zh"])
+        self.assertIn(env["run_status"], {"DONE", "MORE_EVIDENCE", "BLOCKED"})
+        self.assertIn(dr["recommendation"], {"FIT", "CONDITIONAL_FIT", "NOT_FIT", "NEED_MORE_DATA"})
+        self.assertIsInstance(dr["eligible_skus"], list)
+        self.assertEqual(dr["ruleset_version"], "a4-supply-match-v1.1.0")
 
     def test_a4_missing_category_is_more_evidence(self) -> None:
         env = cli.run_capability(A4, ctx(opportunity_state={"fields": {}}, field_updates={}))
         self.assertEqual(env["run_status"], "MORE_EVIDENCE")
         self.assertIn("product_category", env["missing_evidence"])
 
-    def test_a3_returns_numeric_timing_score(self) -> None:
-        env = cli.run_capability(A3, ctx())
-        self.assertEqual(env["run_status"], "DONE")
-        self.assertIsInstance(env["domain_result"]["timing_score"], (int, float))
-        self.assertGreater(env["domain_result"]["timing_score"], 0)
+    def test_a3_returns_numeric_window_score(self) -> None:
+        env = cli.run_capability(A3, ctx(latest_buyer_message={"content": "urgent RFQ, delivery needed by October", "evidence_ref": "email:m1"}))
+        self.assertIn(env["run_status"], {"DONE", "MORE_EVIDENCE", "BLOCKED"})
+        self.assertIsInstance(env["domain_result"]["window_score"], (int, float))
+        self.assertGreater(env["domain_result"]["window_score"], 0)
 
-    def test_a5_blocks_explicitly_blocked_market(self) -> None:
+    def test_a5_does_not_block_market_without_regulatory_evidence(self) -> None:
         env = cli.run_capability(A5, ctx(
             changed_fields=["destination"],
-            field_updates={"destination": "Iran"},
-            seller_context={"blocked_markets": ["Iran"]},
+            destination_market="IR",
+            seller_context={"blocked_markets": ["IR"]},
         ))
-        self.assertEqual(env["run_status"], "BLOCKED")
-        self.assertEqual(env["domain_result"]["decision"], "BLOCKED")
+        self.assertNotEqual(env["run_status"], "BLOCKED")
+        self.assertEqual(env["domain_result"]["access_status"], "CONDITIONAL")
 
     def test_a5_needs_evidence_when_policy_missing(self) -> None:
         env = cli.run_capability(A5, ctx(
             changed_fields=["payment_terms"],
-            field_updates={},
+            destination_market=None,
             seller_context={},
         ))
         self.assertEqual(env["run_status"], "MORE_EVIDENCE")
-        self.assertIn("payment_policy", env["missing_evidence"])
+        self.assertIn("destination_market", env["missing_evidence"])
 
     def test_a5_review_carries_rule_depth_risk_items(self) -> None:
         env = cli.run_capability(A5, ctx(

@@ -1,0 +1,6 @@
+capability_id: qianpulse.a3.purchase_timing
+version: 1.1.0
+runtime: pipeline/skills/a3_purchase_timing.py
+events: [PURCHASE_TIMING_REFRESH]
+required_inputs: [opportunity_id, evaluated_at]
+outputs: [window_status, window_score, urgency, transaction_stage, why_now, counter_evidence, evaluated_at, ruleset_version]

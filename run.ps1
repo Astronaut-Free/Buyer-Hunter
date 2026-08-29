@@ -25,28 +25,77 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
-$Py = if ($env:PY) { $env:PY } else { 'python' }
+
+function Test-PythonCommand([string]$Command, [string[]]$Arguments = @()) {
+    if (-not $Command) { return $false }
+    try {
+        & $Command @Arguments --version *> $null
+        return $LASTEXITCODE -eq 0
+    } catch { return $false }
+}
+
+function Resolve-Python {
+    # Explicit configuration wins, and is also propagated to Node subprocesses.
+    foreach ($configured in @($env:PY, $env:PYTHON_BIN)) {
+        if ($configured -and (Test-PythonCommand $configured)) {
+            return @{ Command = $configured; Arguments = @() }
+        }
+    }
+
+    $pathPython = Get-Command python.exe -ErrorAction SilentlyContinue
+    if ($pathPython -and (Test-PythonCommand $pathPython.Source)) {
+        return @{ Command = $pathPython.Source; Arguments = @() }
+    }
+
+    $pyLauncher = Get-Command py.exe -ErrorAction SilentlyContinue
+    if ($pyLauncher -and (Test-PythonCommand $pyLauncher.Source @('-3'))) {
+        return @{ Command = $pyLauncher.Source; Arguments = @('-3') }
+    }
+
+    # Last resort: Codex's user-scoped bundled Python runtime.
+    $codexRoots = @(
+        (Join-Path $env:USERPROFILE '.codex'),
+        (Join-Path $env:USERPROFILE '.cache\codex-runtimes')
+    )
+    $bundled = foreach ($codexRoot in $codexRoots) {
+        if (Test-Path $codexRoot) {
+            $found = Get-ChildItem -LiteralPath $codexRoot -Filter python.exe -File -Recurse -ErrorAction SilentlyContinue |
+                Select-Object -First 1 -ExpandProperty FullName
+            if ($found) { $found; break }
+        }
+    }
+    if ($bundled -and (Test-PythonCommand $bundled)) {
+        return @{ Command = $bundled; Arguments = @() }
+    }
+
+    throw 'Python not found. Set the PY environment variable to a Python executable and retry.'
+}
+
+$Python = Resolve-Python
+$Py = $Python.Command
+$PyArgs = @($Python.Arguments)
+$env:PYTHON_BIN = $Py
 $PidFile = Join-Path $Root '.run-pids.json'
 
 function Invoke-Db {
-    & $Py (Join-Path $Root 'pipeline\build_opportunity_store_v1.py')
+    & $Py @PyArgs (Join-Path $Root 'pipeline\build_opportunity_store_v1.py')
     if ($LASTEXITCODE -ne 0) { throw "build_opportunity_store failed ($LASTEXITCODE)" }
 }
 
 function Invoke-Export {
-    & $Py (Join-Path $Root 'scripts\export_opportunities_for_agent.py')
+    & $Py @PyArgs (Join-Path $Root 'scripts\export_opportunities_for_agent.py')
     if ($LASTEXITCODE -ne 0) { throw "export failed ($LASTEXITCODE)" }
 }
 
 function Invoke-Import {
     # reverse bridge: A6 outcomes + A2 targets -> decision store (idempotent;
     # re-runs after every rebuild because the builder does a full atomic replace)
-    & $Py (Join-Path $Root 'scripts\import_agent_outcomes.py')
+    & $Py @PyArgs (Join-Path $Root 'scripts\import_agent_outcomes.py')
     if ($LASTEXITCODE -ne 0) { throw "import failed ($LASTEXITCODE)" }
 }
 
 if ($Setup) {
-    & $Py -m pip install -r (Join-Path $Root 'requirements.txt')
+    & $Py @PyArgs -m pip install -r (Join-Path $Root 'requirements.txt')
     Push-Location (Join-Path $Root 'agent'); npm ci; Pop-Location
     return
 }
@@ -55,7 +104,7 @@ if ($Build)  { Invoke-Db; return }
 if ($Export) { Invoke-Db; Invoke-Export; Invoke-Import; return }
 
 if ($Test) {
-    & $Py -m pytest -q
+    & $Py @PyArgs -m pytest -q
     $pyOk = $LASTEXITCODE -eq 0
     Push-Location (Join-Path $Root 'agent'); npm test; $nodeOk = $LASTEXITCODE -eq 0; Pop-Location
     if ($pyOk -and $nodeOk) { Write-Host "`nALL GREEN" -ForegroundColor Green }
@@ -64,7 +113,7 @@ if ($Test) {
 }
 
 if ($Audit) {
-    & $Py (Join-Path $Root 'scripts\audit.py')
+    & $Py @PyArgs (Join-Path $Root 'scripts\audit.py')
     return
 }
 
@@ -116,9 +165,9 @@ if ($Up) {
     Invoke-Export
     Invoke-Import
     $site = Start-Process -PassThru -WorkingDirectory $Root $Py `
-        -ArgumentList '-m','http.server',"$SitePort",'--bind','127.0.0.1','--directory',(Join-Path $Root 'site')
+        -ArgumentList ($PyArgs + @('-m','http.server',"$SitePort",'--bind','127.0.0.1','--directory',(Join-Path $Root 'site')))
     $api = Start-Process -PassThru -WorkingDirectory $Root $Py `
-        -ArgumentList '-m','uvicorn','api.app:app','--host','127.0.0.1','--port',"$ApiPort"
+        -ArgumentList ($PyArgs + @('-m','uvicorn','api.app:app','--host','127.0.0.1','--port',"$ApiPort"))
     $env:PORT = "$AgentPort"
     $agent = Start-Process -PassThru -WorkingDirectory (Join-Path $Root 'agent') 'node' `
         -ArgumentList 'server\bootstrap.js'

@@ -37,7 +37,7 @@ api:
 	$(PY) -m uvicorn api.app:app --host 127.0.0.1 --port $(API_PORT)
 
 agent:
-	cd agent && PORT=$(AGENT_PORT) node server/bootstrap.js
+	cd agent && PORT=$(AGENT_PORT) PYTHON_BIN=$(PY) node server/bootstrap.js
 
 up: export import
 	@echo "site -> http://127.0.0.1:$(SITE_PORT)   (front door)"
@@ -45,12 +45,12 @@ up: export import
 	@echo "agent-> http://127.0.0.1:$(AGENT_PORT)   (workbench)"
 	$(PY) -m http.server $(SITE_PORT) --bind 127.0.0.1 --directory site & \
 	  $(PY) -m uvicorn api.app:app --host 127.0.0.1 --port $(API_PORT) & \
-	  (cd agent && PORT=$(AGENT_PORT) node server/bootstrap.js) & \
+	  (cd agent && PORT=$(AGENT_PORT) PYTHON_BIN=$(PY) node server/bootstrap.js) & \
 	  wait
 
 test:
 	$(PY) -m pytest -q
-	cd agent && npm test
+	cd agent && PYTHON_BIN=$(PY) npm test
 
 audit:
 	$(PY) scripts/audit.py

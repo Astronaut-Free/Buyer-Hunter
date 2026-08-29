@@ -14,7 +14,7 @@ export function createSmartleadLiveWebhookHandler({
 } = {}) {
   if (!liveRuntime?.opportunityStore || !liveRuntime?.runBuyerMessage) throw new Error('liveRuntime required');
 
-  return function handleSmartleadWebhook({ rawBody, body, headers = {} } = {}) {
+  return async function handleSmartleadWebhook({ rawBody, body, headers = {} } = {}) {
     const verification = verifySmartleadWebhook({ rawBody, headers, signingSecret });
     if (!verification.valid) return { status: 401, body: { code: verification.reason } };
 
@@ -82,7 +82,7 @@ export function createSmartleadLiveWebhookHandler({
       id: opportunity.buyer?.id || mapped.lead_email || `smartlead-lead-${mapped.external_lead_id}`,
       role: 'BUYER'
     };
-    const result = liveRuntime.runBuyerMessage({
+    const result = await liveRuntime.runBuyerMessage({
       opportunity_id: opportunity.id,
       idempotency_key: idempotencyKey,
       message: mapped.content,

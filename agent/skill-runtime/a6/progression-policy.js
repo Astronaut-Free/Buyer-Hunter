@@ -17,7 +17,15 @@ export function resolveA6KeyQuestion({ intent = 'UNKNOWN', opportunityState = {}
   const primary = intent?.primary || intent;
   const fields = opportunityState.fields || {};
   const a4 = skillResults.a4;
-  if (a4?.run_status === 'MORE_EVIDENCE') {
+  const a4Facts = domain(a4).verified_facts || {};
+  const a4ChangedFields = new Set(a4?.changed_fields || []);
+  const hasNarrowVerifiedFact = (
+    (primary === 'DELIVERY_REQUEST' && a4Facts.delivery
+      && !['quantity', 'specification', 'grade', 'certification'].some(field => a4ChangedFields.has(field)))
+    || (primary === 'MOQ_SPEC_REQUEST' && (a4Facts.capacity_or_moq || a4Facts.specification))
+    || (primary === 'CERTIFICATION_REQUEST' && a4Facts.certifications)
+  ) && resultEvidence(a4).length > 0;
+  if (a4?.run_status === 'MORE_EVIDENCE' && !hasNarrowVerifiedFact) {
     const missing = a4.missing_evidence || [];
     return keyQuestion('SUPPLY_EVIDENCE', 'SELLER', '请补充缺失的供给、规格、认证或交期证据。', 'A4 无法完成供需匹配判断。', missing);
   }
@@ -57,7 +65,6 @@ export function resolveA6KeyQuestion({ intent = 'UNKNOWN', opportunityState = {}
 
 function claimsForIntent(intent, skillResults = {}) {
   const a4 = skillResults.a4;
-  if (a4?.run_status !== 'DONE') return [];
   const facts = domain(a4).verified_facts || {};
   const evidenceRefs = resultEvidence(a4);
   if (!evidenceRefs.length) return [];
@@ -67,6 +74,7 @@ function claimsForIntent(intent, skillResults = {}) {
   if (primary === 'MOQ_SPEC_REQUEST' && facts.capacity_or_moq) pairs.push(['moq_or_capacity', facts.capacity_or_moq]);
   if (primary === 'MOQ_SPEC_REQUEST' && facts.specification) pairs.push(['specification', facts.specification]);
   if (primary === 'CERTIFICATION_REQUEST' && facts.certifications) pairs.push(['certifications', facts.certifications]);
+  if (!['DONE', 'MORE_EVIDENCE'].includes(a4?.run_status)) return [];
   return pairs.map(([fact, value]) => ({ fact, value, evidence_refs: evidenceRefs }));
 }
 

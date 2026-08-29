@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLiveA2A6Runtime } from '../server/a2a6-live-runtime.js';
 
-test('Agent runs A6 analysis → A3/A4/A5 → A6 final, applies once, and replays duplicate event', () => {
+test('Agent runs A6 analysis → A3/A4/A5 → A6 final, applies once, and replays duplicate event', async () => {
   const state = {
     opportunities: {
       opp1: {
@@ -10,7 +10,7 @@ test('Agent runs A6 analysis → A3/A4/A5 → A6 final, applies once, and replay
         seller: { id: 'seller1' }, buyer: { id: 'buyer1' }, evidence_ids: []
       }
     },
-    users: {}, sessions: {}
+    users: {}, sessions: {}, approvals: {}, runs: {}, steps: {}, traces: [], checkpoints: {}, messages: {}
   };
   let counter = 0;
   const runtime = createLiveA2A6Runtime({
@@ -24,11 +24,14 @@ test('Agent runs A6 analysis → A3/A4/A5 → A6 final, applies once, and replay
     evidence_ref: 'conversation:m1',
     seller_context: {
       capacity: '5 tons/month', delivery: '20 days', certifications: ['JAS'],
-      market_access: 'Japan allowed', evidence_refs: ['seller:capacity:1', 'seller:delivery:1', 'seller:jas:1', 'risk:japan:1']
+      market_access: 'Japan allowed', moq: '500 kg', seller_sku: { sku: 'matcha-001', certifications: ['JAS'] },
+      seller_policy: { allowed_markets: ['JP'], payment_terms: ['T/T'] },
+      regulatory_evidence: [{ market: 'JP', result: 'ALLOWED', evidence_ref: 'risk:japan:1' }],
+      evidence_refs: ['seller:capacity:1', 'seller:delivery:1', 'seller:jas:1', 'seller:moq:1', 'seller:sku:1', 'seller:policy:1', 'risk:japan:1']
     }
   };
-  const first = runtime.runBuyerMessage(payload, { id: 'buyer1', role: 'BUYER' });
-  const replay = runtime.runBuyerMessage(payload, { id: 'buyer1', role: 'BUYER' });
+  const first = await runtime.runBuyerMessage(payload, { id: 'buyer1', role: 'BUYER' });
+  const replay = await runtime.runBuyerMessage(payload, { id: 'buyer1', role: 'BUYER' });
 
   assert.equal(first.status, 201);
   assert.equal(replay.status, 200);
@@ -43,7 +46,10 @@ test('Agent runs A6 analysis → A3/A4/A5 → A6 final, applies once, and replay
   const steps = Object.values(state.steps).filter(step => step.run_id === first.body.run.run_id).sort((a, b) => a.sequence - b.sequence);
   assert.deepEqual(steps.map(step => step.phase), ['ANALYSIS', 'REFRESH', 'REFRESH', 'REFRESH', 'FINAL']);
   assert.equal(Object.keys(state.runs).length, 1);
-  assert.equal(Object.keys(state.approvals).length, 1);
+  // This multi-field change remains evidence-gated; idempotency must not
+  // duplicate either state application or a premature outbound approval.
+  assert.equal(first.body.envelope.run_status, 'MORE_EVIDENCE');
+  assert.equal(Object.keys(state.approvals).length, 0);
   assert.equal(state.opportunities.opp1.fields.quantity, '2 tons');
   assert.equal(state.opportunities.opp1.fields.destination, 'Japan');
   assert.equal(state.opportunities.opp1.fields.delivery_date, 'October 2026');

@@ -2,6 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLiveA2A6Runtime } from '../server/a2a6-live-runtime.js';
 
+function dependencyRunner(capabilityId, runStatus = 'DONE', missing = []) {
+  return async context => ({
+    capability_id: capabilityId, capability_version: 'test', run_status: runStatus,
+    changed_fields: context.changed_fields || [], missing_evidence: missing,
+    evidence_refs: context.latest_buyer_message?.evidence_ref ? [context.latest_buyer_message.evidence_ref] : [],
+    human_review_required: runStatus !== 'DONE', domain_result: capabilityId.endsWith('supply_match')
+      ? { verified_facts: { delivery: context.seller_context?.delivery, capacity_or_moq: context.seller_context?.moq || context.seller_context?.capacity } }
+      : capabilityId.endsWith('trade_risk') ? { access_status: 'PASS' } : {}, error: null
+  });
+}
+
 function buyerCompany() {
   return {
     buyer_company_id: 'buyer-company-1',
@@ -37,6 +48,14 @@ function runtimeFixture() {
     now: () => '2026-08-29T04:00:00Z',
     id: prefix => `${prefix}-${++counter}`,
     authorizeOpportunity: (actor, opportunity) => actor?.role === 'INTERNAL' || (actor?.role === 'SELLER' && opportunity.seller?.id === actor.id),
+    dependencyRunners: {
+      'qianpulse.a3.purchase_timing': dependencyRunner('qianpulse.a3.purchase_timing'),
+      'qianpulse.a4.supply_match': async context => {
+        const lacksCapacity = context.changed_fields?.includes('quantity') && !context.seller_context?.capacity && !context.seller_context?.moq;
+        return dependencyRunner('qianpulse.a4.supply_match', lacksCapacity ? 'MORE_EVIDENCE' : 'DONE', lacksCapacity ? ['capacity_or_moq'] : [])(context);
+      },
+      'qianpulse.a5.trade_risk': dependencyRunner('qianpulse.a5.trade_risk')
+    },
     providers: {
       trade_data: { async searchBuyers() { return { companies: [buyerCompany()] }; } },
       contact_data: { async findDecisionMakers() { return [{ buyer_company_id: 'buyer-company-1', name: 'Alex', work_email: 'alex@buyer.example', role_reason: 'Procurement Manager', source_refs: ['ev_contact'] }]; } }
@@ -107,7 +126,7 @@ test('buyer reply enters A6 AgentRun and waits for invalidated dependency refres
   const proactive = await runtime.runProactive({ event_type: 'SELLER_PROACTIVE_DEVELOPMENT', idempotency_key: 'a2-live-2', input: targetInput, max_ready: 1 }, user);
   const opportunityId = proactive.body.generated_opportunity_ids[0];
 
-  const result = runtime.runBuyerMessage({
+  const result = await runtime.runBuyerMessage({
     opportunity_id: opportunityId,
     idempotency_key: 'buyer-msg-1',
     message: 'We need 20 tons. What is your delivery lead time?',
@@ -124,8 +143,8 @@ test('buyer reply enters A6 AgentRun and waits for invalidated dependency refres
   assert.ok(result.body.envelope.missing_evidence.includes('capacity_or_moq'));
   assert.ok(result.body.opportunity.evidence_ids.includes('email:mail-001'));
   assert.deepEqual(result.body.run.capabilities_called, [
-    'qianpulse.a6.opportunity_progression',
-    'qianpulse.a3.purchase_timing',
+     'qianpulse.a6.opportunity_progression',
+     'qianpulse.a3.purchase_timing',
     'qianpulse.a4.supply_match',
     'qianpulse.a6.opportunity_progression'
   ]);
@@ -141,12 +160,12 @@ test('A6 verified low-risk answer creates a Human Gate approval after Reply Comp
   const proactive = await runtime.runProactive({ event_type: 'SELLER_PROACTIVE_DEVELOPMENT', idempotency_key: 'a2-live-3', input: targetInput, max_ready: 1 }, user);
   const opportunityId = proactive.body.generated_opportunity_ids[0];
 
-  const result = runtime.runBuyerMessage({
+  const result = await runtime.runBuyerMessage({
     opportunity_id: opportunityId,
     idempotency_key: 'buyer-msg-2',
     message: 'What is your delivery lead time?',
     evidence_ref: 'email:mail-002',
-    seller_context: { delivery: '20 days', evidence_refs: ['seller:delivery-policy:1'] }
+    seller_context: { delivery: '20 days', moq: '500 kg', capacity: '5 tons/month', seller_sku: { sku: 'matcha-001', certifications: ['HACCP'] }, seller_policy: { allowed_markets: ['US'], payment_terms: ['T/T'] }, evidence_refs: ['seller:delivery-policy:1', 'seller:moq:1', 'seller:capacity:1', 'seller:sku:1', 'seller:policy:1', 'reg:US:1'] }
   }, user);
 
   assert.equal(result.status, 201);
@@ -163,7 +182,7 @@ test('A6 live runtime rejects wrong seller before touching Opportunity state', a
   const proactive = await runtime.runProactive({ event_type: 'SELLER_PROACTIVE_DEVELOPMENT', idempotency_key: 'a2-live-4', input: targetInput, max_ready: 1 }, user);
   const opportunityId = proactive.body.generated_opportunity_ids[0];
 
-  const result = runtime.runBuyerMessage({ opportunity_id: opportunityId, idempotency_key: 'buyer-msg-3', message: 'Hello' }, { id: 'seller-2', role: 'SELLER' });
+  const result = await runtime.runBuyerMessage({ opportunity_id: opportunityId, idempotency_key: 'buyer-msg-3', message: 'Hello' }, { id: 'seller-2', role: 'SELLER' });
   assert.equal(result.status, 403);
   assert.equal(result.body.code, 'FORBIDDEN');
 });

@@ -127,7 +127,7 @@ test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state
         seller: { id: 'seller1', name: 'Guizhou Tea' },
         buyer: { id: 'buyer1', name: 'US Buyer', country: 'US' },
         product: { id: 'matcha-1', name: 'MATCHA' },
-        seller_context: { delivery: '20 days', evidence_refs: ['seller:delivery-policy:1'] },
+        seller_context: { delivery: '20 days', moq: '500 kg', capacity: '5 tons/month', seller_sku: { sku: 'matcha-001' }, seller_policy: { allowed_markets: ['US'], payment_terms: ['T/T'] }, evidence_refs: ['seller:delivery-policy:1', 'seller:moq:1', 'seller:capacity:1', 'seller:sku:1', 'seller:policy:1', 'reg:US:1'] },
         stage: 'CONTACTED',
         status: 'ACTIVE',
         evidence_ids: ['ev-seed'],

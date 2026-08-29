@@ -1,114 +1,92 @@
-/**
- * Python-delegating dependency runners.
- *
- * A6's buyer-reply cycle refreshes invalidated A3/A4/A5 through synchronous
- * "runners" (skill-runtime/dependency-refresh.js). These runners shell out to
- * Free's authoritative Python implementation (scripts/capability_cli.py) and
- * fall back to the bundled Node runner on any failure — so the agent behaves
- * identically when Python is unavailable.
- *
- * Wire in via createLiveA2A6Runtime({ dependencyRunners }).
- */
-import { execFileSync } from 'node:child_process';
+/** Async adapter for the authoritative Python A3/A4/A5 runtimes. */
+import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_DEPENDENCY_RUNNERS } from './dependency-refresh.js';
-import { A3_CAPABILITY_ID } from './a3.js';
-import { A4_CAPABILITY_ID } from './a4.js';
-import { A5_CAPABILITY_ID } from './a5.js';
+import { A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID } from './capability-ids.js';
+import { validateCapabilityEnvelope } from './validators.js';
 
 const DEFAULT_CLI = fileURLToPath(new URL('../../scripts/capability_cli.py', import.meta.url));
+const CAPABILITY_IDS = [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID];
 
-/**
- * @param {object} [opts]
- * @param {string} [opts.pythonBin='python']  python interpreter
- * @param {string} [opts.cliPath]             path to scripts/capability_cli.py
- * @param {number} [opts.timeoutMs=8000]
- * @param {object} [opts.fallback]            capability_id -> Node runner (defaults to bundled)
- * @param {(msg: string) => void} [opts.onFallback]
- */
+function executeCapability({ pythonBin, cliPath, timeoutMs, maxBuffer }, payload) {
+  return new Promise((resolve, reject) => {
+    const child = execFile(pythonBin, [cliPath], {
+      encoding: 'utf8', timeout: timeoutMs, maxBuffer, windowsHide: true
+    }, (error, stdout, stderr) => {
+      if (error) {
+        error.stderr = stderr;
+        reject(error);
+      } else {
+        resolve(stdout);
+      }
+    });
+    child.stdin.on('error', reject);
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function runtimeError(capabilityId, context, error) {
+  const reason = error?.code || error?.message || 'unknown';
+  return {
+    capability_id: capabilityId,
+    capability_version: 'runtime-error',
+    run_status: 'ERROR',
+    changed_fields: context?.changed_fields || [],
+    missing_evidence: [],
+    evidence_refs: [],
+    human_review_required: true,
+    domain_result: {},
+    error: {
+      code: 'CAPABILITY_RUNTIME_UNAVAILABLE',
+      message: String(reason),
+      stderr: error?.stderr ? String(error.stderr).slice(0, 2000) : null
+    }
+  };
+}
+
 export function createPythonDependencyRunners({
   pythonBin = process.env.PYTHON_BIN || 'python',
   cliPath = DEFAULT_CLI,
   timeoutMs = 8000,
-  fallback = DEFAULT_DEPENDENCY_RUNNERS,
-  onFallback = () => {},
+  maxBuffer = 1024 * 1024,
+  onError = () => {}
 } = {}) {
-  function delegate(capabilityId, context) {
-    const nodeRunner = fallback[capabilityId];
+  async function delegate(capabilityId, context) {
     try {
-      const stdout = execFileSync(pythonBin, [cliPath], {
-        input: JSON.stringify({ capability: capabilityId, context }),
-        encoding: 'utf8',
-        timeout: timeoutMs,
-        stdio: ['pipe', 'pipe', 'pipe'],
-        windowsHide: true,
-      });
+      const stdout = await executeCapability(
+        { pythonBin, cliPath, timeoutMs, maxBuffer },
+        { capability: capabilityId, context }
+      );
       const envelope = JSON.parse(stdout);
-      if (!envelope || !envelope.capability_id || !envelope.run_status) {
-        throw new Error('capability CLI returned a malformed envelope');
+      const validation = validateCapabilityEnvelope(envelope);
+      if (!validation.valid || envelope.capability_id !== capabilityId) {
+        throw new Error(`invalid capability envelope: ${validation.errors.join(', ')}`);
       }
       envelope.domain_result = { ...(envelope.domain_result || {}), source: 'python' };
       return envelope;
     } catch (error) {
-      const reason = error.code || error.message || 'unknown';
-      onFallback(`${capabilityId}: python capability unavailable (${reason}); using node runner`);
-      if (typeof nodeRunner !== 'function') {
-        return {
-          capability_id: capabilityId,
-          capability_version: 'fallback',
-          run_status: 'MORE_EVIDENCE',
-          changed_fields: context?.changed_fields || [],
-          missing_evidence: [`runner:${capabilityId}`],
-          evidence_refs: [],
-          human_review_required: false,
-          domain_result: { source: 'node-fallback', fallback_reason: reason },
-          error: null,
-        };
-      }
-      const envelope = nodeRunner(context) || {};
-      envelope.domain_result = {
-        ...(envelope.domain_result || {}),
-        source: 'node-fallback',
-        fallback_reason: reason,
-      };
+      const envelope = runtimeError(capabilityId, context, error);
+      onError(envelope.error);
       return envelope;
     }
   }
 
-  return {
-    [A3_CAPABILITY_ID]: (context) => delegate(A3_CAPABILITY_ID, context),
-    [A4_CAPABILITY_ID]: (context) => delegate(A4_CAPABILITY_ID, context),
-    [A5_CAPABILITY_ID]: (context) => delegate(A5_CAPABILITY_ID, context),
-  };
+  return Object.fromEntries(CAPABILITY_IDS.map(capabilityId => [
+    capabilityId,
+    context => delegate(capabilityId, context)
+  ]));
 }
 
-/** One-shot probe used at boot to decide whether to enable Python runners. */
-export function pythonCapabilitiesAvailable({
+export async function pythonCapabilitiesAvailable({
   pythonBin = process.env.PYTHON_BIN || 'python',
   cliPath = DEFAULT_CLI,
+  timeoutMs = 10000
 } = {}) {
-  try {
-    const out = execFileSync(pythonBin, [cliPath], {
-      input: JSON.stringify({
-        capability: A4_CAPABILITY_ID,
-        context: {
-          opportunity_id: '__probe__',
-          changed_fields: [],
-          opportunity_state: { fields: { product: 'MATCHA', demand_title: 'probe', quantity: '100 kg', destination: 'US' } },
-          seller_context: {},
-          latest_buyer_message: { content: '' },
-        },
-      }),
-      encoding: 'utf8',
-      timeout: 10000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      windowsHide: true,
-    });
-    const env = JSON.parse(out);
-    return Boolean(env && env.capability_id === A4_CAPABILITY_ID);
-  } catch {
-    return false;
-  }
+  const runners = createPythonDependencyRunners({ pythonBin, cliPath, timeoutMs });
+  const envelope = await runners[A3_CAPABILITY_ID]({
+    opportunity_id: '__probe__', evaluated_at: '2000-01-01T00:00:00Z',
+    latest_buyer_message: { content: '', evidence_refs: [] }, opportunity_state: { fields: {} }
+  });
+  return envelope.run_status !== 'ERROR';
 }
 
 export { DEFAULT_CLI as CAPABILITY_CLI_PATH };
