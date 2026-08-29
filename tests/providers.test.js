@@ -49,14 +49,113 @@ test('Trademo refuses to invent endpoint when configuration is absent', async ()
   await assert.rejects(() => provider.searchBuyers({ countries: ['US'] }), /TRADEMO_BUYER_LIST_URL/);
 });
 
-test('Smartlead reply uses documented endpoint, api_key query and thread payload', async () => {
+test('Smartlead resolves email_stats_id from lead activities then uses current reply contract', async () => {
   const calls = [];
-  const provider = createSmartleadProvider({ apiKey: 'smart-key', fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ ok: true }); } });
+  const provider = createSmartleadProvider({
+    apiKey: 'smart-key',
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      const parsed = new URL(url);
+      if (parsed.pathname === '/api/v1/campaigns/all-leads-activities') {
+        return jsonResponse({
+          data: [{
+            lead_id: 34,
+            campaign_id: 12,
+            activities: [{
+              stats_id: 7788,
+              message_id: 'sent-1',
+              sent_time: '2026-08-28T23:00:00.000Z',
+              reply_details: {
+                message_id: 'msg-1',
+                time: '2026-08-29T00:00:00.000Z',
+                reply_email_body: 'Interested'
+              }
+            }]
+          }],
+          hasMore: false
+        });
+      }
+      return jsonResponse({ success: true, message: 'Reply sent successfully' });
+    }
+  });
+
   await provider.replyEmailThread({ campaignId: 12, leadId: 34, emailBody: '<p>Hello</p>', replyMessageId: 'msg-1', replyEmailTime: '2026-08-29T00:00:00.000Z' });
-  const url = new URL(calls[0].url);
-  assert.equal(url.pathname, '/api/v1/campaigns/12/reply-email-thread');
-  assert.equal(url.searchParams.get('api_key'), 'smart-key');
-  assert.deepEqual(JSON.parse(calls[0].options.body), { lead_id: 34, email_body: '<p>Hello</p>', reply_message_id: 'msg-1', reply_email_time: '2026-08-29T00:00:00.000Z' });
+
+  assert.equal(calls.length, 2);
+  const activityUrl = new URL(calls[0].url);
+  assert.equal(activityUrl.pathname, '/api/v1/campaigns/all-leads-activities');
+  assert.equal(activityUrl.searchParams.get('api_key'), 'smart-key');
+  assert.ok(activityUrl.searchParams.get('event_time_from'));
+  assert.ok(activityUrl.searchParams.get('event_time_to'));
+
+  const replyUrl = new URL(calls[1].url);
+  assert.equal(replyUrl.pathname, '/api/v1/campaigns/12/reply-email-thread');
+  assert.equal(replyUrl.searchParams.get('api_key'), 'smart-key');
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    email_stats_id: '7788',
+    email_body: '<p>Hello</p>',
+    add_signature: true,
+    reply_message_id: 'msg-1',
+    reply_email_time: '2026-08-29T00:00:00.000Z'
+  });
+});
+
+test('Smartlead email_stats_id resolver matches campaign, lead and reply message across paged activities', async () => {
+  const calls = [];
+  const provider = createSmartleadProvider({
+    apiKey: 'smart-key',
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      const offset = Number(new URL(url).searchParams.get('offset'));
+      if (offset === 0) {
+        return jsonResponse({
+          data: [{ lead_id: 99, campaign_id: 12, activities: [{ stats_id: 1, reply_details: { message_id: 'other' } }] }],
+          hasMore: true
+        });
+      }
+      return jsonResponse({
+        data: [{
+          lead_id: 34,
+          campaign_id: 12,
+          activities: [{ stats_id: 9901, reply_details: { message_id: 'reply-target', time: '2026-08-29T00:00:00Z' } }]
+        }],
+        hasMore: false
+      });
+    }
+  });
+
+  const statsId = await provider.resolveEmailStatsId({ campaignId: 12, leadId: 34, replyMessageId: 'reply-target', replyEmailTime: '2026-08-29T00:00:00Z', pageSize: 1 });
+  assert.equal(statsId, '9901');
+  assert.equal(calls.length, 2);
+  assert.equal(new URL(calls[1].url).searchParams.get('offset'), '1');
+});
+
+test('Smartlead current reply mode fails closed when email_stats_id cannot be resolved', async () => {
+  const provider = createSmartleadProvider({
+    apiKey: 'smart-key',
+    fetchImpl: async () => jsonResponse({ data: [], hasMore: false })
+  });
+  await assert.rejects(
+    () => provider.replyEmailThread({ campaignId: 12, leadId: 34, emailBody: 'Hello', replyMessageId: 'missing', replyEmailTime: '2026-08-29T00:00:00Z' }),
+    error => error.code === 'SMARTLEAD_EMAIL_STATS_ID_REQUIRED'
+  );
+});
+
+test('Smartlead legacy reply contract remains available only when explicitly configured', async () => {
+  const calls = [];
+  const provider = createSmartleadProvider({
+    apiKey: 'smart-key',
+    replyMode: 'legacy',
+    fetchImpl: async (url, options) => { calls.push({ url, options }); return jsonResponse({ ok: true }); }
+  });
+  await provider.replyEmailThread({ campaignId: 12, leadId: 34, emailBody: '<p>Hello</p>', replyMessageId: 'msg-1', replyEmailTime: '2026-08-29T00:00:00.000Z' });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(calls[0].options.body), {
+    lead_id: 34,
+    email_body: '<p>Hello</p>',
+    reply_message_id: 'msg-1',
+    reply_email_time: '2026-08-29T00:00:00.000Z'
+  });
 });
 
 test('Smartlead add leads keeps global unsubscribe/block protections enabled and requests returned lead IDs only when explicitly asked', async () => {
