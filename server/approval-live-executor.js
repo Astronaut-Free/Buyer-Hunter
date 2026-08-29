@@ -100,7 +100,7 @@ export function createApprovalLiveExecutor({
         lead_id: transport.lead_id,
         updated_at: now()
       };
-      if (execution.executed) approval.execution_status = 'SENT';
+      if (execution.executed || execution.replayed) approval.execution_status = 'SENT';
       else approval.execution_status = execution.status;
       onMutate();
       return { status: execution.executed || execution.replayed ? 200 : 422, body: { approval, execution } };
