@@ -26,7 +26,7 @@ export function extractA6FieldUpdates(content = '', explicitUpdates = {}) {
   if (destination) extracted.destination = destination;
 
   const deliveryDate = firstMatch(text, [
-    /\b(?:by|before)\s+((?:Q[1-4]\s*\d{4})|(?:\d{4}-\d{2}-\d{2})|(?:[A-Z][a-z]+(?:\s+\d{1,2})?(?:,?\s+\d{4})?))/i,
+    /\b(?:by|before)\s+((?:Q[1-4]\s*\d{4})|(?:\d{4}-\d{2}-\d{2})|(?:[A-Z][a-z]+\s+\d{4})|(?:[A-Z][a-z]+\s+\d{1,2}(?:,?\s+\d{4})?)|(?:[A-Z][a-z]+))/i,
     /(?:最晚|交期|到货时间)(?:是|为|：|:)?\s*([0-9]{4}[-年][0-9]{1,2}(?:[-月][0-9]{1,2}日?)?|[0-9]{1,2}月(?:底|前|[0-9]{1,2}日)?)/i
   ]);
   if (deliveryDate) extracted.delivery_date = deliveryDate;
