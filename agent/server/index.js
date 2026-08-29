@@ -22,6 +22,7 @@ import { createCollectionRunner } from './collection-runner.js';
 import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../skill-runtime/python-capability-runners.mjs';
 import { createDeepSeekClient } from '../providers/deepseek.js';
 import { parseNlTarget, buildNlTargetPayload } from '../skill-runtime/nl-target-parser.js';
+import { createAgentConversation } from './agent-conversation.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -592,6 +593,12 @@ function respond(res, result) {
   return sendJson(res, result.status, result.body);
 }
 
+// DeepSeek-backed chat surfaces (seller intake + opportunity advisory) with a
+// deterministic fallback, so the reference frontends work without a key.
+const agentConversation = createAgentConversation({
+  createClient: () => (process.env.DEEPSEEK_API_KEY ? createDeepSeekClient() : null)
+});
+
 let liveA2A6;
 let approvalLiveExecutor;
 let smartleadWebhookHandler;
@@ -771,6 +778,29 @@ async function handleV1(req, res, path) {
     }));
   }
 
+  // --- conversation surfaces (used by agent/index.html and agent/reference/*) ---
+  if (req.method === 'POST' && path === '/api/v1/agent/intake') {
+    if (!user) return sendJson(res, 401, { error: '请先登录后使用 AI 对话' });
+    const result = await agentConversation.intake({
+      message: payload.message,
+      profile: payload.profile,
+      history: payload.history
+    });
+    if (!result.ok) return sendJson(res, 400, { code: result.code, error: result.error });
+    return sendJson(res, 200, result);
+  }
+
+  if (req.method === 'POST' && path === '/api/v1/agent/chat') {
+    if (!user) return sendJson(res, 401, { error: '请先登录后使用 AI 对话' });
+    const opportunity = state.opportunities[String(payload.opportunity_id || '')];
+    if (!opportunity || !canAccess(user, opportunity)) {
+      return sendJson(res, 403, { error: '无权访问当前买家上下文' });
+    }
+    const result = await agentConversation.advise({ message: payload.message, opportunity });
+    if (!result.ok) return sendJson(res, 400, { code: result.code, error: result.error });
+    return sendJson(res, 200, result);
+  }
+
   return sendJson(res, 404, { error: '未找到 Agent 控制面接口' });
 }
 
@@ -934,6 +964,34 @@ const server = createServer(async (req, res) => {
     }
     if (url.pathname.startsWith('/api/v1/auth/')) return authHandler(req, res, url.pathname);
     if (url.pathname.startsWith('/api/v1/')) return handleV1(req, res, url.pathname);
+
+    // Public, unauthenticated projection of the A1-bridged demand pool. Carries
+    // no seller context, no scores and no contact data -- it is the same
+    // information the landing site already shows.
+    if (req.method === 'GET' && url.pathname === '/api/public/opportunities') {
+      const rows = Object.values(state.opportunities)
+        .filter(item => String(item.id).startsWith('opp-'))
+        .map(item => ({
+          id: item.id,
+          buyer: { name: item.buyer?.name || null, market: item.buyer?.market || null },
+          fields: {
+            product: item.fields?.product || null,
+            demand_title: item.fields?.demand_title || null,
+            quantity: item.fields?.quantity || null,
+            destination: item.fields?.destination || null
+          },
+          decision: item.decision || null,
+          why_now: item.why_now || null,
+          source: state.free_data_source || 'origin/Free',
+          updated_at: item.updated_at || null
+        }));
+      return sendJson(res, 200, rows);
+    }
+
+    // Any other /api/ path is a missing endpoint, not a static file -- without
+    // this it fell through to the file server and surfaced as a 500.
+    if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { error: '接口不存在' });
+
     if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' });
 
     const file = url.pathname === '/' ? 'index.html' : normalize(url.pathname).replace(/^[/\\]+/, '');

@@ -342,4 +342,101 @@ async function refreshResults(){
   showWorkspace=function(){origShowWorkspace();ensureCollectionPanel();loadCollectionState();if(authToken())refreshResults();};
   if(location.hash==='#workspace')showWorkspace();
 })();
+</script><script>
+/* 卖家入驻对话 + 商机问答 —— 接 /api/v1/agent/intake 与 /api/v1/agent/chat。
+   在此之前 send() / openAction() 只回固定文案，聊天面板是死的。
+   入驻状态机的字段推断思路取自 Agent 分支 ccxioi 的设计稿
+   (agent/reference/app.html)，此处接到本仓库真实后端。 */
+(function installConversation(){
+  const FIELDS=[
+    ['product',/抹茶|蓝莓|刺梨|辣椒|茶叶|咖啡|蜂蜜|产品/],
+    ['specification',/规格|等级|目数|包装/],
+    ['capacity',/产能|每月|月产/],
+    ['moq',/MOQ|起订量|最小起订/i],
+    ['markets',/市场|国家|地区|美国|日本|德国|英国|欧盟|韩国|荷兰/],
+    ['buyer_type',/买家类型|品牌方|工厂|贸易商|进口商|分销商|零售商/],
+    ['certifications',/认证|证书|检测|HACCP|FDA|有机|ISO|JAS/i],
+  ];
+  const LABEL={product:'产品',specification:'规格',capacity:'月产能',moq:'MOQ',markets:'目标市场',buyer_type:'买家类型',certifications:'认证'};
+  const state={profile:{},history:[],pending:null};
+
+  // 把回答归到某个字段：优先归到上一轮 AI 正在问的字段，否则按关键词猜
+  const fieldFor=text=>{
+    if(state.pending)return state.pending;
+    const hit=FIELDS.find(([,re])=>re.test(text));
+    return hit?hit[0]:null;
+  };
+  // 从 AI 的提问里推断它在问哪个字段，供下一轮归位
+  const fieldAsked=answer=>{
+    const hit=FIELDS.find(([,re])=>re.test(answer));
+    return hit?hit[0]:null;
+  };
+  const setStatus=t=>{const el=document.querySelector('#status');if(el)el.textContent=t;};
+  const tag=p=>p==='deepseek'?'':'<div style="margin-top:6px;font-size:10px;color:var(--muted)">规则兜底（未配置 DEEPSEEK_API_KEY）</div>';
+
+  function profileCard(){
+    const rows=Object.entries(state.profile).filter(([,v])=>v);
+    if(!rows.length)return '';
+    return '<div class="parse">'+rows.map(([k,v])=>
+      '<div><small>'+(LABEL[k]||k)+'</small><b>'+escapeHtml(String(v).slice(0,40))+'</b></div>').join('')+'</div>';
+  }
+
+  window.send=async function(){
+    const input=document.querySelector('#input');
+    const text=(input?.value||'').trim();
+    if(!text)return;
+    if(!authToken()){line('请先登录后再对话。');return;}
+    line(text,'user'); input.value='';
+
+    // 商机问答模式：已绑定某笔商机时，问题走 /chat
+    if(state.opportunityId){
+      setStatus('正在分析这笔商机');
+      try{
+        const {response,data}=await collectionFetch('/api/v1/agent/chat',{method:'POST',
+          body:JSON.stringify({message:text,opportunity_id:state.opportunityId})});
+        if(!response.ok)throw new Error(data.error||'请求失败');
+        line(escapeHtml(data.answer).replace(/\n/g,'<br>')+tag(data.provider));
+        setStatus('商机问答 · '+state.opportunityId);
+      }catch(e){line('对话失败：'+escapeHtml(e.message));setStatus('等待服务恢复');}
+      return;
+    }
+
+    // 入驻模式：收集企业能力档案
+    const field=fieldFor(text);
+    if(field)state.profile[field]=state.profile[field]?state.profile[field]+'；'+text:text;
+    state.history.push({role:'user',content:text});
+    setStatus('正在理解');
+    try{
+      const {response,data}=await collectionFetch('/api/v1/agent/intake',{method:'POST',
+        body:JSON.stringify({message:text,profile:state.profile,history:state.history})});
+      if(!response.ok)throw new Error(data.error||'请求失败');
+      state.history.push({role:'assistant',content:data.answer});
+      state.pending=fieldAsked(data.answer);
+      line(escapeHtml(data.answer).replace(/\n/g,'<br>')+profileCard()+tag(data.provider));
+      const done=FIELDS.every(([k])=>state.profile[k]);
+      if(done){
+        setStatus('企业能力档案已完成');
+        line('企业能力画像已建立，正在按此匹配全球采购需求…');
+        await refreshResults();
+      }else setStatus('等待你的回答');
+    }catch(e){line('对话失败：'+escapeHtml(e.message));setStatus('等待服务恢复');}
+  };
+
+  // 结果表「处理 →」：绑定该商机并进入问答
+  const prevOpenAction=window.openAction;
+  window.openAction=function(id){
+    const key=String(id||'');
+    if(!/^opp[-_]/.test(key))return prevOpenAction&&prevOpenAction(id);
+    state.opportunityId=key;
+    line('已绑定商机 <b>'+escapeHtml(key)+'</b>。可以直接提问，例如「这笔值得追吗」「贵州哪家 SKU 最匹配」「有什么风险」。'
+      +'<div class="suggestions"><button onclick="unbindOpportunity()">退出该商机</button></div>');
+    document.querySelector('#input')?.focus();
+    setStatus('商机问答 · '+key);
+  };
+  window.unbindOpportunity=function(){
+    state.opportunityId=null;
+    line('已退出商机问答，回到企业入驻对话。');
+    setStatus('等待你的回答');
+  };
+})();
 </script></body></html>
