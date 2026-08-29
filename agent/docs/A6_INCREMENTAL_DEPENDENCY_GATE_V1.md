@@ -6,17 +6,16 @@ A6 收到买家新消息后，如果 `quantity / destination / specification / c
 
 ```text
 Buyer Message
-→ Conservative Structured Field Extraction
-→ A6 First Pass
-→ changed_business_fields
-→ invalidated_capabilities
-→ Automatic Dependency Runner
+→ A6 ANALYSIS
+→ field_observations.updates + field_observations.mentions
+→ affected_skills
+→ Agent-owned Dependency Runner + input_hash freshness check
 → A3 / A4 / A5 selective refresh
-→ Merge dependency_results
-→ A6 Second Pass
+→ Merge skill_results
+→ A6 FINAL
 → Dependency Gate
-→ Opportunity State Update
-→ Next Best Action / Draft / Wait / Block / Human Takeover
+→ Contract Validation / Opportunity State Update Once
+→ Next Best Action / Communication Brief / Wait / Block / Human Takeover
 ```
 
 这层机制保持增量执行。没有失效的 SKILL 不重复运行。
@@ -49,7 +48,7 @@ payment_terms
 → qianpulse.a5.trade_risk
 ```
 
-具体 invalidation 仍由 A6 changed-field routing 产生，Dependency Runner 只执行 A6 明确列出的 capability。
+具体刷新范围由 A6 的 `field_observations → affected_skills` 产生；执行权和新鲜度判断属于 Agent Orchestrator。
 
 ## 3. A3 / A4 / A5 刷新职责
 
@@ -153,7 +152,7 @@ Dependency Gate required != []
 ```text
 HUMAN review requirement
 +
-refresh_invalidated_capabilities prerequisite
+refresh_affected_skills prerequisite
 ```
 
 业务员可以立即看到接管要求，系统不会使用过期专业结果继续对外动作。
@@ -171,7 +170,7 @@ certification
 specification
 ```
 
-明确提取值进入 `field_updates`，随后由 A6 产生 changed-field diff 和 invalidated capabilities。
+明确提取值进入 `field_observations.updates`；询问进入 `field_observations.mentions`，随后由 A6 产生 `affected_skills`。
 
 显式 API `field_updates` 优先级高于文本提取。无法可靠提取的字段不会写入 Opportunity。
 
@@ -180,9 +179,7 @@ specification
 最终 A6 Envelope 应用时，仅写入：
 
 ```text
-changed_business_fields[].after
-且
-needs_structured_extraction != true
+field_observations.updates[].after
 ```
 
 Opportunity 保存：
