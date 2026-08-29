@@ -59,6 +59,7 @@ test('Agent State store applies A6 result into the existing Opportunity record',
     buyer: { id: 'buyer3' },
     stage: 'CONTACTED',
     status: 'READY_FOR_OUTREACH_APPROVAL',
+    fields: { quantity: '500 kg' },
     evidence_ids: ['ev_seed']
   });
 
@@ -70,6 +71,10 @@ test('Agent State store applies A6 result into the existing Opportunity record',
       evidence_refs: ['ev_reply'],
       domain_result: {
         stage: { before: 'CONTACTED', after: 'REPLIED' },
+        changed_business_fields: [
+          { field: 'quantity', before: '500 kg', after: '20 tons' },
+          { field: 'destination', before: null, after: null, needs_structured_extraction: true }
+        ],
         next_action: { action: 'WAIT', reason: '等待 A4 刷新' },
         dependency_refresh: { required: ['qianpulse.a4.supply_match'] },
         evidence_refs: ['ev_reply']
@@ -79,6 +84,9 @@ test('Agent State store applies A6 result into the existing Opportunity record',
 
   assert.equal(updated.status, 'WAITING_EVIDENCE');
   assert.equal(updated.stage, 'CONTACTED');
+  assert.equal(updated.fields.quantity, '20 tons');
+  assert.deepEqual(updated.a6.applied_field_updates, { quantity: '20 tons' });
+  assert.deepEqual(updated.a6.pending_structured_extraction, ['destination']);
   assert.ok(updated.evidence_ids.includes('ev_reply'));
   assert.deepEqual(updated.a6.dependency_refresh.required, ['qianpulse.a4.supply_match']);
 });
