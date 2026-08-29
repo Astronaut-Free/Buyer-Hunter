@@ -7,7 +7,7 @@ vendored wholesale from the `ui` branch of this repository.
 | | |
 |---|---|
 | Source branch | `origin/ui` |
-| Source commit | `c7d5634` (re-synced 2026-08-29; was `382f759`, before that `e619f0a`) |
+| Source commit | `8977260` (re-synced 2026-08-29; was `c7d5634`, `382f759`, `e619f0a`) |
 | Vendored on | 2026-08-29 |
 | Vendored into | `integration` branch, under `site/` |
 | Method | `git read-tree --prefix=site/ -u origin/ui` (tree snapshot, no history) |
