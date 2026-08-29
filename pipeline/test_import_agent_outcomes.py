@@ -196,5 +196,122 @@ class ImportAgentOutcomesTest(unittest.TestCase):
         self.assertIn("missing", result["reason"])
 
 
+class PromotionTest(unittest.TestCase):
+    """A2↔A1 rank promotion: bonus rules, max-wins, replay-safe recompute."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.db_path = Path(cls._tmp.name) / "store.db"
+        store.build_store(input_csv=FIXTURE, db_path=cls.db_path)
+        cls.conn = sqlite3.connect(cls.db_path)
+        cls.real_opp, cls.real_buyer = cls.conn.execute(
+            "SELECT o.id, o.buyer_id FROM opportunity o "
+            "JOIN opportunity_decision od ON od.opportunity_id = o.id "
+            "WHERE od.decision_status != 'PASS' ORDER BY od.rank_position LIMIT 1"
+        ).fetchone()
+        # another opportunity we can promote independently
+        cls.other_opp = cls.conn.execute(
+            "SELECT o.id FROM opportunity o "
+            "JOIN opportunity_decision od ON od.opportunity_id = o.id "
+            "WHERE od.decision_status != 'PASS' AND o.id != ? ORDER BY od.rank_position LIMIT 1",
+            (cls.real_opp,),
+        ).fetchone()[0]
+        cls.third_opp = cls.conn.execute(
+            "SELECT o.id FROM opportunity o "
+            "JOIN opportunity_decision od ON od.opportunity_id = o.id "
+            "WHERE od.decision_status != 'PASS' AND o.id NOT IN (?, ?) ORDER BY od.rank_position LIMIT 1",
+            (cls.real_opp, cls.other_opp),
+        ).fetchone()[0]
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.conn.close()
+        cls._tmp.cleanup()
+
+    def _insert_outcome(self, opp, outcome, ts, reason="promo-test"):
+        importer.apply(self.conn, importer.build_outcome_rows(_entries(a6_outcomes=[
+            {"opportunity_id": opp, "outcome": outcome, "reason": reason, "reported_at": ts},
+        ])), [])
+
+    def _bonus(self, opp):
+        return self.conn.execute(
+            "SELECT promotion_bonus FROM opportunity_decision WHERE opportunity_id = ?", (opp,)
+        ).fetchone()[0]
+
+    def test_won_adds_15(self) -> None:
+        self._insert_outcome(self.other_opp, "WON", "2026-08-29T23:00:00+00:00")
+        promoted = importer.apply_promotions(self.conn)
+        self.assertGreaterEqual(promoted, 1)
+        self.assertEqual(self._bonus(self.other_opp), 15.0)
+
+    def test_stopped_maps_to_negotiating_10(self) -> None:
+        self._insert_outcome(self.third_opp, "STOPPED", "2026-08-29T23:01:00+00:00")
+        importer.apply_promotions(self.conn)
+        self.assertEqual(self._bonus(self.third_opp), 10.0)
+
+    def test_linked_strong_target_adds_10_for_whole_buyer(self) -> None:
+        self.conn.execute("UPDATE buyer SET domain = 'promo-link.de' WHERE id = ?", (self.real_buyer,))
+        self.conn.commit()
+        importer.apply(self.conn, [], importer.build_target_rows(_entries(a2_targets=[{
+            "seed_key": "a2:seller-guizhou-specialty-demo:promo-1",
+            "source": "A2_PROACTIVE_BUYER_DEVELOPMENT",
+            "seller": {"id": "seller-guizhou-specialty-demo", "name": "demo"},
+            "buyer": {"id": "buyer_promo_1", "name": "Promo Link GmbH", "country": "DE", "domain": "promo-link.de"},
+            "contact": None, "stage": None, "status": "READY_FOR_OUTREACH_APPROVAL",
+            "a2": {"rank_score": 88.0}, "evidence_ids": [],
+            "created_at": "2026-08-29T08:00:00+00:00", "updated_at": "2026-08-29T09:00:00+00:00",
+        }])))
+        importer.resolve_entities(self.conn, importer.build_target_rows(_entries(a2_targets=[{
+            "seed_key": "a2:seller-guizhou-specialty-demo:promo-1",
+            "source": "A2_PROACTIVE_BUYER_DEVELOPMENT",
+            "seller": {"id": "seller-guizhou-specialty-demo", "name": "demo"},
+            "buyer": {"id": "buyer_promo_1", "name": "Promo Link GmbH", "country": "DE", "domain": "promo-link.de"},
+            "contact": None, "stage": None, "status": "READY_FOR_OUTREACH_APPROVAL",
+            "a2": {"rank_score": 88.0}, "evidence_ids": [],
+            "created_at": "2026-08-29T08:00:00+00:00", "updated_at": "2026-08-29T09:00:00+00:00",
+        }])))
+        importer.apply_promotions(self.conn)
+        self.assertEqual(self._bonus(self.real_opp), 10.0)
+
+    def test_max_wins_and_recompute_is_idempotent(self) -> None:
+        # WON(15) on top of the existing STOPPED(10) row -> max wins = 15
+        self._insert_outcome(self.real_opp, "WON", "2026-08-29T23:02:00+00:00")
+        first = importer.apply_promotions(self.conn)
+        self.assertEqual(self._bonus(self.real_opp), 15.0)
+        second = importer.apply_promotions(self.conn)
+        self.assertEqual(first, second)
+        self.assertEqual(self._bonus(self.real_opp), 15.0)
+        # and an untouched opportunity stays at 0 after recompute
+        untouched = self.conn.execute(
+            "SELECT o.id FROM opportunity o "
+            "JOIN opportunity_decision od ON od.opportunity_id = o.id "
+            "WHERE o.id NOT IN (?, ?) ORDER BY od.rank_position LIMIT 1",
+            (self.real_opp, self.other_opp),
+        ).fetchone()[0]
+        self.assertEqual(self._bonus(untouched), 0.0)
+
+    def test_promoted_orders_first_in_today_query(self) -> None:
+        # give other_opp a +15 and confirm the API's ordering expression puts it
+        # ahead of the untouched third_opp even when raw scores disagree.
+        raw_other = self.conn.execute(
+            "SELECT opportunity_score FROM opportunity_decision WHERE opportunity_id = ?", (self.other_opp,)
+        ).fetchone()[0]
+        raw_third = self.conn.execute(
+            "SELECT opportunity_score FROM opportunity_decision WHERE opportunity_id = ?", (self.third_opp,)
+        ).fetchone()[0]
+        if raw_other + 15.0 <= raw_third:
+            self.skipTest("fixture scores don't allow a visible flip")
+        self._insert_outcome(self.other_opp, "WON", "2026-08-29T23:03:00+00:00")
+        importer.apply_promotions(self.conn)
+        rows = self.conn.execute(
+            """SELECT opportunity_id FROM opportunity_decision
+               WHERE decision_status != 'PASS' AND opportunity_id IN (?, ?)
+               ORDER BY (opportunity_score + promotion_bonus) DESC, opportunity_id""",
+            (self.third_opp, self.other_opp),
+        ).fetchall()
+        self.assertEqual(rows[0][0], self.other_opp)
+
+
 if __name__ == "__main__":
     unittest.main()

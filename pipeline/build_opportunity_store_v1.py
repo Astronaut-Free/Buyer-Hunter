@@ -347,6 +347,7 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
         conn.executescript((ROOT / "db/migrations/003_seller_sku_fit.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/004_agent_discovered_target.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/005_buyer_identity.sql").read_text(encoding="utf-8"))
+        conn.executescript((ROOT / "db/migrations/006_promotion_bonus.sql").read_text(encoding="utf-8"))
         insert_base_profile(conn, profile, now)
         # reliable same-account grouping (domain / platform id / reg id only)
         from buyer_profile_v1 import account_key, build_buyer_context  # local: avoids import cycle

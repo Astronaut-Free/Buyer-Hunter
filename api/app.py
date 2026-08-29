@@ -68,6 +68,7 @@ def summary_from(row: sqlite3.Row, full: bool) -> dict[str, Any]:
         "published_at": row["published_at"],
         "decision_status": row["decision_status"],
         "opportunity_score": row["opportunity_score"],
+        "promotion_bonus": row["promotion_bonus"] if "promotion_bonus" in _row_keys(row) else 0.0,
         "truth_score": row["truth_score"],
         "why_now": loads(row["why_now_json"], []),
         "next_action_summary": loads(row["next_action_json"], {}).get("summary", ""),
@@ -182,7 +183,8 @@ def today_opportunities(
             params.append(market_code)
         params.append(limit)
         rows = conn.execute(
-            BASE_QUERY + " WHERE " + " AND ".join(clauses) + " ORDER BY od.opportunity_score DESC, od.opportunity_id LIMIT ?",
+            BASE_QUERY + " WHERE " + " AND ".join(clauses)
+            + " ORDER BY (od.opportunity_score + od.promotion_bonus) DESC, od.opportunity_id LIMIT ?",
             params,
         ).fetchall()
 
