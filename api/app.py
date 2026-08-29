@@ -27,6 +27,7 @@ app.add_middleware(
     allow_origins=[
         "http://127.0.0.1:4173", "http://127.0.0.1:4174", "http://localhost:4173", "http://localhost:4174",
         "http://127.0.0.1:4180", "http://localhost:4180",  # static landing site (site/)
+        "http://127.0.0.1:3317", "http://localhost:3317",  # agent workbench (brief.pdf, live rows)
     ],
     allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
