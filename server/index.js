@@ -10,7 +10,11 @@ import { guardBuyerOutput } from './output-guard.js';
 import { loadFreeOpportunities } from './repository.js';
 import { createApolloProvider } from '../providers/apollo.js';
 import { createTrademoProvider } from '../providers/trademo.js';
+import { createSmartleadProvider } from '../providers/smartlead.js';
 import { createLiveA2A6Runtime } from './a2a6-live-runtime.js';
+import { createSmartleadLiveWebhookHandler } from './smartlead-live-webhook.js';
+import { createApprovalLiveExecutor } from './approval-live-executor.js';
+import { createA2FirstOutreachExecutor } from './a2-first-outreach-executor.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -49,9 +53,19 @@ const sendJson = (res, status, body) => {
   res.end(JSON.stringify(body));
 };
 
-async function readBody(req) {
+async function readRawBody(req, maxBytes = 1024 * 1024) {
   let raw = '';
-  for await (const chunk of req) raw += chunk;
+  let bytes = 0;
+  for await (const chunk of req) {
+    bytes += chunk.length;
+    if (bytes > maxBytes) throw new Error('请求体过大');
+    raw += chunk;
+  }
+  return raw;
+}
+
+async function readBody(req) {
+  const raw = await readRawBody(req);
   if (!raw) return {};
   try {
     return JSON.parse(raw);
@@ -518,6 +532,8 @@ function respond(res, result) {
 }
 
 let liveA2A6;
+let approvalLiveExecutor;
+let smartleadWebhookHandler;
 
 async function handleV1(req, res, path) {
   const payload = await readBody(req);
@@ -546,7 +562,12 @@ async function handleV1(req, res, path) {
 
   if (req.method === 'POST' && path === '/api/v1/agent/runs') {
     if (!user) return sendJson(res, 401, { error: '请先登录后使用 Agent' });
-    if (liveA2A6.isA2EventType(payload.event_type)) return respond(res, await liveA2A6.runProactive(payload, user));
+    if (liveA2A6.isA2EventType(payload.event_type)) {
+      const a2Payload = process.env.SMARTLEAD_CAMPAIGN_ID && !payload.campaign_id
+        ? { ...payload, campaign_id: process.env.SMARTLEAD_CAMPAIGN_ID }
+        : payload;
+      return respond(res, await liveA2A6.runProactive(a2Payload, user));
+    }
     if (payload.event_type === 'BUYER_MESSAGE') return respond(res, liveA2A6.runBuyerMessage(payload, user));
     return respond(res, await createRun(payload, user));
   }
@@ -576,17 +597,12 @@ async function handleV1(req, res, path) {
 
   const approvalMatch = path.match(/^\/api\/v1\/approvals\/([^/]+)$/);
   if (req.method === 'POST' && approvalMatch) {
-    if (!user || user.role !== 'INTERNAL') return sendJson(res, 403, { error: '只有 INTERNAL 可以审批外部动作' });
-    const approval = state.approvals[approvalMatch[1]];
-    if (!approval) return sendJson(res, 404, { error: 'Approval 不存在' });
-    if (!['APPROVED', 'EDITED', 'REJECTED'].includes(payload.status)) return sendJson(res, 400, { error: 'status 必须是 APPROVED、EDITED 或 REJECTED' });
-    approval.status = payload.status;
-    approval.approved_by = user.id;
-    approval.approved_at = now();
-    if (payload.edited_payload) approval.payload = payload.edited_payload;
-    approval.payload_hash = hash(approval.payload);
-    persistSoon();
-    return sendJson(res, 200, approval);
+    return respond(res, await approvalLiveExecutor({
+      approvalId: approvalMatch[1],
+      user,
+      status: payload.status,
+      editedPayload: payload.edited_payload
+    }));
   }
 
   const traceMatch = path.match(/^\/api\/v1\/agent\/runs\/([^/]+)\/trace$/);
@@ -620,12 +636,14 @@ async function handleV1(req, res, path) {
     if (previous.capabilities_called?.includes('qianpulse.a2.proactive_buyer_development')) {
       if (!['SELLER', 'INTERNAL'].includes(user.role)) return sendJson(res, 403, { error: '无权恢复主动拓展 Run' });
       const previousEvent = state.events[previous.trigger_event_id];
-      return respond(res, await liveA2A6.runProactive({
+      const proactivePayload = {
         ...(previousEvent?.payload || {}),
         ...payload,
         event_type: previousEvent?.event_type || 'SELLER_PROACTIVE_DEVELOPMENT',
         source: 'resume'
-      }, user));
+      };
+      if (process.env.SMARTLEAD_CAMPAIGN_ID && !proactivePayload.campaign_id) proactivePayload.campaign_id = process.env.SMARTLEAD_CAMPAIGN_ID;
+      return respond(res, await liveA2A6.runProactive(proactivePayload, user));
     }
 
     const opportunity = state.opportunities[previous.opportunity_id];
@@ -683,6 +701,26 @@ liveA2A6 = createLiveA2A6Runtime({
   agentVersion: AGENT_VERSION
 });
 
+const smartlead = createSmartleadProvider();
+const a2OutreachExecutor = createA2FirstOutreachExecutor({
+  getState: () => state,
+  onMutate: persistSoon,
+  smartlead,
+  opportunityStore: liveA2A6.opportunityStore,
+  now
+});
+approvalLiveExecutor = createApprovalLiveExecutor({
+  getState: () => state,
+  onMutate: persistSoon,
+  smartlead,
+  a2OutreachExecutor,
+  now
+});
+smartleadWebhookHandler = createSmartleadLiveWebhookHandler({
+  liveRuntime: liveA2A6,
+  signingSecret: process.env.SMARTLEAD_WEBHOOK_SECRET
+});
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   try {
@@ -692,8 +730,20 @@ const server = createServer(async (req, res) => {
         provider: process.env.DEEPSEEK_API_KEY ? 'deepseek-ready' : 'rules-fallback',
         agent_version: AGENT_VERSION,
         model: DEEPSEEK_MODEL,
-        a2_a6_runtime: 'ready'
+        a2_a6_runtime: 'ready',
+        smartlead: process.env.SMARTLEAD_API_KEY ? 'configured' : 'not-configured',
+        smartlead_webhook: process.env.SMARTLEAD_WEBHOOK_SECRET ? 'configured' : 'not-configured'
       });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/v1/webhooks/smartlead') {
+      const rawBody = await readRawBody(req);
+      let body;
+      try {
+        body = rawBody ? JSON.parse(rawBody) : {};
+      } catch {
+        return sendJson(res, 400, { code: 'INVALID_JSON' });
+      }
+      return respond(res, smartleadWebhookHandler({ rawBody, body, headers: req.headers }));
     }
     if (url.pathname.startsWith('/api/v1/auth/')) return authHandler(req, res, url.pathname);
     if (url.pathname.startsWith('/api/v1/')) return handleV1(req, res, url.pathname);
