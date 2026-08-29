@@ -616,7 +616,7 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
             "state": "sandbox 闭环" if disp_ok else "异常",
             "evidence": "Target -> Buyer Company Discovery -> Buyer Fit(证据门槛) -> Contact -> Readiness Gate -> "
             "Email Draft -> Human Gate -> Smartlead 队列；skill 调度审计通过",
-            "gap": "自然语言入口未接线（只吃结构化 target）；发现源仅 Trademo 1 个；实网待 5 个凭据",
+            "gap": "发现源仅 Trademo 1 个；实网待 5 个凭据（NL 入口已接：POST /api/v1/agent/nl-targets，DeepSeek 优先 + 规则兜底）",
         },
         {
             "module": "A3 采购时机判断",
@@ -637,10 +637,10 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
         {
             "module": "A5 智能匹配风控",
             "runtime": "Python 唯一运行时（pipeline/skills/a5_trade_risk.py）",
-            "state": "部分（准入已归 Python）",
+            "state": "Python 权威",
             "evidence": "A6 会话内刷新经 capability CLI 调 Free；目的地黑名单 → BLOCKED，缺政策 → MORE_EVIDENCE，"
-            "否则 REVIEWED + market_access 分",
-            "gap": "买家信用 / 欺诈预警 / 知识产权 / 合同履约 未做；法规 Provider 未接",
+            "否则 REVIEWED + market_access 分；13 类风险条目（准入/支付/信用未知/欺诈信号/知识产权/合同条款等，证据门槛制）",
+            "gap": "深度启发式为规则化内置，未接实网数据源（法规 Provider 未接）",
         },
         {
             "module": "A6 成交自动推进",
