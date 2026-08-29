@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { createApolloProvider } from '../providers/apollo.js';
 import { createTrademoProvider } from '../providers/trademo.js';
 import { createSmartleadProvider } from '../providers/smartlead.js';
+import { createDeepSeekClient } from '../providers/deepseek.js';
+import { createJsonClient } from '../providers/http.js';
 
 function jsonResponse(body, status = 200) {
   return { ok: status >= 200 && status < 300, status, async text() { return JSON.stringify(body); } };
@@ -193,4 +195,34 @@ test('Smartlead lead lookup by email uses documented endpoint', async () => {
   assert.equal(url.searchParams.get('api_key'), 'smart-key');
   assert.equal(url.searchParams.get('email'), 'buyer@example.com');
   assert.equal(lead.id, 789);
+});
+
+test('json client normalises header case so content-type is never duplicated', async () => {
+  // Mixing 'content-type' (set by the client) with a differently-cased
+  // 'Content-Type' from defaultHeaders made Headers append both values
+  // ("application/json, application/json"), which DeepSeek rejected with 415.
+  let seen = null;
+  const request = createJsonClient({
+    fetchImpl: async (_url, init) => { seen = init.headers; return { ok: true, status: 200, text: async () => '{}' }; },
+    defaultHeaders: { Authorization: 'Bearer k', 'Content-Type': 'application/json' }
+  });
+  await request('https://api.example/v1/x', { method: 'POST', body: { a: 1 } });
+  const keys = Object.keys(seen);
+  assert.equal(keys.filter(k => k.toLowerCase() === 'content-type').length, 1, 'duplicate content-type key');
+  assert.equal(new Headers(seen).get('content-type'), 'application/json');
+  assert.equal(new Headers(seen).get('authorization'), 'Bearer k');
+});
+
+test('deepseek client sends exactly one content-type', async () => {
+  let seen = null;
+  const client = createDeepSeekClient({
+    apiKey: 'k',
+    fetchImpl: async (_url, init) => {
+      seen = init.headers;
+      return { ok: true, status: 200, text: async () => JSON.stringify({ choices: [{ message: { content: 'ok' } }] }) };
+    }
+  });
+  const answer = await client.chat({ system: 's', messages: [{ role: 'user', content: 'hi' }] });
+  assert.equal(answer, 'ok');
+  assert.equal(new Headers(seen).get('content-type'), 'application/json');
 });

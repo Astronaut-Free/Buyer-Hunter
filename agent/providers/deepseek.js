@@ -21,10 +21,10 @@ export function createDeepSeekClient({
   const request = createJsonClient({
     fetchImpl,
     timeoutMs,
-    defaultHeaders: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    }
+    // NOTE: do not set Content-Type here -- createJsonClient already adds it
+    // for bodied requests, and a differently-cased duplicate key makes Headers
+    // append rather than replace ("application/json, application/json" -> 415).
+    defaultHeaders: { Authorization: `Bearer ${apiKey}` }
   });
 
   const SYSTEM_PROMPT = [
@@ -67,5 +67,27 @@ export function createDeepSeekClient({
     };
   }
 
-  return { parseTarget };
+  /**
+   * Free-form chat turn. `system` fixes the role, `messages` is the running
+   * transcript. Returns the assistant text, or throws — callers own the
+   * fallback, never this module.
+   */
+  async function chat({ system, messages = [], temperature = 0.2 }) {
+    const payload = await withRetry(
+      () => request(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        body: {
+          model,
+          temperature,
+          messages: [{ role: 'system', content: system }, ...messages]
+        }
+      }),
+      { retries: 1 }
+    );
+    const answer = payload?.choices?.[0]?.message?.content?.trim();
+    if (!answer) throw new ProviderHttpError('DeepSeek returned an empty completion', { status: 502 });
+    return answer;
+  }
+
+  return { parseTarget, chat, model };
 }
