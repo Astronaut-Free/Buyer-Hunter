@@ -16,6 +16,8 @@ Seller Target
 → A6 Opportunity Progression
 → Evidence-safe Reply Draft
 → Human Gate
+→ Smartlead Lead Activities
+→ email_stats_id Resolution
 → Smartlead Thread Reply
 ```
 
@@ -53,9 +55,24 @@ DEEPSEEK_API_KEY
 DEEPSEEK_MODEL
 PORT
 SMARTLEAD_BASE_URL
+SMARTLEAD_REPLY_MODE
 ```
 
-`SMARTLEAD_BASE_URL` 主要用于 sandbox / integration test，将 Smartlead 请求指向受控测试服务；未设置时使用正式 Provider 默认地址。
+`SMARTLEAD_BASE_URL` 用于 sandbox / integration test，可将 Smartlead 请求指向受控测试服务。未设置时使用 Provider 默认地址。
+
+Smartlead 回复默认采用当前 `email_stats_id` 合同：
+
+```text
+SMARTLEAD_REPLY_MODE=stats_id
+```
+
+仅在已经确认账号仍使用旧合同的环境显式设置：
+
+```text
+SMARTLEAD_REPLY_MODE=legacy
+```
+
+系统不会遇到新合同失败后自动改走 legacy，从而避免外部动作状态不确定时再次发送。
 
 ## 4. Smartlead Campaign 前置条件
 
@@ -72,7 +89,7 @@ A2 Approval 执行前会调用 Campaign Sequence 查询校验这两个 token。�
 CAMPAIGN_TEMPLATE_INVALID
 ```
 
-系统不会继续加入 Lead。
+系统停止加入 Lead。
 
 每个 Lead 写入：
 
@@ -134,7 +151,7 @@ Raw body
 
 缺少 Lead ID、Opportunity 映射或消息正文时 fail-closed。
 
-A2 Opportunity 会保留明确提供的 `seller_context`。Webhook 进入 A6 时复用该证据上下文，MOQ、认证、交期等回答仍受 A6 Evidence Guard 与 Human Gate 约束。
+A2 Opportunity 会保留明确提供的 `seller_context`。Webhook 进入 A6 时复用该证据上下文，MOQ、认证、交期等回答继续受 A6 Evidence Guard 与 Human Gate 约束。
 
 ## 7. A6 回复执行
 
@@ -151,7 +168,7 @@ POST /api/v1/approvals/{approval_id}
 Authorization: Bearer <INTERNAL_TOKEN>
 ```
 
-批准后从触发 Buyer Message Event 恢复 Smartlead transport context：
+批准后从触发 Buyer Message Event 恢复：
 
 ```text
 campaign_id
@@ -160,11 +177,44 @@ reply_message_id
 reply_email_time
 ```
 
-随后进入 idempotent Smartlead thread reply executor。
+当前 Smartlead Reply API 还需要 `email_stats_id`。执行器调用 Provider 后，Provider 使用：
+
+```text
+GET /campaigns/all-leads-activities
+```
+
+在 Buyer Reply 时间窗口内匹配：
+
+```text
+campaign_id
+lead_id
+reply_details.message_id / message_id
+```
+
+匹配成功后读取该 Activity 的：
+
+```text
+stats_id → email_stats_id
+```
+
+随后执行：
+
+```text
+POST /campaigns/{campaign_id}/reply-email-thread
+{
+  email_stats_id,
+  email_body,
+  add_signature,
+  reply_message_id,
+  reply_email_time
+}
+```
+
+找不到 `email_stats_id` 时返回 `SMARTLEAD_EMAIL_STATS_ID_REQUIRED`，外部回复停止发送。
 
 ## 8. 当前自动化验证
 
-完整模拟链已覆盖：
+模块级完整模拟链：
 
 ```text
 A2
@@ -179,7 +229,29 @@ A2
 → Smartlead Thread Reply
 ```
 
-验证同时覆盖：
+HTTP 黑盒链：
+
+```text
+POST signed Smartlead webhook
+→ server/index.js
+→ Opportunity mapping
+→ A6
+→ Approval generated
+→ POST Approval API with INTERNAL token
+→ GET Smartlead Lead Activities
+→ email_stats_id resolved
+→ POST Smartlead thread reply
+```
+
+当前 CI 基线：
+
+```text
+90 tests
+90 passed
+0 failed
+```
+
+验证范围包含：
 
 ```text
 invalid signature
@@ -188,6 +260,10 @@ invalid campaign template
 wrong role approval
 duplicate external execution
 missing transport context
+missing email_stats_id
+current stats-id reply contract
+explicit legacy reply mode
+HTTP webhook + approval black-box flow
 ```
 
 ## 9. 生产 Smoke 顺序
@@ -202,8 +278,9 @@ missing transport context
 7. 测试 Buyer 回复邮件
 8. 确认 Webhook 生成同一 Opportunity 的 A6 Run
 9. 人工批准 A6 Reply Draft
-10. 确认 Smartlead thread reply 只执行一次
-11. 检查 Run / Step / Checkpoint / Approval / external_actions
+10. 确认 Lead Activities 可解析 email_stats_id
+11. 确认 Smartlead thread reply 只执行一次
+12. 检查 Run / Step / Checkpoint / Approval / external_actions
 ```
 
-生产 Smoke 在真实 Provider 凭据可用后执行；在此之前 CI 使用 mock / sandbox transport 验证控制链与安全边界。
+生产 Smoke 在真实 Provider 凭据可用后执行；当前 CI 使用 mock / sandbox transport 验证控制链、安全边界和 HTTP 接线。
