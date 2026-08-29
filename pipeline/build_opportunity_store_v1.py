@@ -350,6 +350,7 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
         conn.executescript((ROOT / "db/schema.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/002_opportunity_decision.sql").read_text(encoding="utf-8"))
         conn.executescript((ROOT / "db/migrations/003_seller_sku_fit.sql").read_text(encoding="utf-8"))
+        conn.executescript((ROOT / "db/migrations/004_agent_discovered_target.sql").read_text(encoding="utf-8"))
         insert_base_profile(conn, profile, now)
         source_ids: dict[str, str] = {}
         decisions: list[tuple[dict[str, str], dict[str, Any], Any, Any]] = []

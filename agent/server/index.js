@@ -7,7 +7,7 @@ import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypt
 import { decideHandoff, calculateMatch, evaluateMarketAccess } from './decision-engine.js';
 import { withRetry } from './capability-adapter.js';
 import { guardBuyerOutput } from './output-guard.js';
-import { loadFreeOpportunities } from './repository.js';
+import { loadFreeOpportunities, mergeFreeOpportunities, buildAgentOutcomesEntries } from './repository.js';
 import { createApolloProvider } from '../providers/apollo.js';
 import { createTrademoProvider } from '../providers/trademo.js';
 import { createSmartleadProvider } from '../providers/smartlead.js';
@@ -21,7 +21,11 @@ import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../s
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
-const STATE_FILE = join(SERVER_DIR, 'agent-state.json');
+// Env-overridable (full paths) so tests can isolate their state (single machine, one server).
+const STATE_FILE = process.env.AGENT_STATE_FILE || join(SERVER_DIR, 'agent-state.json');
+// Reverse-bridge output (contract v2): consumed by scripts/import_agent_outcomes.py.
+const OUTCOMES_FILE = process.env.AGENT_OUTCOMES_FILE || join(ROOT, 'db', 'agent-outcomes.json');
+const OUTCOMES_META_FILE = process.env.AGENT_OUTCOMES_META_FILE || OUTCOMES_FILE.replace(/\.json$/, '.meta.json');
 const PORT = Number(process.env.PORT || 3317);
 const AGENT_VERSION = 'qianpulse-agent-0.2.0';
 const SESSION_DAYS = 7;
@@ -118,6 +122,26 @@ let persistTimer;
 async function persist() {
   await mkdir(SERVER_DIR, { recursive: true });
   await writeFile(STATE_FILE, JSON.stringify(state, null, 2));
+
+  const entries = buildAgentOutcomesEntries(state.opportunities, now);
+  const exportedAt = now();
+  const payload = {
+    exported_at: exportedAt,
+    contract: 'contracts/opportunity-bridge-v1.md (v2 reverse)',
+    direction: 'agent -> free (v2 reverse)',
+    entries
+  };
+  const meta = {
+    source_state: 'agent/server/agent-state.json',
+    exported_at: exportedAt,
+    a6_outcome_count: entries.a6_outcomes.length,
+    a2_target_count: entries.a2_targets.length,
+    contract: payload.contract,
+    direction: payload.direction
+  };
+  await mkdir(join(ROOT, 'db'), { recursive: true });
+  await writeFile(OUTCOMES_FILE, JSON.stringify(payload, null, 2));
+  await writeFile(OUTCOMES_META_FILE, JSON.stringify(meta, null, 2));
 }
 
 function persistSoon() {
@@ -688,7 +712,16 @@ loadState = async function() {
   }];
   try {
     const imported = await loadFreeOpportunities();
-    for (const opportunity of imported) state.opportunities[opportunity.id] = opportunity;
+    for (const opportunity of imported) {
+      // Merge-on-reload: the bridge file is a full overwrite of every Free row,
+      // so re-importing it would wipe A6-mutated state (fields/stage/status/a6).
+      // Existing runtime values win; decision/score fields refresh from the new
+      // pipeline snapshot.
+      const existing = state.opportunities[opportunity.id];
+      state.opportunities[opportunity.id] = existing
+        ? mergeFreeOpportunities(existing, opportunity)
+        : opportunity;
+    }
     state.free_data_source = 'origin/Free';
   } catch (error) {
     state.free_data_source = 'fallback';

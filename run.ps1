@@ -3,8 +3,8 @@
 
     .\run.ps1 -Setup     install python + node deps
     .\run.ps1 -Build     build the decision store from the committed fixture
-    .\run.ps1 -Export    bridge the store into the agent runtime feed
-    .\run.ps1 -Up        build + export, then run site + api + agent + demo in background
+    .\run.ps1 -Export    bridge the store into the agent runtime feed + import agent outcomes back
+    .\run.ps1 -Up        build + export + import, then run site + api + agent + demo in background
     .\run.ps1 -Down      stop the background services started by -Up
     .\run.ps1 -Test      pytest + agent npm test
     .\run.ps1 -Audit     cross-runtime audit -> docs\AUDIT_<date>.md
@@ -39,6 +39,13 @@ function Invoke-Export {
     if ($LASTEXITCODE -ne 0) { throw "export failed ($LASTEXITCODE)" }
 }
 
+function Invoke-Import {
+    # reverse bridge: A6 outcomes + A2 targets -> decision store (idempotent;
+    # re-runs after every rebuild because the builder does a full atomic replace)
+    & $Py (Join-Path $Root 'scripts\import_agent_outcomes.py')
+    if ($LASTEXITCODE -ne 0) { throw "import failed ($LASTEXITCODE)" }
+}
+
 if ($Setup) {
     & $Py -m pip install -r (Join-Path $Root 'requirements.txt')
     Push-Location (Join-Path $Root 'agent'); npm ci; Pop-Location
@@ -47,7 +54,7 @@ if ($Setup) {
 }
 
 if ($Build)  { Invoke-Db; return }
-if ($Export) { Invoke-Db; Invoke-Export; return }
+if ($Export) { Invoke-Db; Invoke-Export; Invoke-Import; return }
 
 if ($Test) {
     & $Py -m pytest -q
@@ -89,6 +96,7 @@ if ($Down) {
 if ($Up) {
     Invoke-Db
     Invoke-Export
+    Invoke-Import
     $site = Start-Process -PassThru -WorkingDirectory $Root $Py `
         -ArgumentList '-m','http.server',"$SitePort",'--bind','127.0.0.1','--directory',(Join-Path $Root 'site')
     $api = Start-Process -PassThru -WorkingDirectory $Root $Py `

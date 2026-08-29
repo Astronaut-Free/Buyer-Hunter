@@ -67,9 +67,73 @@ pipeline/run_pipeline.py            (A1 collect → clean/score → aggregate)
 - **No identity merge.** A bridged buyer and an A2-discovered `target_account`
   for the same company are not linked in v1. (v2: entity resolution on domain.)
 
+## v2 (implemented) — reverse channel
+
+A6 outcomes and A2-discovered targets flow back into the Free store.
+
+### Flow
+
+```
+agent/server/index.js persist()            (debounced, on every state change)
+  → agent/db/agent-outcomes.json          (+ agent-outcomes.meta.json provenance)
+  → scripts/import_agent_outcomes.py      (`make import`; idempotent, replayable)
+  → runtime/buyer_hunter.db
+      a6_outcomes → deal_outcome          (only ids present in opportunity — bridged
+                                           Free opportunities; A2-only ids are skipped)
+      a2_targets  → agent_discovered_target (upsert on seed_key)
+```
+
+The import re-runs after every store rebuild because
+`build_opportunity_store_v1.py` does a full atomic replace: `make up` /
+`.\run.ps1 -Up` run `db → export → import` in that order.
+
+### `agent/db/agent-outcomes.json` shape
+
+```json
+{
+  "exported_at": "2026-08-29T10:00:00+00:00",
+  "contract": "contracts/opportunity-bridge-v1.md (v2 reverse)",
+  "direction": "agent -> free (v2 reverse)",
+  "entries": {
+    "a6_outcomes": [
+      {
+        "opportunity_id": "opp-…",
+        "seed_key": "bridge:free:opp-… | null",
+        "source": "FREE_PIPELINE | A2_PROACTIVE_BUYER_DEVELOPMENT",
+        "outcome": "WON | LOST | STOPPED",
+        "reason": "…",
+        "next_action": { "action": "…", "reason": "…" },
+        "stage_after": "…",
+        "reported_at": "ISO-8601"
+      }
+    ],
+    "a2_targets": ["full A2 opportunity rows, source == A2_PROACTIVE_BUYER_DEVELOPMENT"]
+  }
+}
+```
+
+### Outcome mapping
+
+| A6 outcome | `deal_outcome.stage` | note |
+|---|---|---|
+| `WON` | `WON` | |
+| `LOST` | `LOST` | |
+| `STOPPED` | `NEGOTIATING` | halted outreach is neither a loss nor a win; reason is prefixed `STOP_CONTACT: ` |
+
+Idempotency: `deal_outcome.id = sha256(opportunity_id | stage | reported_at)`;
+`agent_discovered_target` upserts on `seed_key` (replay is free).
+
+### Boundaries (v2)
+
+- A2-only opportunity ids have no row in Free's `opportunity` table, so their
+  outcomes are deliberately skipped (FK) — the A2 opportunity lives in
+  `agent_discovered_target` instead.
+- Not per-seller yet: every bridged row is still owned by the demo seller
+  profile (v2 candidate #3 remains open).
+
 ## v2 candidates
 
-- Reverse channel: A6 `outcome` / A2 buying signals → append to the Free store.
+- ~~Reverse channel: A6 `outcome` / A2 buying signals → append to the Free store.~~ (implemented above)
 - Entity resolution bridging `buyer.domain` ↔ `target_account.domain` so a
   targeted company that later posts an RFQ is auto-linked and promoted.
 - Per-seller projection driven by `seller_capability_profile`.

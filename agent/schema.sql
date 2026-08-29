@@ -94,3 +94,27 @@ CREATE TABLE IF NOT EXISTS score_breakdown (
   ruleset_version TEXT NOT NULL,
   input_snapshot_sha256 TEXT NOT NULL
 );
+
+-- Reverse-bridge sink (mirror of db/migrations/004_agent_discovered_target.sql):
+-- A2-discovered targets imported back into the Free store by
+-- scripts/import_agent_outcomes.py. Not used by the server; kept in sync with
+-- the Free schema as the migration target.
+CREATE TABLE IF NOT EXISTS agent_discovered_target (
+  id TEXT PRIMARY KEY,
+  seed_key TEXT NOT NULL UNIQUE,
+  buyer_id TEXT NOT NULL,
+  buyer_name TEXT,
+  country_code TEXT,
+  domain TEXT,
+  contact_json TEXT,
+  status TEXT,
+  stage TEXT,
+  a2_rank_score REAL,
+  source TEXT NOT NULL,
+  evidence_json TEXT,
+  seller_json TEXT,
+  matched_free_buyer_id TEXT REFERENCES buyer(id),
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_agent_discovered_target_domain ON agent_discovered_target(domain);

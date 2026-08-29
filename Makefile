@@ -4,7 +4,8 @@
 #   make setup   install python + node deps
 #   make db      build the decision store from the committed fixture
 #   make export  bridge the store into the agent runtime feed
-#   make up      db + export, then run site + api + agent + demo together
+#   make import  import agent outcomes back into the store (reverse bridge)
+#   make up      db + export + import, then run site + api + agent + demo together
 #   make test    pytest + agent npm test
 #   make audit   cross-runtime audit -> docs/AUDIT_<date>.md
 
@@ -15,7 +16,7 @@ AGENT_PORT ?= 3317
 DEMO_PORT ?= 4173
 SITE_PORT ?= 4180
 
-.PHONY: setup db export site api agent demo up test audit clean
+.PHONY: setup db export import site api agent demo up test audit clean
 
 setup:
 	$(PIP) install -r requirements.txt
@@ -27,6 +28,9 @@ db:
 
 export: db
 	$(PY) scripts/export_opportunities_for_agent.py
+
+import: db
+	$(PY) scripts/import_agent_outcomes.py
 
 site:
 	$(PY) -m http.server $(SITE_PORT) --bind 127.0.0.1 --directory site
@@ -40,7 +44,7 @@ agent:
 demo:
 	cd demo && npm run dev -- --host 127.0.0.1 --port $(DEMO_PORT)
 
-up: export
+up: export import
 	@echo "site -> http://127.0.0.1:$(SITE_PORT)   (front door)"
 	@echo "demo -> http://127.0.0.1:$(DEMO_PORT)   (app / workbench)"
 	@echo "api  -> http://127.0.0.1:$(API_PORT)"
@@ -59,4 +63,4 @@ audit:
 	$(PY) scripts/audit.py
 
 clean:
-	rm -rf runtime agent/db/opportunities.json agent/db/opportunities.meta.json agent/server/agent-state.json
+	rm -rf runtime agent/db/opportunities.json agent/db/opportunities.meta.json agent/db/agent-outcomes.json agent/db/agent-outcomes.meta.json agent/server/agent-state.json
