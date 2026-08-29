@@ -42,6 +42,10 @@ COUNTRY_TO_CODE = {
     "qatar": "QA", "thailand": "TH", "greece": "GR", "ukraine": "UA", "oman": "OM",
     "uganda": "UG", "sri lanka": "LK", "benin": "BJ", "kenya": "KE",
     "afghanistan": "AF", "russia": "RU", "russian federation": "RU", "indonesia": "ID",
+    "austria": "AT", "brazil": "BR", "china": "CN", "denmark": "DK", "egypt": "EG",
+    "ghana": "GH", "ireland": "IE", "mexico": "MX", "nigeria": "NG", "norway": "NO",
+    "portugal": "PT", "south africa": "ZA", "south korea": "KR", "sweden": "SE",
+    "switzerland": "CH",
 }
 
 
@@ -97,12 +101,23 @@ def load_rows(path: Path) -> list[dict]:
         return list(csv.DictReader(handle))
 
 
+INPUT_FILENAME = "B2B公开渠道_全量.csv"
+
+
 def find_latest_input() -> Path:
+    """Newest data_b2b_public_v3 run that actually produced the full-listing CSV.
+
+    Matches the filename by exact comparison rather than a glob, so a non-UTF-8
+    shell locale cannot corrupt a CJK glob pattern into something that never
+    matches.
+    """
     root = Path(__file__).with_name("data_b2b_public_v3")
-    candidates = sorted(root.glob("*/B2B閸忣剙绱戝〒鐘讳壕_閸忋劑鍣?csv"), reverse=True)
-    if not candidates:
-        raise SystemExit("No v3 collection found. Run collect_b2b_public_v3.py first.")
-    return candidates[0]
+    runs = sorted((p for p in root.glob("*") if p.is_dir()), reverse=True) if root.exists() else []
+    for run in runs:
+        candidate = run / INPUT_FILENAME
+        if candidate.exists():
+            return candidate
+    raise SystemExit("No v3 collection found. Run collect_b2b_public_v3.py first.")
 
 
 def boolish(value: str | None) -> bool:

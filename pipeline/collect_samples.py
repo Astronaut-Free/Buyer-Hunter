@@ -24,10 +24,12 @@ from urllib.robotparser import RobotFileParser
 import requests
 from bs4 import BeautifulSoup
 
+from http_util import SIZE_CAP, read_capped
+
 
 USER_AGENT = "BuyerHunterDemo/0.1 (+public-source research; hackathon demo)"
 TIMEOUT = (5, 20)
-MAX_BYTES = 2 * 1024 * 1024
+MAX_BYTES = SIZE_CAP
 
 
 @dataclass
@@ -196,22 +198,40 @@ def fetch_one(
     source: dict[str, Any],
     url: str,
     raw_dir: Path,
+    *,
+    params: dict[str, Any] | None = None,
+    html_parser: Any | None = None,
+    json_parser: Any | None = None,
 ) -> tuple[ProbeResult, list[dict[str, Any]]]:
+    """Fetch one URL and parse it.
+
+    ``params`` is handed to ``requests`` and never concatenated into ``url``, so
+    secrets passed this way (e.g. ``api_key``) stay out of the stored probe URL,
+    ``probe_results.json``, and any derived record. Parser callables can be
+    injected instead of patching the module globals.
+    """
     observed_at = utc_now()
+    parse_html = html_parser or parse_html_records
+    parse_json = json_parser or parse_json_records
     allowed, robots_note = robots_allowed(session, url)
     if not allowed:
         return ProbeResult(source["code"], url, source["access"], "ROBOTS_DENIED", None, None, observed_at, error=robots_note), []
 
     try:
         if source.get("method") == "POST":
-            response = session.post(url, json=source.get("json_body"), timeout=TIMEOUT)
+            response = session.post(url, json=source.get("json_body"), params=params, timeout=TIMEOUT, stream=True)
         else:
-            response = session.get(url, timeout=TIMEOUT, allow_redirects=True)
-        content = response.content[: MAX_BYTES + 1]
-        if len(content) > MAX_BYTES:
-            return ProbeResult(source["code"], url, source["access"], "TOO_LARGE", response.status_code, response.headers.get("content-type"), observed_at, error="response_exceeds_2mb"), []
+            response = session.get(url, params=params, timeout=TIMEOUT, allow_redirects=True, stream=True)
+        with response:
+            content, too_large = read_capped(response)
+            if too_large:
+                return ProbeResult(source["code"], url, source["access"], "TOO_LARGE", response.status_code, response.headers.get("content-type"), observed_at, error="response_exceeds_2mb"), []
 
-        content_type = response.headers.get("content-type", "")
+            content_type = response.headers.get("content-type", "")
+            final_url = response.url
+            ok = response.ok
+            status_code = response.status_code
+
         suffix = ".json" if "json" in content_type else ".html"
         digest = hashlib.sha256(content).hexdigest()
         filename = f"{safe_name(source['code'])}_{digest[:12]}{suffix}"
@@ -219,21 +239,21 @@ def fetch_one(
         path.write_bytes(content)
 
         records: list[dict[str, Any]] = []
-        if response.ok and "json" in content_type:
+        if ok and "json" in content_type:
             try:
-                records = parse_json_records(source["code"], response.url, response.json())
+                records = parse_json(source["code"], url, json.loads(content))
             except ValueError:
                 pass
-        elif response.ok and ("html" in content_type or content.lstrip().startswith(b"<")):
-            records = parse_html_records(source["code"], response.url, content)
+        elif ok and ("html" in content_type or content.lstrip().startswith(b"<")):
+            records = parse_html(source["code"], url, content)
 
-        status = "FETCHED" if response.ok else "HTTP_BLOCKED_OR_ERROR"
-        if response.url != url and re.search(r"login|signin|sign-in", response.url, re.I):
+        status = "FETCHED" if ok else "HTTP_BLOCKED_OR_ERROR"
+        if final_url != url and re.search(r"login|signin|sign-in", final_url, re.I):
             status = "LOGIN_REQUIRED"
         result = ProbeResult(
-            source["code"], url, source["access"], status, response.status_code,
+            source["code"], url, source["access"], status, status_code,
             content_type or None, observed_at, digest, str(path), len(records),
-            None if response.ok else robots_note,
+            None if ok else robots_note,
         )
         return result, records
     except requests.RequestException as exc:

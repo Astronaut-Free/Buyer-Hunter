@@ -19,6 +19,7 @@ import requests
 from bs4 import BeautifulSoup
 
 import collect_ec21 as core
+from http_util import read_capped
 
 
 COUNTRIES = {
@@ -110,10 +111,14 @@ def main() -> int:
                 url = f"https://importer.ec21.com/{country_code}/{slug}.html"
                 observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
                 try:
-                    response = session.get(url, timeout=(5, 25))
-                    status = response.status_code
-                    body = response.content
-                    error = None
+                    with session.get(url, timeout=(5, 25), stream=True) as response:
+                        status = response.status_code
+                        body, oversized = read_capped(response)
+                    if oversized:
+                        body = b""
+                        error = "response_exceeds_2mb"
+                    else:
+                        error = None
                 except requests.RequestException as exc:
                     status = None
                     body = b""

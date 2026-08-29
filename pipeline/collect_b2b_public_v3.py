@@ -21,6 +21,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from http_util import read_capped
 from parser_quality_v1_1 import extract_go4worldbusiness_card, extract_tradekey_card
 
 
@@ -71,7 +72,7 @@ def fetch(session: requests.Session, url: str, retries: int) -> tuple[requests.R
     for attempt in range(1, retries + 2):
         started = time.monotonic()
         try:
-            response = session.get(url, timeout=(7, 30), allow_redirects=True)
+            response = session.get(url, timeout=(7, 30), allow_redirects=True, stream=True)
             attempts.append({
                 "attempt": attempt,
                 "status": response.status_code,
@@ -178,7 +179,13 @@ def main() -> int:
         observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         response, attempts = fetch(session, url, args.retries)
         status = response.status_code if response is not None else None
-        body = response.content if response is not None else b""
+        oversized = False
+        body = b""
+        if response is not None:
+            with response:
+                body, oversized = read_capped(response)
+        if oversized:
+            body = b""
         digest = hashlib.sha256(body).hexdigest()
         snapshot_path = None
         parsed = []
@@ -216,6 +223,7 @@ def main() -> int:
             "listing_url": url,
             "http_status": status,
             "bytes": len(body),
+            "oversized": oversized,
             "parsed_count": len(parsed),
             "candidate_count": accepted,
             "attempt_count": len(attempts),

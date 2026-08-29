@@ -18,9 +18,24 @@ from opportunity_decision_engine_v1 import timing_score
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_INPUT = ROOT / "pipeline/data_b2b_public_v3/20260828T060329Z/cleaned_v1/buyer_signals_cleaned_scored.csv"
+FIXTURE_INPUT = ROOT / "pipeline/tests/fixtures/b2b_public_v3/cleaned_v1/buyer_signals_cleaned_scored.csv"
 DEFAULT_PROFILE = ROOT / "pipeline/seller_capability_profile_demo_v1.json"
-DEFAULT_OUTPUT = ROOT / "pipeline/data_skill_validation/20260828T060329Z"
+DEFAULT_OUTPUT = ROOT / "pipeline/data_skill_validation"
+
+
+def resolve_input() -> Path:
+    """Newest cleaned buyer-signals CSV from a local b2b run, else the fixture."""
+    root = ROOT / "pipeline/data_b2b_public_v3"
+    runs = (
+        sorted((p for p in root.glob("*") if p.is_dir()), reverse=True)
+        if root.exists()
+        else []
+    )
+    for run in runs:
+        candidate = run / "cleaned_v1" / "buyer_signals_cleaned_scored.csv"
+        if candidate.exists():
+            return candidate
+    return FIXTURE_INPUT
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
@@ -258,11 +273,12 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
+    args.input = args.input or resolve_input()
     rows = read_rows(args.input)
     row = choose_record(rows)
     profile = json.loads(args.profile.read_text(encoding="utf-8"))

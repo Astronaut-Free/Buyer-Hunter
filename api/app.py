@@ -6,6 +6,7 @@ import json
 import os
 import sqlite3
 from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +43,11 @@ def loads(value: str | None, default: Any) -> Any:
     return json.loads(value) if value else default
 
 
+def first_category(product_terms_json: str | None) -> str:
+    terms = loads(product_terms_json, [])
+    return terms[0] if isinstance(terms, list) and terms else ""
+
+
 def summary_from(row: sqlite3.Row, full: bool) -> dict[str, Any]:
     return {
         "id": row["opportunity_id"],
@@ -49,7 +55,7 @@ def summary_from(row: sqlite3.Row, full: bool) -> dict[str, Any]:
         "buyer_display_name": row["canonical_name"],
         "country_code": row["country_code"],
         "demand_title": row["title"],
-        "category_code": loads(row["product_terms_json"], [""])[0],
+        "category_code": first_category(row["product_terms_json"]),
         "quantity_raw": row["quantity_raw"] or "未披露",
         "published_at": row["published_at"],
         "decision_status": row["decision_status"],
@@ -83,7 +89,51 @@ JOIN evidence e ON e.id=se.evidence_id
 def health() -> dict[str, Any]:
     with closing(connect()) as conn:
         row = conn.execute("SELECT COUNT(*) AS count, MAX(decision_date) AS latest FROM opportunity_decision").fetchone()
-    return {"status": "ok", "decision_count": row["count"], "latest_decision_date": row["latest"]}
+        run = conn.execute(
+            "SELECT status, completed_at FROM crawl_run ORDER BY created_at DESC LIMIT 1"
+        ).fetchone()
+    return {
+        "status": "ok",
+        "decision_count": row["count"],
+        "latest_decision_date": row["latest"],
+        "last_pipeline_run": dict(run) if run else None,
+    }
+
+
+@app.get("/api/v1/opportunities/recent")
+def recent_opportunities(limit: int = Query(12, ge=1, le=50)) -> dict[str, Any]:
+    """Newest observed demand first — the source for the "found N ago" ticker."""
+    with closing(connect()) as conn:
+        rows = conn.execute(
+            BASE_QUERY + " ORDER BY e.observed_at DESC, s.published_at DESC, od.opportunity_id LIMIT ?",
+            (limit,),
+        ).fetchall()
+        latest_observed = conn.execute("SELECT MAX(observed_at) FROM evidence").fetchone()[0]
+        run = conn.execute(
+            "SELECT status, completed_at, opportunity_count, buyer_count FROM crawl_run ORDER BY created_at DESC LIMIT 1"
+        ).fetchone()
+    items = [
+        {
+            "id": row["opportunity_id"],
+            "buyer_display_name": row["canonical_name"],
+            "country_code": row["country_code"],
+            "demand_title": row["title"],
+            "category_code": first_category(row["product_terms_json"]),
+            "observed_at": row["observed_at"],
+            "published_at": row["published_at"],
+            "opportunity_score": row["opportunity_score"],
+            "truth_score": row["truth_score"],
+            "decision_status": row["decision_status"],
+            "data_mode": row["data_mode"],
+        }
+        for row in rows
+    ]
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "latest_observed_at": latest_observed,
+        "last_pipeline_run": dict(run) if run else None,
+        "items": items,
+    }
 
 
 @app.get("/api/v1/opportunities/today")

@@ -16,6 +16,8 @@ from urllib.robotparser import RobotFileParser
 import requests
 from bs4 import BeautifulSoup
 
+from http_util import read_capped
+
 
 USER_AGENT = "BuyerHunterDemo/0.1 (+public-business-contact research)"
 EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
@@ -77,11 +79,15 @@ def main() -> int:
                 if robots_response.ok and not parser_rules.can_fetch(USER_AGENT, page_url):
                     continue
                 time.sleep(max(float(delay), 1.0))
-                response = session.get(page_url, timeout=(5, 25))
-                digest = hashlib.sha256(response.content).hexdigest()
-                if response.ok:
-                    (raw_dir / f"{domain}_{digest[:12]}.html").write_bytes(response.content)
-                    soup = BeautifulSoup(response.content, "html.parser")
+                with session.get(page_url, timeout=(5, 25), stream=True) as response:
+                    ok = response.ok
+                    page_body, oversized = read_capped(response)
+                if oversized:
+                    continue
+                digest = hashlib.sha256(page_body).hexdigest()
+                if ok:
+                    (raw_dir / f"{domain}_{digest[:12]}.html").write_bytes(page_body)
+                    soup = BeautifulSoup(page_body, "html.parser")
                     visible = soup.get_text(" ", strip=True)
                     values = set()
                     for link in soup.select("a[href^='mailto:']"):

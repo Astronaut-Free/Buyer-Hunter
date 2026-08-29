@@ -1,9 +1,0 @@
-[
-  {
-    "decision": "DUPLICATE_SIGNAL",
-    "kept_url": "https://www.tradewheel.com/buyers/ceremonial-grade-matcha-powder-wanted-for-long-term-supply/986397/",
-    "duplicate_url": "https://www.tradewheel.com/buyers/want-quotes-on-matcha-powder/977547/",
-    "buyer_name_raw": "Tim",
-    "reason": "same normalized buyer and requirement description"
-  }
-]

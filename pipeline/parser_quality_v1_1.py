@@ -22,6 +22,19 @@ GO4_QUANTITY = re.compile(
 )
 GO4_CONTACT = re.compile(r"\bContact\s*:\s*(.+?)(?=\s+Buyer\s+Of\b|$)", re.I)
 TRADEKEY_QUANTITY = re.compile(r"\bInitial\s+quantity\s*:\s*(.+?)(?=\s+(?:\W\s*)?(?:Material|Grade|Dimensions?|Packaging)\b|$)", re.I)
+TRADEKEY_COUNTRY_POSTED = re.compile(
+    r"\b(UAE|United Arab Emirates|United States|USA|United Kingdom|Japan|India|Pakistan|"
+    r"Vietnam|Viet Nam|Saudi Arabia|Canada|Australia)\s+Posted\s+on\s*:",
+    re.I,
+)
+TRADEKEY_COUNTRY_BASED = re.compile(
+    r"\b(?:buyer|company|importer)\s+based\s+in\s+([A-Za-z ]{2,40}?)(?:\s+(?:requires|needs|seeks|is|wants|for)\b|[,.])",
+    re.I,
+)
+TRADEKEY_COUNTRY_FOR = re.compile(
+    r"\b(?:buying|import|procurement)\b.{0,40}?\bfor\s+([A-Za-z ]{2,30}?)(?:[,.]|\s+(?:market|requires|needs)\b)",
+    re.I,
+)
 
 PRODUCT_PATTERNS = {
     "MATCHA": re.compile(r"\b(?:matcha|macha)\b", re.I),
@@ -151,7 +164,11 @@ def repair_cleaning_input(row: dict[str, Any]) -> dict[str, Any]:
         repaired["buyer_name_raw"] = None
     elif source == "tradekey":
         if not repaired.get("buyer_country_raw"):
-            match = re.search(r"\b(UAE|United Arab Emirates|United States|USA|United Kingdom|Japan|India|Pakistan|Vietnam|Viet Nam|Saudi Arabia|Canada|Australia)\s+Posted\s+on\s*:", description, re.I)
+            match = (
+                TRADEKEY_COUNTRY_POSTED.search(description)
+                or TRADEKEY_COUNTRY_BASED.search(description)
+                or TRADEKEY_COUNTRY_FOR.search(description)
+            )
             if match:
                 repaired["buyer_country_raw"] = clean_text(match.group(1))
                 repaired["buyer_country_span"] = match.group(1)

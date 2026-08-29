@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from api.app import app
-from pipeline.build_opportunity_store_v1 import build_store
+from pipeline.build_opportunity_store_v1 import FIXTURE_INPUT, build_store
 
 
 class OpportunityApiTests(unittest.TestCase):
@@ -16,7 +16,9 @@ class OpportunityApiTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.temp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         cls.db_path = Path(cls.temp.name) / "buyer_hunter.db"
-        build_store(db_path=cls.db_path)
+        # Pin to the committed fixture so the suite is hermetic and clone-safe,
+        # independent of whatever local pipeline runs exist.
+        build_store(input_csv=FIXTURE_INPUT, db_path=cls.db_path)
         os.environ["BUYER_HUNTER_DB"] = str(cls.db_path)
         cls.client = TestClient(app)
 
@@ -29,7 +31,19 @@ class OpportunityApiTests(unittest.TestCase):
     def test_health(self) -> None:
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["decision_count"], 51)
+        body = response.json()
+        self.assertEqual(body["decision_count"], 51)
+        self.assertEqual(body["last_pipeline_run"]["status"], "SUCCEEDED")
+
+    def test_recent_opportunities_are_newest_observed_first(self) -> None:
+        response = self.client.get("/api/v1/opportunities/recent", params={"limit": 8})
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(len(body["items"]), 8)
+        observed = [item["observed_at"] for item in body["items"]]
+        self.assertEqual(observed, sorted(observed, reverse=True))
+        self.assertIsNotNone(body["latest_observed_at"])
+        self.assertEqual(body["last_pipeline_run"]["opportunity_count"], 51)
 
     def test_today_returns_ranked_top_five(self) -> None:
         response = self.client.get("/api/v1/opportunities/today", params={"seller_profile_id": "seller-guizhou-specialty-demo"})

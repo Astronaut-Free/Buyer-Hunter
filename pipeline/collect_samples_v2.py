@@ -162,21 +162,18 @@ def fetch(session: Any, source: dict[str, Any], url: str, raw_dir: Path):
             source["code"], url, source["access"], "CREDENTIAL_REQUIRED", None, None,
             core.utc_now(), error=f"missing_env:{required}",
         ), []
-    request_url = url
-    if required:
-        request_url += ("&" if "?" in request_url else "?") + f"api_key={os.environ[required]}"
-    original_html = core.parse_html_records
-    original_json = core.parse_json_records
-    try:
-        core.parse_html_records = parse_html
-        core.parse_json_records = parse_json
-        probe, records = core.fetch_one(session, source, request_url, raw_dir)
-        if probe.status == "FETCHED" and source.get("access") == "public_boundary_probe":
-            probe.status = "PUBLIC_INFO_ONLY"
-        return probe, records
-    finally:
-        core.parse_html_records = original_html
-        core.parse_json_records = original_json
+    # The credential is passed as a request parameter, never concatenated into
+    # the URL, so it never reaches the stored probe URL or probe_results.json.
+    params = {source.get("auth_param", "api_key"): os.environ[required]} if required else None
+    probe, records = core.fetch_one(
+        session, source, url, raw_dir,
+        params=params,
+        html_parser=parse_html,
+        json_parser=parse_json,
+    )
+    if probe.status == "FETCHED" and source.get("access") == "public_boundary_probe":
+        probe.status = "PUBLIC_INFO_ONLY"
+    return probe, records
 
 
 def main() -> int:

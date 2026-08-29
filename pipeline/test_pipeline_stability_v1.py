@@ -36,13 +36,12 @@ class CollectorStabilityTests(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(len(attempts), 1)
 
-    def test_saved_snapshots_remain_parseable(self):
-        runs = sorted((PIPELINE / "data_b2b_public_v3").glob("*/raw"), reverse=True)
-        self.assertTrue(runs, "collection snapshots are missing")
-        trade = next(path for raw in runs for path in raw.glob("tradekey_MATCHA_*.html"))
-        go4 = next(path for raw in runs for path in raw.glob("go4worldbusiness_MATCHA_*.html"))
-        self.assertGreater(len(collector.parse_tradekey(trade.read_bytes(), "https://example.test")), 0)
-        self.assertGreater(len(collector.parse_go4worldbusiness(go4.read_bytes(), "https://example.test")), 0)
+    def test_listing_pages_remain_parseable(self):
+        raw = PIPELINE / "tests" / "fixtures" / "b2b_public_v3" / "raw"
+        trade = (raw / "tradekey_listing_sample.html").read_bytes()
+        go4 = (raw / "go4worldbusiness_listing_sample.html").read_bytes()
+        self.assertGreater(len(collector.parse_tradekey(trade, "https://example.test")), 0)
+        self.assertGreater(len(collector.parse_go4worldbusiness(go4, "https://example.test")), 0)
 
 
 class CleaningAndTruthTests(unittest.TestCase):
@@ -89,19 +88,38 @@ class CleaningAndTruthTests(unittest.TestCase):
         self.assertTrue(cleaner.product_matches("MATCHA", text, text))
         self.assertFalse(cleaner.product_matches("TEA", text, text))
 
-    def test_latest_quality_report_has_no_hard_gate_failures(self):
-        reports = sorted((PIPELINE / "data_b2b_public_v3").glob("*/cleaned_v1/data_quality_report.json"), reverse=True)
-        self.assertTrue(reports, "quality report is missing")
+    def test_quality_report_fixture_has_no_hard_gate_failures(self):
+        report = json.loads(
+            (PIPELINE / "tests" / "fixtures" / "b2b_public_v3" / "cleaned_v1" / "data_quality_report.json")
+            .read_text(encoding="utf-8")
+        )
+        self.assertEqual(report["hard_gate_failure_count"], 0)
+        self.assertEqual(report["future_date_count"], 0)
+        self.assertEqual(report["ruleset_version"], "truth-v1.1.0")
+
+    def test_clean_output_fixture_has_unique_signal_ids(self):
+        path = (
+            PIPELINE / "tests" / "fixtures" / "b2b_public_v3" / "cleaned_v1"
+            / "buyer_signals_cleaned_scored.csv"
+        )
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+        ids = [row["signal_id"] for row in rows]
+        self.assertGreater(len(ids), 0)
+        self.assertEqual(len(ids), len(set(ids)))
+
+    @unittest.skipUnless(
+        sorted((PIPELINE / "data_b2b_public_v3").glob("*/cleaned_v1/data_quality_report.json")),
+        "no local collection run; data audit runs only when data_b2b_public_v3/ is populated",
+    )
+    def test_local_latest_run_still_passes_hard_gate(self):
+        reports = sorted(
+            (PIPELINE / "data_b2b_public_v3").glob("*/cleaned_v1/data_quality_report.json"),
+            reverse=True,
+        )
         report = json.loads(reports[0].read_text(encoding="utf-8"))
         self.assertEqual(report["hard_gate_failure_count"], 0)
         self.assertEqual(report["future_date_count"], 0)
-
-    def test_latest_clean_output_has_unique_signal_ids(self):
-        outputs = sorted((PIPELINE / "data_b2b_public_v3").glob("*/cleaned_v1/buyer_signals_cleaned_scored.csv"), reverse=True)
-        with outputs[0].open("r", encoding="utf-8-sig", newline="") as handle:
-            rows = list(csv.DictReader(handle))
-        ids = [row["signal_id"] for row in rows]
-        self.assertEqual(len(ids), len(set(ids)))
 
 
 if __name__ == "__main__":

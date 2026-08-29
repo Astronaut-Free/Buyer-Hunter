@@ -72,7 +72,8 @@ def main() -> int:
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT, "Accept": "application/json"})
     end = date.today()
-    start = end - timedelta(days=365)
+    # SAM.gov rejects a search window of a full year or more.
+    start = end - timedelta(days=364)
     common = {
         "api_key": key,
         "postedFrom": start.strftime("%m/%d/%Y"),

@@ -22,6 +22,8 @@ from urllib.parse import quote_plus, urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from http_util import read_capped
+
 
 BASE_URL = "https://sourcing.alibaba.com"
 SEARCH_URL = f"{BASE_URL}/rfq/onepage/rfq_search_list.htm"
@@ -180,7 +182,7 @@ def fetch(session: requests.Session, url: str, retries: int = 2) -> tuple[reques
     for attempt in range(1, retries + 2):
         started = time.monotonic()
         try:
-            response = session.get(url, timeout=(7, 30), allow_redirects=True)
+            response = session.get(url, timeout=(7, 30), allow_redirects=True, stream=True)
             attempts.append({
                 "attempt": attempt,
                 "http_status": response.status_code,
@@ -239,7 +241,13 @@ def main() -> int:
             observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
             response, attempts = fetch(session, listing_url, args.retries)
             status = response.status_code if response is not None else None
-            body = response.content if response is not None else b""
+            oversized = False
+            body = b""
+            if response is not None:
+                with response:
+                    body, oversized = read_capped(response)
+            if oversized:
+                body = b""
             digest = hashlib.sha256(body).hexdigest()
             snapshot_path: Path | None = None
             parsed: list[dict[str, Any]] = []
@@ -279,6 +287,7 @@ def main() -> int:
                 "listing_url": listing_url,
                 "http_status": status,
                 "bytes": len(body),
+                "oversized": oversized,
                 "parsed_count": len(parsed),
                 "candidate_count": accepted,
                 "attempts": attempts,

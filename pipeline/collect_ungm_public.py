@@ -20,6 +20,8 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from http_util import read_capped
+
 
 BASE_URL = "https://www.ungm.org"
 SEARCH_URL = f"{BASE_URL}/Public/Notice/Search"
@@ -102,7 +104,7 @@ def fetch_results(session: requests.Session, payload: dict[str, Any],
     for attempt in range(1, retries + 2):
         started = time.monotonic()
         try:
-            response = session.post(SEARCH_URL, json=payload, timeout=(7, 30))
+            response = session.post(SEARCH_URL, json=payload, timeout=(7, 30), stream=True)
             attempts.append({
                 "attempt": attempt,
                 "http_status": response.status_code,
@@ -168,7 +170,13 @@ def main() -> int:
                 session, search_payload(term, 0, args.page_size, datetime.now()),
             )
             status = response.status_code if response is not None else None
-            body = response.content if response is not None else b""
+            oversized = False
+            body = b""
+            if response is not None:
+                with response:
+                    body, oversized = read_capped(response)
+            if oversized:
+                body = b""
             digest = hashlib.sha256(body).hexdigest()
             snapshot_path: Path | None = None
             parsed: list[dict[str, Any]] = []
@@ -199,6 +207,7 @@ def main() -> int:
                 "search_term": term,
                 "http_status": status,
                 "bytes": len(body),
+                "oversized": oversized,
                 "parsed_count": len(parsed),
                 "accepted_count": accepted,
                 "elapsed_ms": round((time.monotonic() - started) * 1000),

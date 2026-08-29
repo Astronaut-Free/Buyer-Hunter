@@ -13,6 +13,8 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
+from http_util import read_capped
+
 
 SOURCES = {
     "MATCHA": ["matcha"],
@@ -62,12 +64,19 @@ def main() -> int:
         for slug in slugs:
             url = f"https://importer.ec21.com/{slug}.html"
             observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            response = session.get(url, timeout=(5, 25))
-            digest = hashlib.sha256(response.content).hexdigest()
-            (raw / f"{slug}_{digest[:12]}.html").write_bytes(response.content)
+            with session.get(url, timeout=(5, 25), stream=True) as response:
+                ok = response.ok
+                status_code = response.status_code
+                body, oversized = read_capped(response)
+            if oversized:
+                body = b""
+                ok = False
+            digest = hashlib.sha256(body).hexdigest()
+            if body:
+                (raw / f"{slug}_{digest[:12]}.html").write_bytes(body)
             page_count = 0
-            if response.ok:
-                soup = BeautifulSoup(response.content, "html.parser")
+            if ok:
+                soup = BeautifulSoup(body, "html.parser")
                 for card in soup.select("li.listLs"):
                     title_node = card.select_one("h2.inlineTitle a[href]")
                     if not title_node:
@@ -111,12 +120,13 @@ def main() -> int:
                 "source_code": "ec21",
                 "category_code": category,
                 "url": url,
-                "http_status": response.status_code,
+                "http_status": status_code,
+                "oversized": oversized,
                 "record_count": page_count,
                 "snapshot_sha256": digest,
                 "observed_at": observed_at,
             })
-            print(f"ec21 category={category} slug={slug} http={response.status_code} records={page_count}")
+            print(f"ec21 category={category} slug={slug} http={status_code} records={page_count}")
             time.sleep(2)
 
     run.mkdir(parents=True, exist_ok=True)

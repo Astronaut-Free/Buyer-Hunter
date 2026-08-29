@@ -1,4 +1,23 @@
-# Buyer Hunter 小样本采集
+# Buyer Hunter 采集与决策管道
+
+## 一键运行整条管道
+
+```powershell
+python pipeline/run_pipeline.py
+```
+
+依次执行：各采集器 → 清洗打分 → `aggregate_full_collection_v1.py` → `build_opportunity_store_v1.py`。
+
+- 每个采集器在独立进程运行，单个失败不影响其他，整轮标 `PARTIAL`；聚合与建库失败则整轮 `FAILED`。
+- 缺少凭据的采集器（如未设 `SAM_API_KEY`）自动跳过，不算失败。
+- 结果写入 `runtime/pipeline_last_run.json` 和 `runtime/pipeline_runs.jsonl`，供“X 分钟前发现一条商机”接口使用。
+- 定时执行：接 Windows 计划任务 / cron / 云定时器即可。
+- `--skip-collect` 只重新聚合并建库；`--only <step>` 单跑某一步。
+
+采集运行产物（`pipeline/data_*/`）和生成的 `runtime/buyer_hunter.db` 都是构建产物，不进 git；
+测试用的固定样本在 `pipeline/tests/fixtures/`。
+
+## 小样本采集
 
 本目录先保存真实来源响应，再依据样本生成字段覆盖矩阵。它不是生产级批量爬虫。
 

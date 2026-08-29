@@ -21,9 +21,34 @@ if str(ROOT / "pipeline") not in sys.path:
 from opportunity_decision_engine_v1 import assess_opportunity  # noqa: E402
 
 
-DEFAULT_INPUT = ROOT / "pipeline/data_full_collection/20260828T110920Z/qualified_pending_entity_opportunities.csv"
+INPUT_BASENAME = "qualified_pending_entity_opportunities.csv"
+FULL_COLLECTION_DIR = ROOT / "pipeline/data_full_collection"
+FIXTURE_INPUT = ROOT / "pipeline/tests/fixtures/full_collection" / INPUT_BASENAME
 DEFAULT_PROFILE = ROOT / "pipeline/seller_capability_profile_demo_v1.json"
 DEFAULT_DB = ROOT / "runtime/buyer_hunter.db"
+
+
+def resolve_input() -> Path:
+    """Newest full-collection run that produced the qualified-opportunities CSV.
+
+    Falls back to the committed test fixture so a fresh clone with no local runs
+    can still build a store. run_pipeline.py passes the fresh run path explicitly.
+    """
+    runs = (
+        sorted((p for p in FULL_COLLECTION_DIR.glob("*") if p.is_dir()), reverse=True)
+        if FULL_COLLECTION_DIR.exists()
+        else []
+    )
+    for run in runs:
+        candidate = run / INPUT_BASENAME
+        if candidate.exists():
+            return candidate
+    if FIXTURE_INPUT.exists():
+        return FIXTURE_INPUT
+    raise SystemExit(
+        "No full-collection run found. Run pipeline/run_pipeline.py "
+        "(or pipeline/aggregate_full_collection_v1.py) first."
+    )
 
 COUNTRY_CODES = {
     "United States": "US", "United Kingdom": "GB", "Japan": "JP", "Australia": "AU",
@@ -297,7 +322,8 @@ def insert_base_profile(conn: sqlite3.Connection, profile: dict[str, Any], now: 
     )
 
 
-def build_store(input_csv: Path = DEFAULT_INPUT, profile_path: Path = DEFAULT_PROFILE, db_path: Path = DEFAULT_DB) -> dict[str, Any]:
+def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROFILE, db_path: Path = DEFAULT_DB) -> dict[str, Any]:
+    input_csv = input_csv or resolve_input()
     rows = load_rows(input_csv)
     profile = normalized_profile(json.loads(profile_path.read_text(encoding="utf-8")))
     now = utc_now()
@@ -407,12 +433,25 @@ def build_store(input_csv: Path = DEFAULT_INPUT, profile_path: Path = DEFAULT_PR
                     decision.ruleset_version, decision.input_snapshot_sha256, now,
                 ),
             )
+        buyer_count = conn.execute("SELECT COUNT(*) FROM buyer").fetchone()[0]
+        conn.execute(
+            """INSERT INTO crawl_run(
+                 id, target_product_query, status, stage, raw_count, normalized_count,
+                 buyer_count, opportunity_count, started_at, completed_at, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                stable_id("run", f"{db_path}|{now}"), "buyer-hunter-full-collection",
+                "SUCCEEDED", "COMPLETE", len(rows), len(rows), buyer_count,
+                len(decisions), now, now, now,
+            ),
+        )
         conn.commit()
         integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
         summary = {
             "input_count": len(rows),
             "decision_count": len(decisions),
             "top5_count": len(top_ids),
+            "buyer_count": buyer_count,
             "decision_date": decision_date,
             "seller_profile_id": profile["id"],
             "database": str(db_path),
@@ -426,7 +465,7 @@ def build_store(input_csv: Path = DEFAULT_INPUT, profile_path: Path = DEFAULT_PR
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument("--input", type=Path, default=None, help="qualified-opportunities CSV; default: newest full-collection run")
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
     args = parser.parse_args()

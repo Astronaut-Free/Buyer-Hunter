@@ -1,9 +1,0 @@
-{
-  "input_count": 33,
-  "qualified_count": 18,
-  "false_positive_count": 15,
-  "qualified_by_category": {
-    "CHILI": 18
-  },
-  "rule": "exact word boundary AND food procurement context"
-}
