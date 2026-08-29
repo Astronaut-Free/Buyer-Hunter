@@ -33,6 +33,7 @@ export function createApprovalLiveExecutor({
   getState,
   onMutate = () => {},
   smartlead,
+  a2OutreachExecutor,
   now = () => new Date().toISOString()
 } = {}) {
   if (typeof getState !== 'function') throw new Error('getState required');
@@ -49,6 +50,11 @@ export function createApprovalLiveExecutor({
     const approval = state.approvals[approvalId];
     if (!approval) return { status: 404, body: { code: 'APPROVAL_NOT_FOUND' } };
     if (!['APPROVED', 'EDITED', 'REJECTED'].includes(status)) return { status: 400, body: { code: 'INVALID_APPROVAL_STATUS' } };
+
+    if (approval.action_type === 'A2_OUTREACH_DRAFT') {
+      if (typeof a2OutreachExecutor !== 'function') return { status: 503, body: { code: 'A2_OUTREACH_EXECUTOR_REQUIRED' } };
+      return a2OutreachExecutor({ approvalId, user, status, editedPayload });
+    }
 
     approval.status = status;
     approval.approved_by = user.id;
