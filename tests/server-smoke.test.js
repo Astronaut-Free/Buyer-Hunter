@@ -64,7 +64,7 @@ test('server boots and health endpoint is usable', async () => {
   }
 });
 
-test('HTTP signed Smartlead webhook creates A6 approval and INTERNAL approval sends current stats-id reply', async () => {
+test('HTTP signed Smartlead webhook creates A6 approval, Workspace exposes state, and INTERNAL approval sends current stats-id reply', async () => {
   const qianpulsePort = 3398;
   const webhookSecret = 'http-e2e-webhook-secret';
   const internalToken = 'http-e2e-internal-token';
@@ -208,6 +208,19 @@ test('HTTP signed Smartlead webhook creates A6 approval and INTERNAL approval se
     assert.ok(webhookResult.approval?.approval_id);
     assert.match(webhookResult.approval.payload.draft.content, /MOQ: 500 kg/);
 
+    const workspaceResponse = await fetch(`http://127.0.0.1:${qianpulsePort}/api/v1/opportunities/opp_http_001/workspace`, {
+      headers: { authorization: `Bearer ${internalToken}` }
+    });
+    const workspace = await workspaceResponse.json();
+    assert.equal(workspaceResponse.status, 200);
+    assert.equal(workspace.workspace_version, '1.0.0');
+    assert.equal(workspace.opportunity.id, 'opp_http_001');
+    assert.equal(workspace.a6.buyer_intent.primary, 'MOQ_SPEC_REQUEST');
+    assert.equal(workspace.integration.smartlead_bound, true);
+    assert.equal(workspace.approvals[0].status, 'PENDING');
+    assert.equal(workspace.next_action.action, 'REVIEW_APPROVAL');
+    assert.ok(workspace.blockers.some(item => item.type === 'HUMAN_APPROVAL'));
+
     const approvalResponse = await fetch(`http://127.0.0.1:${qianpulsePort}/api/v1/approvals/${webhookResult.approval.approval_id}`, {
       method: 'POST',
       headers: {
@@ -220,6 +233,15 @@ test('HTTP signed Smartlead webhook creates A6 approval and INTERNAL approval se
     assert.equal(approvalResponse.status, 200);
     assert.equal(approvalResult.execution.status, 'SENT');
     assert.equal(approvalResult.approval.execution_status, 'SENT');
+
+    const completedWorkspaceResponse = await fetch(`http://127.0.0.1:${qianpulsePort}/api/v1/opportunities/opp_http_001/workspace`, {
+      headers: { authorization: `Bearer ${internalToken}` }
+    });
+    const completedWorkspace = await completedWorkspaceResponse.json();
+    assert.equal(completedWorkspaceResponse.status, 200);
+    assert.equal(completedWorkspace.approvals[0].status, 'APPROVED');
+    assert.equal(completedWorkspace.approvals[0].execution_status, 'SENT');
+    assert.equal(completedWorkspace.activity.external_actions[0].status, 'SENT');
 
     assert.equal(smartleadCalls.filter(call => call.pathname === '/api/v1/campaigns/all-leads-activities').length, 1);
     assert.equal(smartleadCalls.filter(call => call.pathname === '/api/v1/campaigns/123/reply-email-thread').length, 1);
