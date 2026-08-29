@@ -246,6 +246,18 @@ def audit_skill_dispatch() -> dict[str, Any]:
         f"envelopes={s.get('envelopes')} e2e={s.get('e2e')} "
         f"({s.get('dispatched')}/{s.get('total')} capabilities dispatched)",
     )
+
+    py = payload.get("python", {})
+    caps = py.get("capabilities", {})
+    available = py.get("available")
+    expect = "python" if available else "node-fallback"
+    py_ok = ok and bool(caps) and all(c.get("source") == expect for c in caps.values())
+    a4_source = payload.get("summary_e2e_a4_source")
+    check("Python capability CLI (A3/A4/A5 -> Free)").record(
+        py_ok,
+        f"available={available}; A3/A4/A5 source={expect}"
+        + (f"; live A6 cycle A4 refresh source={a4_source}" if a4_source else ""),
+    )
     return payload
 
 
@@ -293,24 +305,27 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
         },
         {
             "module": "A3 采购时机判断",
-            "runtime": "Python(决策引擎 timing_score) + Node(a3 refresh)",
-            "state": "规则版就绪",
-            "evidence": "recency + urgency + stage + continuity − staleness；A6 变更字段触发按需刷新，skill 调度通过",
-            "gap": "两套实现（Python 权威、Node refresh 用于会话内）；未做统计校准",
+            "runtime": "Python 权威（timing_score + buying_window_fields）· Node fallback",
+            "state": "Python 权威",
+            "evidence": "A6 会话内刷新经 capability CLI 调 Free 的 timing_score；recency + urgency + stage + continuity − staleness；"
+            "Python 不可用时自动回退 Node placeholder",
+            "gap": "未做统计校准；子进程启动 ~200ms/次",
         },
         {
             "module": "A4 贵州供需匹配",
-            "runtime": "Python — supply_demand_fit_v1.py（逐 SKU）+ Node(a4 refresh)",
-            "state": "就绪",
-            "evidence": f"{store_counts.get('seller_sku_fit', 0)} 条逐 SKU 评估；硬条件先于软条件，MATCH/CONDITIONAL/BLOCK",
+            "runtime": "Python 权威（supply_demand_fit_v1.py 逐 SKU）· Node fallback",
+            "state": "Python 权威",
+            "evidence": f"{store_counts.get('seller_sku_fit', 0)} 条逐 SKU 评估入库；A6 会话内刷新经 capability CLI 拿到真实 "
+            "supply_pool_status / best_verdict / summary_zh；硬条件先于软条件，MATCH/CONDITIONAL/BLOCK",
             "gap": "卖家目录是 demo 数据（3 卖家/5 SKU），需真实卖家入库",
         },
         {
             "module": "A5 智能匹配风控",
-            "runtime": "Python(market_access + 硬冲突) + Node(a5 trade_risk refresh)",
-            "state": "部分",
-            "evidence": "市场准入评分 + 真实性门槛 + 硬冲突 blocker；目的地/支付变更触发 A5 刷新",
-            "gap": "买家信用 / 欺诈预警 / 知识产权 / 合同履约 未做；实体去重规则部分实现",
+            "runtime": "Python 权威（market_access_score + 目的地/allowed/blocked/支付 审查）· Node fallback",
+            "state": "部分（准入已归 Python）",
+            "evidence": "A6 会话内刷新经 capability CLI 调 Free；目的地黑名单 → BLOCKED，缺政策 → MORE_EVIDENCE，"
+            "否则 REVIEWED + market_access 分",
+            "gap": "买家信用 / 欺诈预警 / 知识产权 / 合同履约 未做；法规 Provider 未接",
         },
         {
             "module": "A6 成交自动推进",
@@ -340,6 +355,21 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
             "state": "就绪(v1 单向)",
             "evidence": "决策 store -> agent/db/opportunities.json；非 PASS 行；证据 URL 可回溯；6 个测试",
             "gap": "单向；A2 发现与 A6 结果不回流；无 domain 实体合并",
+        },
+        {
+            "module": "Capability 合同 + Python 桥",
+            "runtime": "scripts/capability_cli.py（stdin/stdout）· agent/skill-runtime/python-capability-runners.mjs",
+            "state": "就绪",
+            "evidence": "统一 CapabilityResultEnvelope / AgentEvent JSON Schema + 两侧合同测试；"
+            "A6 依赖刷新经 execFileSync 调 Python，任何失败自动回退 Node；QIANPULSE_PYTHON_CAPABILITIES=off 可关",
+            "gap": "子进程启动延迟；后续可升级为常驻 HTTP capability 服务",
+        },
+        {
+            "module": "统一 Opportunity（v2）",
+            "runtime": "contracts/opportunity-v2.md（设计）",
+            "state": "设计完成 · 未实现",
+            "evidence": "core.opportunity（origin A1/A2）+ intel.decision_snapshot + runtime.agent_* 的目标形状与迁移草案",
+            "gap": "Phase 4：Free SQLite 与 MVP agent-state 仍是两套主键；下一增量",
         },
     ]
 

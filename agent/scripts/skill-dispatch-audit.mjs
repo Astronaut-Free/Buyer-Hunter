@@ -9,6 +9,7 @@
  *   3. envelope      each capability runs on a fixture and returns a valid envelope
  *   4. e2e           A2 -> Opportunity -> buyer reply -> A6 dispatches through the
  *                    live runtime and records one AgentStep per dispatched capability
+ *   5. python        A3/A4/A5 delegate to Free's Python capability CLI (or fall back)
  *
  * Exits non-zero if any check fails. `--json` prints the machine-readable report.
  */
@@ -26,6 +27,7 @@ import {
   validateA6Envelope,
 } from '../skill-runtime/index.js';
 import { createLiveA2A6Runtime } from '../server/a2a6-live-runtime.js';
+import { createPythonDependencyRunners, pythonCapabilitiesAvailable } from '../skill-runtime/python-capability-runners.mjs';
 
 const jsonOnly = process.argv.includes('--json');
 const report = { checks: {}, capabilities: [], ok: true };
@@ -103,6 +105,7 @@ if (!jsonOnly) console.log('\n[4] live runtime dispatch (A2 -> reply -> A6)');
 let counter = 0;
 const state = { opportunities: {}, users: {}, sessions: {}, runs: {}, steps: {}, checkpoints: {}, approvals: {}, events: {} };
 const user = { id: 'seller-audit', role: 'SELLER', profile: { company_name: 'Guizhou Tea' } };
+const e2ePythonOn = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() !== 'off' && pythonCapabilitiesAvailable();
 const runtime = createLiveA2A6Runtime({
   getState: () => state,
   onMutate: () => {},
@@ -113,6 +116,7 @@ const runtime = createLiveA2A6Runtime({
     trade_data: { async searchBuyers() { return { companies: [{ buyer_company_id: 'bc1', legal_or_display_name: 'Pacific Importers', country: 'US', domain: 'pac.example', sells_or_uses_product: true, buyer_type: 'importer', why_fit: 'customs records show 22 matcha shipments', number_of_shipments: 22, evidence_refs: ['ev_c'], product_evidence: ['ev_p'], trade_evidence: ['ev_t'] }] }; } },
     contact_data: { async findDecisionMakers() { return [{ buyer_company_id: 'bc1', name: 'Dana Lee', title: 'Procurement Manager', work_email: 'p@pac.example', email_status: 'verified', source_refs: ['ev_ct'] }]; } },
   },
+  dependencyRunners: e2ePythonOn ? createPythonDependencyRunners() : undefined,
 });
 
 try {
@@ -145,10 +149,54 @@ try {
   if (cpCount < 2) throw new Error(`expected >=2 checkpoints, got ${cpCount}`);
   pass(`A6 dispatched -> ${reply.body.envelope.run_status}, capabilities_called: ${called.join(', ')}`);
   pass(`checkpoints recorded: ${cpCount}`);
+  if (e2ePythonOn) {
+    const a4Step = Object.values(state.steps).find((s) => s.run_id === reply.body.run.run_id && s.capability_id === 'qianpulse.a4.supply_match');
+    const src = a4Step?.result?.domain_result?.source;
+    if (src !== 'python') throw new Error(`A4 refresh step source=${src}, expected python`);
+    pass(`A4 refresh in live cycle used Free's Python implementation (source: ${src})`);
+    report.summary_e2e_a4_source = src;
+  }
   report.checks.e2e = true;
 } catch (err) {
   fail(`e2e: ${err.message}`);
   report.checks.e2e = false;
+}
+
+// ---- 5. python capability delegation --------------------------------
+if (!jsonOnly) console.log('\n[5] python capability delegation (A3/A4/A5 -> Free)');
+const pyForcedOff = String(process.env.QIANPULSE_PYTHON_CAPABILITIES || '').toLowerCase() === 'off';
+const pyAvailable = !pyForcedOff && pythonCapabilitiesAvailable();
+report.python = { available: pyAvailable, capabilities: {} };
+try {
+  const pyCtx = {
+    opportunity_id: 'opp-py', changed_fields: ['quantity', 'destination'],
+    opportunity_state: { stage: 'QUALIFYING', fields: { product: 'MATCHA', demand_title: 'bulk matcha', quantity: '500 kg', destination: 'US', age_days: '6' } },
+    field_updates: { quantity: '2 tons', destination: 'US' },
+    seller_context: { capacity: '8000 kg/mo', allowed_markets: ['US'] },
+    latest_buyer_message: { content: 'we need 2 tons to US', evidence_ref: 'email:m1' },
+  };
+  const runners = pyAvailable
+    ? createPythonDependencyRunners()
+    : createPythonDependencyRunners({ pythonBin: 'python-disabled-for-audit' });
+  const expected = pyAvailable ? 'python' : 'node-fallback';
+  for (const id of ['qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk']) {
+    const env = runners[id](pyCtx);
+    const src = env.domain_result?.source;
+    report.python.capabilities[id] = { source: src, run_status: env.run_status };
+    if (src !== expected) fail(`${id} source=${src}, expected ${expected}`);
+    else pass(`${id} -> ${env.run_status} (source: ${src})`);
+  }
+  // when python is on, prove A4 carries Free's per-SKU verdict
+  if (pyAvailable) {
+    const a4 = runners['qianpulse.a4.supply_match'](pyCtx);
+    const ok = ['HAS_MATCH', 'CONDITIONAL_ONLY', 'NO_MATCH'].includes(a4.domain_result?.supply_pool_status);
+    if (!ok) fail('A4 python result missing supply_pool_status from Free supply_demand_fit');
+    else pass(`A4 python verdict: ${a4.domain_result.supply_pool_status} / ${a4.domain_result.best_verdict}`);
+  }
+  report.checks.python = report.ok;
+} catch (err) {
+  fail(`python: ${err.message}`);
+  report.checks.python = false;
 }
 
 // ---- summary -------------------------------------------------------
@@ -157,6 +205,8 @@ report.summary = {
   routing: report.checks.routing,
   envelopes: report.checks.envelopes,
   e2e: report.checks.e2e,
+  python: report.checks.python,
+  python_available: pyAvailable,
   dispatched: report.capabilities.filter((c) => c.dispatched).length,
   total: report.capabilities.length,
 };
