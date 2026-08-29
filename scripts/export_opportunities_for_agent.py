@@ -46,7 +46,10 @@ SELECT
   ssf.supply_pool_status, ssf.best_verdict, ssf.best_fit_score, ssf.summary_zh,
   (SELECT fo.raw_value FROM field_observation fo
      WHERE fo.owner_type='SIGNAL' AND fo.owner_id=s.id
-       AND fo.field_code='quantity_raw' LIMIT 1) AS quantity_raw
+       AND fo.field_code='quantity_raw' LIMIT 1) AS quantity_raw,
+  (SELECT fo.raw_value FROM field_observation fo
+     WHERE fo.owner_type='SIGNAL' AND fo.owner_id=s.id
+       AND fo.field_code='destination_market' LIMIT 1) AS destination_market
 FROM opportunity_decision od
 JOIN opportunity o ON o.id = od.opportunity_id
 JOIN buyer b ON b.id = o.buyer_id
@@ -119,7 +122,7 @@ def build_export_rows(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                     "demand_title": row["demand_title"],
                     "quantity": quantity,
                     "certification": _certifications(conn, row["signal_id"]),
-                    "destination": row["country_code"],
+                    "destination": row["destination_market"] or "UNKNOWN",
                 },
                 "fit_score": _round(row["seller_fit_score"]),
                 "intent_score": _round(row["truth_score"]),

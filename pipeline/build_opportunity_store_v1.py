@@ -22,6 +22,7 @@ from opportunity_decision_engine_v1 import assess_opportunity  # noqa: E402
 from supply_demand_fit_v1 import evaluate as evaluate_fit  # noqa: E402
 from supply_demand_fit_v1 import load_catalog  # noqa: E402
 from supply_demand_fit_v1 import parse_demand  # noqa: E402
+from destination_v1 import destination_fields  # noqa: E402
 from risk_items_v1 import classify_risk_items  # noqa: E402
 
 
@@ -101,7 +102,13 @@ def normalize_input_row(raw: dict[str, str]) -> dict[str, str]:
     row.setdefault("quantity_status", "DISCLOSED" if row.get("quantity_raw", "").strip() else "UNKNOWN")
     row.setdefault("quantity_source_span", row.get("quantity_raw", ""))
     row.setdefault("field_warnings", "")
-    row.setdefault("destination_present", str(contains_any(text, ["destination", "destination port", "ship to", "delivery to"])))
+    dest = destination_fields(row)
+    row["destination_raw"] = dest["destination_raw"]
+    row["destination_market"] = dest["destination_market"]
+    row["destination_source_span"] = dest["destination_source_span"]
+    # 兼容旧消费方（风险项 / 契约文档）：destination_present 现在表示"目的地已解析出市场"，
+    # 而不是"正文出现了 destination 字样"
+    row["destination_present"] = "True" if dest["destination_market"] != "UNKNOWN" else "False"
     row.setdefault("buyer_name_source_span", row.get("buyer_name_raw", ""))
     row.setdefault("contact_person_source_span", row.get("contact_person_raw", ""))
     row.setdefault("buyer_country_source_span", row.get("buyer_country_raw", ""))
@@ -151,7 +158,7 @@ def commercial_execution_score(row: dict[str, str]) -> float:
         "specification": row.get("specs_present") == "True",
         "quantity": bool(row.get("quantity_raw", "").strip()),
         "purpose": contains_any(text, ["purpose", "application", "for retail", "for beverage", "for bakery"]),
-        "destination": row.get("destination_present") == "True",
+        "destination": row.get("destination_market", "UNKNOWN") != "UNKNOWN",
         "packaging": contains_any(text, ["packaging", "packing", "carton", "bag", "drum", "sachet"]),
         "certification": bool(extract_certifications(text)) or contains_any(text, ["certificate", "certification"]),
         "price_request": contains_any(text, ["quote", "quotation", "target price", "budget", "price offer"]),
@@ -276,14 +283,15 @@ def opportunity_input(row: dict[str, str], buyer_id: str) -> dict[str, Any]:
     if extract_certifications(description):
         gaps.append("采购认证范围需由买家书面确认")
 
+    destination_market = row.get("destination_market", "UNKNOWN") or "UNKNOWN"
     why_now = [f"需求发布于 {row.get('age_days') or '未知'} 天前"]
     if row.get("quantity_raw", "").strip():
         why_now.append(f"已明确采购量：{row['quantity_raw'].strip()}")
-    if row.get("destination_present") == "True":
-        why_now.append("已披露交付目的地")
+    if destination_market != "UNKNOWN":
+        why_now.append(f"已披露交付目的地：{destination_market}")
 
-    destination_known = row.get("destination_present") == "True"
-    market_access = 60.0 if destination_known and country in target_markets else 35.0 if country in target_markets else 25.0
+    destination_known = destination_market != "UNKNOWN"
+    market_access = 60.0 if destination_known and destination_market in target_markets else 35.0 if country in target_markets else 25.0
     return {
         "opportunity_id": stable_id("opp", row["signal_id"]),
         "buyer_id": buyer_id,
@@ -384,6 +392,13 @@ def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROF
             conn.execute(
                 "INSERT INTO field_observation(id,owner_type,owner_id,field_code,raw_value,confidence,evidence_span,evidence_id,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
                 (stable_id("field", f"{row['signal_id']}|quantity_raw"), "SIGNAL", row["signal_id"], "quantity_raw", row.get("quantity_raw") or None, 0.9, row.get("quantity_raw") or None, evidence_id, now),
+            )
+            dest_known = row.get("destination_market", "UNKNOWN") != "UNKNOWN"
+            conn.execute(
+                "INSERT INTO field_observation(id,owner_type,owner_id,field_code,raw_value,confidence,evidence_span,evidence_id,created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+                (stable_id("field", f"{row['signal_id']}|destination_market"), "SIGNAL", row["signal_id"], "destination_market",
+                 row.get("destination_market") if dest_known else None, 0.9,
+                 row.get("destination_raw") or None, evidence_id, now),
             )
 
             fit_report = evaluate_fit(row, catalog)

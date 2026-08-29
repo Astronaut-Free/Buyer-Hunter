@@ -533,14 +533,17 @@ def classify_risk_items_from_context(
         "title": str(demand_title or ""),
         "description_raw": str(message_text or ""),
         "quantity_raw": str(quantity or ""),
-        "buyer_country_code": destination if len(destination) == 2 else "",
-        "buyer_country_raw": destination if len(destination) != 2 else "",
+        "destination_raw": str(destination or ""),
         "contact_gate": contact_gate or "",
         "contact_email_raw": contact_email_raw or "",
         "specs_present": "True" if spec_present else "False",
-        "destination_present": "True" if destination else "False",
         "buyer_name_raw": "",
     }
+    from destination_v1 import destination_fields
+
+    dest_fields = destination_fields(row)
+    row["destination_market"] = dest_fields["destination_market"]
+    row["destination_present"] = "True" if dest_fields["destination_market"] != "UNKNOWN" else "False"
     catalog = catalog if catalog is not None else _lazy_catalog()
     demand = parse_demand(row)
     if cat:

@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+from destination_v1 import destination_fields
+
 
 CATALOG_PATH = Path(__file__).with_name("seller_sku_catalog_v1.json")
 RULESET_VERSION = "supply-demand-fit-v1.0.0"
@@ -53,15 +55,6 @@ OEM_TERMS = ("oem", "private label", "private-label", "white label", "custom lab
 PRIVATE_LABEL_TERMS = ("private label", "private-label", "white label", "own brand")
 SAMPLE_TERMS = ("sample", "trial order", "trial batch")
 RETAIL_PACKAGING_TERMS = ("retail pack", "retail pouch", "consumer pack", "custom pouch", "custom packaging", "stick pack", "sachet")
-
-COUNTRY_TO_MARKET = {
-    "united states": "US", "usa": "US", "u.s.": "US", "america": "US",
-    "united kingdom": "GB", "uk": "GB", "britain": "GB",
-    "germany": "DE", "netherlands": "NL", "france": "FR", "italy": "IT",
-    "spain": "ES", "poland": "PL", "belgium": "BE", "finland": "FI",
-    "hungary": "HU", "japan": "JP", "australia": "AU", "canada": "CA",
-    "new zealand": "NZ",
-}
 
 # Bare "g" / "grams" is deliberately excluded: in RFQ text it is almost always a
 # serving size or per-unit weight, not the order quantity.
@@ -193,15 +186,13 @@ def _extract_certs(folded: str) -> list[str]:
 
 
 def _extract_market(row: dict[str, Any], folded: str) -> str | None:
-    code = str(row.get("buyer_country_code") or "").strip().upper()
-    if len(code) == 2:
-        return code
-    raw = str(row.get("buyer_country_raw") or "").strip().casefold()
-    if raw in COUNTRY_TO_MARKET:
-        return COUNTRY_TO_MARKET[raw]
-    for name, market in COUNTRY_TO_MARKET.items():
-        if re.search(rf"\b(?:destination|ship to|deliver to)\b[^.]{{0,40}}\b{re.escape(name)}\b", folded):
-            return market
+    """目的市场只来自明确的目的地表述；绝不拿买家国家兜底（C2/C3）。"""
+    market = str(row.get("destination_market") or "").strip().upper()
+    if market and market != "UNKNOWN":
+        return market
+    dest = destination_fields(row)
+    if dest["destination_market"] != "UNKNOWN":
+        return dest["destination_market"]
     return None
 
 

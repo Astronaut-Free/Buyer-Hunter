@@ -178,7 +178,7 @@ def run_a4(context: dict[str, Any]) -> dict[str, Any]:
         "title": str(fields.get("demand_title") or ""),
         "description_raw": _msg_text(context),
         "quantity_raw": str(fields.get("quantity") or ""),
-        "buyer_country_code": str(fields.get("destination") or ""),
+        "destination_raw": str(fields.get("destination") or ""),
     }
     if _CATALOG is None:
         _CATALOG = load_catalog()

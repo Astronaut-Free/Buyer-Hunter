@@ -38,7 +38,7 @@ pipeline/run_pipeline.py            (A1 collect → clean/score → aggregate)
 | `fields.demand_title` | `evidence.title` | |
 | `fields.quantity` | `field_observation` quantity_raw | `"未披露"` when absent |
 | `fields.certification` | `requirement` rows, `requirement_type='CERTIFICATION'` | comma-joined, or `null` |
-| `fields.destination` | `buyer.country_code` | |
+| `fields.destination` | `field_observation` destination_market | ISO-2 code resolved from an explicit destination statement in the RFQ text (`destination_v1.py`); `"UNKNOWN"` when not disclosed — never the buyer's country |
 | `fit_score` | `seller_fit_score` | A4 |
 | `intent_score` / `truth_score` | `truth_score` | four-dimension evidence credibility |
 | `conversation_score` | `null` | no buyer conversation before A6 |
