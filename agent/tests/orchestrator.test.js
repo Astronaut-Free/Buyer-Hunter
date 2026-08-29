@@ -2,13 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMemoryOpportunityStore } from '../opportunity-store.js';
 import { createQianPulseSkillOrchestrator } from '../qianpulse-skill-orchestrator.js';
+import { composeReply } from '../services/reply-composer.js';
 
 function dependencyRunner(capabilityId, runStatus = 'DONE', missing = []) {
   return async context => ({
     capability_id: capabilityId, capability_version: 'test', run_status: runStatus,
     changed_fields: context.changed_fields || [], missing_evidence: missing,
     evidence_refs: context.latest_buyer_message?.evidence_ref ? [context.latest_buyer_message.evidence_ref] : [],
-    human_review_required: runStatus !== 'DONE', domain_result: capabilityId.endsWith('trade_risk') ? { access_status: 'PASS' } : {}, error: null
+    human_review_required: runStatus !== 'DONE', domain_result: capabilityId.endsWith('trade_risk')
+      ? { access_status: 'PASS' }
+      : capabilityId.endsWith('supply_match')
+        ? { verified_facts: { delivery: context.seller_context?.delivery, capacity_or_moq: context.seller_context?.moq || context.seller_context?.capacity } }
+        : {}, error: null
   });
 }
 
@@ -78,7 +83,8 @@ test('A6 buyer progression keeps waiting when automatic dependency refresh lacks
   assert.equal(result.run_status, 'MORE_EVIDENCE');
   assert.equal(result.opportunity.id, opportunity.id);
   assert.equal(result.opportunity.status, 'WAITING_EVIDENCE');
-  assert.ok(result.envelope.domain_result.dependency_refresh.required.includes('qianpulse.a4.supply_match'));
+  assert.equal(result.envelope.domain_result.decision_state, 'VERIFY');
+  assert.ok(result.dependency_refresh.executions.some(item => item.capability_id === 'qianpulse.a4.supply_match' && item.run_status === 'MORE_EVIDENCE'));
   assert.ok(result.dependency_refresh.refreshed_capabilities.includes('qianpulse.a3.purchase_timing'));
   assert.ok(result.opportunity.evidence_ids.includes('ev_reply'));
   assert.equal(result.opportunity.fields.quantity, '20 tons');
@@ -102,7 +108,7 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
   const result = await orchestrator.runBuyerProgression({
     opportunityId: opportunity.id,
     event: { event_id: 'evt2', event_type: 'BUYER_MESSAGE', content: 'What is your delivery lead time?', evidence_ref: 'ev_delivery' },
-    sellerContext: { delivery: '20 days', evidence_refs: ['seller_delivery_policy'] }
+    sellerContext: { delivery: '20 days', moq: '500 kg', capacity: '5 tons/month', seller_sku: { sku: 'matcha-001' }, seller_policy: { allowed_markets: ['US'], payment_terms: ['T/T'] }, evidence_refs: ['seller_delivery_policy', 'seller_moq', 'seller_capacity', 'seller_sku', 'seller_policy', 'reg:US:1'] }
   });
   assert.equal(result.run_status, 'DONE');
   assert.deepEqual(result.dependency_refresh.refreshed_capabilities.sort(), [
@@ -110,7 +116,9 @@ test('A6 automatically refreshes A3 and A4 then resumes the same buyer message',
     'qianpulse.a4.supply_match'
   ].sort());
   assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
-  assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
+  const draft = composeReply({ communicationBrief: result.envelope.domain_result.communication_brief });
+  assert.match(draft.content, /Lead time: 20 days/);
+  assert.equal(result.envelope.domain_result.reply_draft, undefined);
   assert.equal(result.opportunity.stage, 'REPLIED');
 });
 
@@ -142,7 +150,9 @@ test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportu
       capacity: '30 tons/month',
       delivery: '20 days',
       market_access: 'EU distribution allowed',
-      evidence_refs: ['seller_capacity', 'seller_delivery', 'seller_market_access']
+      seller_sku: { sku: 'matcha-001' },
+      seller_policy: { allowed_markets: ['DE'], payment_terms: ['T/T'] },
+      evidence_refs: ['seller_capacity', 'seller_delivery', 'seller_market_access', 'seller_sku', 'seller_policy', 'reg:DE:1', 'seller_moq']
     }
   });
 
@@ -157,5 +167,13 @@ test('A6 extracts buyer changes, refreshes A3 A4 A5 and persists the new Opportu
   assert.equal(result.opportunity.fields.delivery_date, 'October 2026');
   assert.equal(result.opportunity.a6.pending_structured_extraction.length, 0);
   assert.equal(result.envelope.domain_result.dependency_refresh.required.length, 0);
-  assert.match(result.envelope.domain_result.reply_draft.content, /Lead time: 20 days/);
+  const draft = composeReply({ communicationBrief: result.envelope.domain_result.communication_brief });
+  assert.match(draft.content, /Lead time: 20 days/);
+  assert.deepEqual(result.trace.map(item => `${item.capability_id}:${item.phase}`), [
+    'qianpulse.a6.opportunity_progression:ANALYSIS',
+    'qianpulse.a3.purchase_timing:REFRESH',
+    'qianpulse.a4.supply_match:REFRESH',
+    'qianpulse.a5.trade_risk:REFRESH',
+    'qianpulse.a6.opportunity_progression:FINAL'
+  ]);
 });

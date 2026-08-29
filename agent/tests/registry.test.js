@@ -20,7 +20,7 @@ test('skill registry exposes enabled A2 through A6 runtime metadata', () => {
     const metadata = getQianPulseSkillMetadata(capabilityId);
     assert.ok(metadata, `missing metadata for ${capabilityId}`);
     assert.equal(metadata.enabled, true);
-    assert.equal(metadata.version, [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID].includes(capabilityId) ? '1.1.0' : '1.0.0');
+    assert.equal(metadata.version, [A3_CAPABILITY_ID, A4_CAPABILITY_ID, A5_CAPABILITY_ID, A6_CAPABILITY_ID].includes(capabilityId) ? '1.1.0' : '1.0.0');
     assert.ok(metadata.description);
     assert.ok(Array.isArray(metadata.required_inputs));
     assert.ok(Array.isArray(metadata.produced_outputs));

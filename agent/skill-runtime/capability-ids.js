@@ -13,3 +13,10 @@ export const CAPABILITY_SLOT_BY_ID = Object.freeze({
 export function capabilitySlot(capabilityId) {
   return CAPABILITY_SLOT_BY_ID[capabilityId] || null;
 }
+export const QIANPULSE_CAPABILITY_IDS = Object.freeze({
+  a2: A2_CAPABILITY_ID,
+  a3: A3_CAPABILITY_ID,
+  a4: A4_CAPABILITY_ID,
+  a5: A5_CAPABILITY_ID,
+  a6: A6_CAPABILITY_ID
+});

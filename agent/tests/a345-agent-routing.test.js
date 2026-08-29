@@ -67,10 +67,11 @@ test('buyer reply runs A3 A4 A5 A6 through Python in one Agent Run', async () =>
   }, { id: 'seller-1', role: 'SELLER' });
   assert.equal(response.status, 201);
   assert.deepEqual(response.body.run.capabilities_called, [
-    'qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk', 'qianpulse.a6.opportunity_progression'
+    'qianpulse.a6.opportunity_progression', 'qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk', 'qianpulse.a6.opportunity_progression'
   ]);
   const steps = Object.values(state.steps).filter(item => item.run_id === response.body.run.run_id);
-  assert.equal(steps.length, 4);
-  assert.ok(steps.slice(0, 3).every(item => item.result.domain_result.source === 'python'));
+  assert.equal(steps.length, 5);
+  assert.deepEqual(steps.sort((a, b) => a.sequence - b.sequence).map(item => item.phase), ['ANALYSIS', 'REFRESH', 'REFRESH', 'REFRESH', 'FINAL']);
+  assert.ok(steps.filter(item => item.phase === 'REFRESH').every(item => item.result.domain_result.source === 'python'));
   assert.ok(Object.values(state.checkpoints).some(item => item.run_id === response.body.run.run_id));
 });

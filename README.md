@@ -25,7 +25,7 @@ A1 采集 ─┐
          │                                                                        │
 A2 目标市场 ─→ 发现买家 ─→ Fit ─→ 联系人 ─→ 首封邮件(Human Gate) ─→ Smartlead ──┐   │ 数据桥
                                                                               ↓   ↓
-                                              买家回复 ─→ A6 ─→ 变更字段 ─→ 刷新 A3/A4/A5 ─→ 下一步 + 回复草稿(Human Gate)
+                                              买家回复 ─→ A6 Analysis ─→ 刷新 A3/A4/A5 ─→ A6 Final ─→ Communication Brief ─→ Reply Composer ─→ Human Gate
 ```
 
 ---

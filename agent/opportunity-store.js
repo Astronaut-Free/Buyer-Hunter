@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { capabilitySlot } from './skill-runtime/capability-ids.js';
 
 function stableOpportunityId(seedKey) {
   const digest = createHash('sha256').update(String(seedKey)).digest('hex').slice(0, 16);
@@ -78,17 +79,13 @@ export function createMemoryOpportunityStore(initial = []) {
     if (!opportunity) throw new Error('Opportunity not found');
     if (!envelope?.domain_result) throw new Error('A6 envelope domain_result required');
     const result = envelope.domain_result;
-    const changedBusinessFields = result.changed_business_fields || [];
+    const changedBusinessFields = result.field_observations?.updates || result.changed_business_fields || [];
     const appliedFieldUpdates = {};
     const pendingStructuredExtraction = [];
     opportunity.fields ||= {};
 
     for (const change of changedBusinessFields) {
       if (!change?.field) continue;
-      if (change.needs_structured_extraction) {
-        pendingStructuredExtraction.push(change.field);
-        continue;
-      }
       if (!Object.prototype.hasOwnProperty.call(change, 'after') || change.after === null || change.after === undefined) continue;
       opportunity.fields[change.field] = change.after;
       appliedFieldUpdates[change.field] = change.after;
@@ -98,7 +95,9 @@ export function createMemoryOpportunityStore(initial = []) {
       run_status: envelope.run_status,
       buyer_reply: result.buyer_reply || null,
       next_action: result.next_action || null,
-      execution_mode: result.execution_mode || null,
+      execution_mode: result.next_action?.execution_mode || result.execution_mode || null,
+      decision_state: result.decision_state || null,
+      communication_brief: result.communication_brief || null,
       dependency_refresh: result.dependency_refresh || null,
       outcome: result.outcome || null,
       applied_field_updates: appliedFieldUpdates,
@@ -107,9 +106,13 @@ export function createMemoryOpportunityStore(initial = []) {
     };
     opportunity.evidence_ids = unique([...(opportunity.evidence_ids || []), ...(envelope.evidence_refs || []), ...(result.evidence_refs || [])]);
 
+    // A verified inbound buyer reply advances the stage even when the final
+    // decision waits for specialist evidence. MORE_EVIDENCE is not a rollback.
+    if (envelope.run_status !== 'ERROR' && (result.stage_transition?.after || result.stage?.after)) {
+      opportunity.stage = result.stage_transition?.after || result.stage.after;
+    }
     if (envelope.run_status === 'DONE') {
-      if (result.stage?.after) opportunity.stage = result.stage.after;
-      if (result.outcome?.outcome) opportunity.status = result.outcome.outcome;
+      if (result.outcome?.type || result.outcome?.outcome) opportunity.status = result.outcome?.type || result.outcome.outcome;
       else if (result.next_action?.action === 'HUMAN_TAKEOVER') opportunity.status = 'HUMAN_TAKEOVER';
       else opportunity.status = 'ACTIVE';
     } else if (envelope.run_status === 'MORE_EVIDENCE') {
@@ -123,5 +126,24 @@ export function createMemoryOpportunityStore(initial = []) {
     return opportunity;
   }
 
-  return { upsertSeed, upsertSeeds, get, list, bindExternalRef, resolveExternalRef, applyA6Envelope };
+  function applyCapabilityEnvelope({ opportunityId, envelope, at = new Date().toISOString() } = {}) {
+    const opportunity = get(opportunityId);
+    if (!opportunity) throw new Error('Opportunity not found');
+    if (!envelope?.capability_id || !envelope?.domain_result) throw new Error('Capability envelope required');
+    const slot = capabilitySlot(envelope.capability_id);
+    if (!slot) throw new Error('Only A3/A4/A5 refresh envelopes are supported');
+    opportunity[slot] = {
+      run_status: envelope.run_status,
+      capability_version: envelope.capability_version,
+      result: envelope.domain_result,
+      missing_evidence: envelope.missing_evidence || [],
+      evidence_refs: envelope.evidence_refs || [],
+      updated_at: at
+    };
+    opportunity.evidence_ids = unique([...(opportunity.evidence_ids || []), ...(envelope.evidence_refs || [])]);
+    opportunity.updated_at = at;
+    return opportunity;
+  }
+
+  return { upsertSeed, upsertSeeds, get, list, bindExternalRef, resolveExternalRef, applyCapabilityEnvelope, applyA6Envelope };
 }

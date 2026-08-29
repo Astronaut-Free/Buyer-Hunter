@@ -45,10 +45,13 @@ createA2BatchPipeline
 `runBuyerProgression()`：
 
 ```text
-runA6Skill
-→ enrichA6Envelope
-→ applyA6DependencyGate
-→ OpportunityStore.applyA6Envelope
+A6 ANALYSIS
+→ Agent refreshes affected skills by input_hash
+→ A6 FINAL
+→ validateA6Envelope
+→ OpportunityStore.applyA6Envelope once
+→ Reply Composer
+→ Human Gate
 ```
 
 业务字段变化导致 A3/A4/A5 失效时，Opportunity 进入 `WAITING_EVIDENCE`，等待相关能力增量刷新。

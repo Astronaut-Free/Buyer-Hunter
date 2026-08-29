@@ -32,6 +32,7 @@ agent/db/agent-outcomes.json
 agent/db/agent-outcomes.meta.json
 # Agent runtime state (per-machine)
 agent/server/agent-state.json
+agent/server/agent-state.auth-*.json
 node_modules/
 .run-pids.json
 

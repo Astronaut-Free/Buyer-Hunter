@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runA2Skill, evaluateOutreachReadiness, decidePreReplyFollowup } from '../skill-runtime/a2.js';
-import { runA6Skill, classifyReplyIntent } from '../skill-runtime/a6.js';
+import { runA6Skill } from '../skill-runtime/a6.js';
+import { classifyReplyIntent } from '../skill-runtime/a6/intent.js';
 
 const target = {
   seller: { seller_id: 's1', company_id: 'c1', product_id: 'p1' },
@@ -38,9 +39,9 @@ test('A6 detects changed quantity and destination and invalidates only related s
     field_updates: { quantity: '20 tons', destination: 'Dubai' },
     seller_context: {}
   });
-  const fields = result.domain_result.changed_business_fields.map(item => item.field);
+  const fields = result.domain_result.field_observations.updates.map(item => item.field);
   assert.deepEqual(fields.sort(), ['destination', 'quantity']);
-  assert.deepEqual(result.domain_result.invalidated_capabilities.sort(), ['qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk']);
+  assert.deepEqual(result.domain_result.affected_skills.sort(), ['qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk']);
 });
 
 test('A6 formal price and payment discussion requires HUMAN', () => {
@@ -50,7 +51,7 @@ test('A6 formal price and payment discussion requires HUMAN', () => {
     opportunity_state: { stage: 'SOLUTION_FIT', fields: {} },
     seller_context: {}
   });
-  assert.equal(result.domain_result.execution_mode, 'HUMAN');
+  assert.equal(result.domain_result.next_action.execution_mode, 'HUMAN');
   assert.equal(result.domain_result.next_action.action, 'HUMAN_TAKEOVER');
 });
 
@@ -62,7 +63,7 @@ test('A6 unsubscribe stops contact', () => {
     seller_context: {}
   });
   assert.equal(result.domain_result.next_action.action, 'STOP_CONTACT');
-  assert.equal(result.domain_result.stage.after, 'STOPPED');
+  assert.equal(result.domain_result.stage_transition.after, 'STOPPED');
 });
 
 test('A6 sample request without policy asks for evidence', () => {
@@ -73,7 +74,7 @@ test('A6 sample request without policy asks for evidence', () => {
     seller_context: {}
   });
   assert.equal(result.domain_result.next_action.action, 'REQUEST_MORE_EVIDENCE');
-  assert.equal(result.domain_result.execution_mode, 'APPROVAL');
+  assert.equal(result.domain_result.next_action.execution_mode, 'APPROVAL');
 });
 
 test('A6 acknowledgement does not invent changed fields', () => {
@@ -83,7 +84,7 @@ test('A6 acknowledgement does not invent changed fields', () => {
     opportunity_state: { stage: 'QUALIFYING', fields: {} },
     seller_context: {}
   });
-  assert.deepEqual(result.domain_result.changed_business_fields, []);
+  assert.deepEqual(result.domain_result.field_observations.updates, []);
   assert.equal(result.domain_result.next_action.action, 'WAIT');
 });
 

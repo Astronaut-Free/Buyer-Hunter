@@ -10,7 +10,10 @@ const dependencyRunners = Object.fromEntries([
   'qianpulse.a3.purchase_timing', 'qianpulse.a4.supply_match', 'qianpulse.a5.trade_risk'
 ].map(capabilityId => [capabilityId, async context => ({
   capability_id: capabilityId, capability_version: 'test', run_status: 'DONE', changed_fields: context.changed_fields || [],
-  missing_evidence: [], evidence_refs: [], human_review_required: false, domain_result: {}, error: null
+  missing_evidence: [], evidence_refs: [context.latest_buyer_message?.evidence_ref, ...(context.seller_context?.evidence_refs || [])].filter(Boolean),
+  human_review_required: false, domain_result: capabilityId.endsWith('supply_match')
+    ? { verified_facts: { delivery: context.seller_context?.delivery, capacity_or_moq: context.seller_context?.moq || context.seller_context?.capacity } }
+    : capabilityId.endsWith('trade_risk') ? { access_status: 'PASS' } : {}, error: null
 })]));
 
 function sign(rawBody, requestId, secret = 'webhook-secret') {
@@ -84,7 +87,7 @@ test('A2 → Smartlead → delivery reply → automatic A3/A4 refresh → A6 app
         product_name: 'Matcha',
         seller_context: {
           delivery: '20 days',
-          evidence_refs: ['seller-delivery-policy']
+          moq: '500 kg', capacity: '5 tons/month', seller_sku: { sku: 'matcha-001' }, seller_policy: { allowed_markets: ['US'], payment_terms: ['T/T'] }, evidence_refs: ['seller-delivery-policy', 'seller-moq', 'seller-capacity', 'seller-sku', 'seller-policy', 'reg:US:1']
         }
       },
       target: { countries: ['US'], product_keywords: ['matcha'] },

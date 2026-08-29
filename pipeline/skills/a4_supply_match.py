@@ -22,10 +22,35 @@ def _catalog(context: dict[str, Any]) -> dict[str, Any]:
     return load_catalog()
 
 
+def _verified_facts(context: dict[str, Any], refs: list[str]) -> dict[str, Any]:
+    """Expose only seller facts that carry an explicit evidence reference.
+
+    These facts may answer a narrow buyer question even when the overall SKU
+    fit remains MORE_EVIDENCE because another hard gate is UNKNOWN.
+    """
+    if not refs:
+        return {}
+    seller = context.get("seller_context") or {}
+    sku = seller.get("seller_sku") or context.get("seller_sku") or {}
+    facts: dict[str, Any] = {}
+    if seller.get("delivery"):
+        facts["delivery"] = seller["delivery"]
+    capacity_or_moq = seller.get("moq") or seller.get("capacity")
+    if capacity_or_moq:
+        facts["capacity_or_moq"] = capacity_or_moq
+    if sku.get("specification"):
+        facts["specification"] = sku["specification"]
+    certifications = sku.get("certifications") or seller.get("certifications")
+    if certifications:
+        facts["certifications"] = certifications
+    return facts
+
+
 def run(context: dict[str, Any]) -> dict[str, Any]:
     """Normalize capability input, call evaluate once, and map its report."""
     changed = context.get("changed_fields") or []
     refs = evidence_refs(context)
+    verified_facts = _verified_facts(context, refs)
     if not context.get("opportunity_id"):
         return envelope(A4, VERSION, "BLOCKED", {}, changed_fields=changed, missing_evidence=["opportunity_id"], refs=refs,
                         human_review_required=True)
@@ -104,6 +129,7 @@ def run(context: dict[str, Any]) -> dict[str, Any]:
         "soft_gaps": soft_gaps,
         "unknowns": unknowns,
         "recommendation": recommendation,
+        "verified_facts": verified_facts,
         "seller_profile_version": catalog.get("catalog_version"),
         "data_mode": catalog.get("data_mode", "LIVE"),
         "evaluated_at": context["evaluated_at"],

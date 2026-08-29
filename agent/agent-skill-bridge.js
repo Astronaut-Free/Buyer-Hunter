@@ -33,7 +33,7 @@ export async function invokeSkillThroughAdapter({ invoke, capabilityId, context 
   return result;
 }
 
-export function buildA6ContextFromAgent({ opportunity, event, conversationContext = {}, sellerContext = {}, dependencyResults = {}, refreshedCapabilities = [] } = {}) {
+export function buildA6ContextFromAgent({ opportunity, event, conversationContext = {}, sellerExecutionPolicy = {}, dependencyResults = {} } = {}) {
   if (!opportunity?.id) throw new Error('opportunity.id required');
   if (!event?.event_id) throw new Error('event.event_id required');
   return {
@@ -41,20 +41,28 @@ export function buildA6ContextFromAgent({ opportunity, event, conversationContex
     trigger_event: {
       event_id: event.event_id,
       event_type: event.event_type,
-      timestamp: event.timestamp
+      timestamp: event.timestamp,
+      evidence_ref: event.evidence_ref || null,
+      human_approved: Boolean(event.human_approved || event.payload?.human_approved)
     },
     latest_buyer_message: event.payload?.message || event.payload?.content || event.content || '',
     field_updates: event.payload?.field_updates || {},
-    conversation_context: conversationContext,
+    conversation_context: {
+      ...conversationContext,
+      latest_message: event.payload?.message || event.payload?.content || event.content || ''
+    },
     opportunity_state: {
+      status: opportunity.status || 'ACTIVE',
       stage: opportunity.stage || opportunity.status || 'CONTACTED',
       fields: opportunity.fields || {}
     },
-    seller_context: sellerContext,
-    refreshed_capabilities: refreshedCapabilities,
-    a3_result: dependencyResults.a3 || null,
-    a4_result: dependencyResults.a4 || null,
-    a5_result: dependencyResults.a5 || null
+    skill_results: {
+      a3: dependencyResults.a3 || null,
+      a4: dependencyResults.a4 || null,
+      a5: dependencyResults.a5 || null
+    },
+    seller_execution_policy: sellerExecutionPolicy,
+    evaluated_at: event.timestamp
   };
 }
 
