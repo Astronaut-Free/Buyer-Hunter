@@ -25,6 +25,39 @@
 .section-index{position:absolute;z-index:4;left:26px;top:24px;color:#f6e8b7;font-size:11px;letter-spacing:2px;font-weight:900}.section-index span{margin-left:10px;color:#d6e5da;font-weight:700;letter-spacing:.5px}.section-index.inline{position:static;color:var(--g);margin-bottom:9px}.section-index.inline span{color:var(--muted)}.section-index.light{color:#f6e8b7}.section-index.light span{color:#e5eee8}
 .qianpulse-v15 .section-head{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:end}.qianpulse-v15 .section-head .section-index{min-width:210px}.qianpulse-v15 .section h2{letter-spacing:-.4px}.qianpulse-v15 .banner-slot{height:320px;overflow:hidden;background:linear-gradient(120deg,#173d30,#527763 52%,#a8baa9)}.qianpulse-v15 .banner-slot:before{content:""}.qianpulse-v15 .v15-overlay{position:absolute;inset:0;padding:32px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(180deg,transparent 25%,#102f25d9)}.qianpulse-v15 .v15-overlay h2{font-size:27px;margin:4px 0}.qianpulse-v15 .v15-overlay p{max-width:590px;color:#d8e7dc;margin:0;line-height:1.7}.v15-pillar-head{grid-column:1/-1;display:flex;align-items:end;justify-content:space-between;margin-bottom:5px}.v15-pillar-head p{color:var(--muted);margin:0}.qianpulse-v15 .pillars{grid-template-columns:repeat(3,1fr);margin-top:12px}.qianpulse-v15 .pillar{min-height:100px;display:flex;align-items:center}.agent-teaser{margin-top:42px;padding:28px 30px;background:#173d30;border-radius:8px;color:#fff;display:flex;align-items:end;justify-content:space-between;gap:22px;position:relative;overflow:hidden}.agent-teaser:after{content:"AI";position:absolute;right:25px;top:-35px;font-size:170px;font-weight:900;color:#ffffff0b}.agent-teaser h2{font-size:25px;margin:7px 0}.agent-teaser p{max-width:640px;color:#cfe1d4;margin:0}.agent-teaser .cta{position:relative;z-index:1;white-space:nowrap}.login-link{margin-left:4px;border:1px solid #d4e4d9!important;color:#fff!important;padding:8px 13px!important}
 @media(max-width:740px){.qianpulse-v15 .section-head{display:block}.qianpulse-v15 .section-head .section-index{margin-bottom:12px}.v15-pillar-head{display:block}.v15-pillar-head p{margin-top:8px}.agent-teaser{display:block;padding:25px 20px}.agent-teaser .cta{margin-top:18px}.qianpulse-v15 .banner-slot{height:300px}}
+</style><style>
+/* Mobile workspace: keep chat input reachable and make result data independently scrollable. */
+@media (max-width:740px){
+  html,body{overflow-x:hidden}
+  body{background:#f4f7f4}
+  .workspace{display:flex;flex-direction:column;min-height:100svh;height:auto;background:#f4f7f4}
+  .ws-side{display:none}
+  .chat{display:flex;flex:0 0 auto;height:calc(100svh - 18px);min-height:560px;border-right:0;background:#fff}
+  .chat-head{height:58px;flex:0 0 58px;padding:0 16px;position:sticky;top:0;z-index:4;background:#fff}
+  .chat-head b{font-size:15px}.chat-head span{font-size:10px;max-width:120px;text-align:right}
+  .messages{min-height:0;overflow-y:auto;padding:14px 12px 10px;scroll-behavior:smooth}
+  .bubble{max-width:92%;padding:10px 11px;margin-bottom:10px;font-size:13px;line-height:1.65}
+  .bubble.user{max-width:88%}.agent-title{font-size:11px;margin-bottom:4px}
+  .parse{grid-template-columns:1fr 1fr;gap:6px}.parse div{padding:7px}.parse b{font-size:12px;word-break:break-word}
+  .composer{flex:0 0 auto;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:#fff;position:sticky;bottom:0;z-index:5}
+  .composer-box{min-height:48px;padding:6px 6px 6px 10px;align-items:center;border-radius:8px;box-shadow:0 2px 10px #16312612}
+  .composer textarea{height:34px;min-height:34px;font-size:14px;line-height:1.45;padding:3px 0}
+  .composer button{width:38px;height:38px;flex:0 0 38px;border-radius:7px}
+  #seller-fact-table{order:-1;margin:10px 10px 0!important}
+  #seller-fact-table .parse{grid-template-columns:1fr 1fr}
+  .results{display:flex;flex:0 0 auto;min-height:420px;height:auto;border-top:8px solid #e8eee9;background:#fbfcfb}
+  .result-head{height:auto;min-height:64px;padding:12px 14px;align-items:flex-start;gap:8px}
+  .result-head b{font-size:14px}.result-head span{font-size:10px}
+  .controls{gap:5px;flex-wrap:wrap;justify-content:flex-end}.controls button{font-size:10px;padding:5px 6px}.controls .action{display:none}
+  .table-wrap{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch}
+  .table{min-width:900px}.tr{padding:11px 12px;gap:8px;font-size:11px}.tr.head{position:sticky;top:0}
+  .run-timeline{margin:10px 12px}.run-timeline header{font-size:11px}
+}
+@media (max-width:380px){
+  .chat{min-height:520px}.chat-head{padding:0 12px}.chat-head b{font-size:14px}
+  .bubble{font-size:12px}.parse{grid-template-columns:1fr}.parse div{display:flex;justify-content:space-between;gap:8px}.parse small{display:inline}
+  .result-head{display:block}.controls{margin-top:8px;justify-content:flex-start}
+}
 </style></head><body>
 <style>
 .auth-view{min-height:100vh;background:#f4f7f4;display:grid;place-items:center;padding:24px}.auth-card{width:min(470px,100%);background:#fff;border:1px solid var(--line);border-radius:8px;padding:30px;box-shadow:0 16px 35px #16312618}.auth-card h1{margin:0 0 5px;font-size:25px}.auth-card .auth-sub{color:var(--muted);margin:0 0 22px}.auth-mode{display:flex;gap:6px;margin-bottom:18px}.auth-mode button{flex:1;border:1px solid var(--line);background:#fff;color:var(--muted);padding:9px;border-radius:5px;font-weight:800}.auth-mode button.active{background:#e5f2e9;border-color:#b8d6c2;color:var(--g)}.auth-form{display:grid;gap:11px}.auth-form label{font-size:11px;color:var(--muted);font-weight:800}.auth-form input{width:100%;border:1px solid #d5e0d8;border-radius:5px;padding:10px;outline-color:var(--g)}.auth-form button[type=submit]{margin-top:6px;border:0;border-radius:5px;background:var(--g);color:#fff;padding:11px;font-weight:800}.auth-switch{border:0;background:transparent;color:var(--g);font-weight:800;cursor:pointer}.auth-message{min-height:18px;color:#a34235;font-size:11px;margin:8px 0 0}.auth-back{border:0;background:transparent;color:var(--muted);padding:0;margin-bottom:15px;cursor:pointer}
@@ -37,6 +70,29 @@
 <script>
 const DATA=[{id:1,c:'matcha',score:94,status:'窗口打开',country:'美国',buyer:'饮料品牌',title:'采购有机抹茶粉，用于新品饮料',qty:'500 kg / 月',tags:['Organic','OEM','800目+'],why:'7天前发布新 RFQ，官网同步上线抹茶新品。',fit:'5 / 6 项满足',access:'补条件',action:'先发样品与认证清单',risk:'USDA Organic 文件待确认；FDA 食品进口要求已覆盖。'},{id:2,c:'matcha',score:87,status:'可进入',country:'日本',buyer:'食品企业',title:'寻找稳定的第二抹茶供应源',qty:'1 t / 季',tags:['食品级','JAS','长期合作'],why:'采购频率提升，并出现第二供应商信号。',fit:'6 / 6 项满足',access:'PASS',action:'切入第二供应源',risk:'预算未披露，建议首轮确认目标价格带。'},{id:3,c:'matcha',score:81,status:'风险',country:'欧盟',buyer:'零售品牌',title:'定制品牌抹茶粉与零售包装',qty:'2,000 units',tags:['Private label','农残','定制包装'],why:'定制需求明确，但农残标准和有机文件待核验。',fit:'4 / 6 项满足',access:'待复核',action:'先做准入核验',risk:'欧盟农残限量、标签声称与有机文件待确认。'},{id:4,c:'blueberry',score:79,status:'窗口打开',country:'韩国',buyer:'烘焙集团',title:'冷冻蓝莓原料年度采购',qty:'20 t / 年',tags:['IQF','冷链','框架采购'],why:'年度采购即将截止，买家正比较第二供应源。',fit:'5 / 6 项满足',access:'PASS',action:'立即报价并寄样',risk:'冷链交付时效需确认。'}];let selected=1,filter='all';const cards=document.querySelector('#opps'),details=document.querySelector('#details');function tone(o){return o.status==='风险'?'risk':o.status==='可进入'?'':'warn'}function draw(){document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===filter));cards.innerHTML=DATA.filter(o=>filter==='all'||o.c===filter||(filter==='open'&&o.status==='窗口打开')).map(o=>`<article class="card ${o.id===selected?'selected':''}" onclick="showHomeDetail(${o.id})"><div class="card-image"><span class="status ${tone(o)}">${o.status}</span><span class="card-score">${o.score}</span></div><div class="card-body"><div class="dots"><i></i><i></i><i></i></div><h3>${o.country} · ${o.buyer}<br>${o.title}</h3><p>${o.why}</p><div class="chips">${o.tags.map(t=>`<span style="font-size:10px;background:#f2f4f0;padding:3px 5px;border-radius:4px;margin-right:4px">${t}</span>`).join('')}</div><div class="card-foot"><b>${o.qty}</b><button>查看　→</button></div></div></article>`).join('')}function showHomeDetail(id){selected=id;draw();const o=DATA.find(x=>x.id===id);details.className='details show';details.innerHTML=`<div><small style="color:var(--g);font-weight:800;letter-spacing:1px">${o.country} · 采购机会详情</small><h2>${o.title}</h2><p>${o.why} 建议下一步：${o.action}。</p><div class="facts"><div><small>原始 RFQ</small><b>需求已采集</b></div><div><small>买家变化</small><b>近期出现新信号</b></div><div><small>供需匹配</small><b>${o.fit}</b></div></div></div><aside class="decision"><small>机会分</small><b>${o.score}</b><p style="font-size:12px">市场准入：${o.access}</p><div class="risk-box">${o.risk}</div><button onclick="mail()">生成首封跟进邮件　→</button></aside>`}function mail(){const t=document.querySelector('#toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300)}document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filter=b.dataset.f;draw()});draw();
 let running=false,shown=0;const messages=document.querySelector('#messages'),rows=document.querySelector('#rows');function line(text,cls='agent'){const d=document.createElement('div');d.className='bubble '+cls;d.innerHTML=cls==='agent'?'<div class="agent-title">买家猎手 AI</div>'+text:text;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;return d}function startScan(){if(running)return;running=true;document.querySelector('#parse-card').querySelector('.confirm').innerHTML='<span style="color:var(--g);font-weight:800">任务已确认，正在扫描公开信号…</span>';document.querySelector('#status').textContent='AI 正在执行';line('<div class="step done"><i>✓</i>已锁定：美国 · 有机饮品级抹茶 · 500kg/月以上</div><div class="step live"><i>…</i>正在扫描公开 RFQ、企业新品和采购变化</div>');const steps=['已读取 36 条可追溯公开信号','正在识别买家主体与采购窗口','正在比对贵州供应能力与出口准入','已完成去重和优先级排序'];let n=0;const timer=setInterval(()=>{if(n<steps.length){line('<div class="step done"><i>✓</i>'+steps[n]+'</div>');if(n===1)appendRow();if(n===2)appendRow();n++}else{clearInterval(timer);appendRow();appendRow();running=false;document.querySelector('#status').textContent='任务已完成';line('扫描完成：从 36 条公开信号中确认 4 条高优机会。其中 1 条可直接报价，2 条需补充 Organic 文件，1 条建议先确认规格。<div class="suggestions"><button onclick="refine(\'只看最近7天\')">只看最近7天</button><button onclick="refine(\'仅可直接报价\')">仅可直接报价</button><button onclick="refine(\'再扩展50条\')">再扩展50条</button></div>')}} ,850)}function appendRow(){if(shown===0)rows.innerHTML='';if(shown>=DATA.length)return;const o=DATA[shown++],tag=o.access==='PASS'?'tag':o.access==='补条件'?'tag wait':'tag block';const r=document.createElement('div');r.className='tr';r.innerHTML=`<input type="checkbox"><div class="buyer"><b>${o.country} · ${o.buyer}</b><small>采购买家</small></div><div class="demand"><b>${o.need||o.title}</b><small>${o.why}</small></div><div class="platform"><i class="dot"></i>公开信号</div><div class="score2">${o.score}</div><div><span class="${tag}">${o.access}</span></div><button class="action" onclick="openAction('${o.buyer}')">${o.action}　→</button>`;rows.appendChild(r);document.querySelector('#count').textContent=shown+' 条'}function refine(text){line(text,'user');line('已应用条件：“'+text+'”。结果表已按当前筛选重新排序。')}function editTask(){line('请直接补充或修改市场、产品、数量、认证、交期等条件。')}function send(){const i=document.querySelector('#input'),v=i.value.trim();if(!v)return;line(v,'user');i.value='';line('已收到追问，我将按新条件更新机会结果。')}function openAction(buyer){line('请为「'+buyer+'」生成下一步行动方案：默认输出样品清单、认证资料清单和英文首封邮件草稿。')}function resetTask(){location.reload()}function showWorkspace(){document.querySelector('#home').classList.remove('active');document.querySelector('#workspace').classList.add('active');location.hash='workspace'}function showHome(){document.querySelector('#workspace').classList.remove('active');document.querySelector('#home').classList.add('active');location.hash='home'}if(location.hash==='#workspace')showWorkspace();
+</script><style>
+/* Responsive message avatars for desktop and mobile. */
+.chat{position:relative;background:#f7faf8 url('assets/chat-bg-desktop.png') center / cover no-repeat;isolation:isolate}
+.chat:before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.78);pointer-events:none}
+.chat-head,.messages,.composer{position:relative;z-index:1}
+.messages{background:rgba(255,255,255,.34)}
+.composer{background:rgba(255,255,255,.94)}
+.bubble{background-clip:padding-box}
+.bubble.agent{background:rgba(247,250,247,.96)}
+.bubble.user{background:rgba(231,242,235,.97)}
+.message-row{display:flex;align-items:flex-start;gap:9px;margin:0 0 13px;width:100%}.message-row .bubble{margin:0}.message-avatar{width:36px;height:36px;flex:0 0 36px;border-radius:50%;object-fit:cover;border:1px solid #d7e7dc;background:#f3f8f4;box-shadow:0 2px 7px #16312612}.user-row{justify-content:flex-end}.user-row .message-avatar{order:2}.user-row .bubble{order:1}.agent-row .bubble{max-width:calc(100% - 45px)}.user-row .bubble{max-width:calc(100% - 45px)}
+@media(max-width:740px){.chat{background-image:url('assets/chat-bg-mobile.png');background-position:center top;background-size:cover}.chat:before{background:rgba(255,255,255,.8)}.message-row{gap:7px;margin-bottom:10px}.message-avatar{width:30px;height:30px;flex-basis:30px}.agent-row .bubble,.user-row .bubble{max-width:calc(100% - 37px)}}
+</style><script>
+(function installMessageAvatars(){
+  const container=document.querySelector('#messages');if(!container)return;
+  const originalLine=window.line;
+  function avatarFor(cls){const img=document.createElement('img');img.className='message-avatar';img.src=cls==='user'?'assets/user-avatar.png':'assets/agent-avatar.png';img.alt=cls==='user'?'用户头像':'黔脉智能体头像';img.onerror=()=>{img.style.display='none';};return img;}
+  function renderLine(text,cls='agent'){
+    const row=document.createElement('div');row.className='message-row '+(cls==='user'?'user-row':'agent-row');const bubble=document.createElement('div');bubble.className='bubble '+cls;bubble.innerHTML=cls==='agent'?'<div class="agent-title">黔脉智能体</div>'+text:text; if(cls==='user'){row.appendChild(bubble);row.appendChild(avatarFor(cls));}else{row.appendChild(avatarFor(cls));row.appendChild(bubble);}container.appendChild(row);container.scrollTop=container.scrollHeight;return bubble;
+  }
+  container.querySelectorAll(':scope > .bubble').forEach(old=>{const cls=old.classList.contains('user')?'user':'agent';const row=document.createElement('div');row.className='message-row '+(cls==='user'?'user-row':'agent-row');old.parentNode.insertBefore(row,old);row.appendChild(cls==='user'?old:avatarFor(cls));if(cls==='user')row.appendChild(avatarFor(cls));else row.appendChild(old);});
+  window.line=renderLine;
+})();
 </script><script>
 /* 演示状态：LLM 只负责理解与提问，接管判断由可解释规则完成。 */
 Object.assign(DATA[0],{fitScore:72,intentScore:81,conversationScore:58,confirmedFields:['用途','月采购量','样品测试'],missingFields:['预算','交付时间'],hardGaps:[],riskTopics:[],conversationStatus:'已确认样品意向'});
@@ -374,7 +430,7 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
   if(!input||!messagesEl)return;
   const labels={product:'产品',specification:'规格 / 等级',capacity:'月产能',moq:'MOQ',markets:'目标市场',buyer_type:'目标买家类型',certifications:'已有认证'};
   const required=Object.keys(labels);
-  const flow=window.__sellerFlow||{profile:Object.fromEntries(required.map(k=>[k,{value:'',status:'missing'}])),history:[],pending:null,busy:false,matched:false};
+  const flow=window.__sellerFlow||{profile:Object.fromEntries(required.map(k=>[k,{value:'',status:'missing'}])),history:[],pending:null,busy:false,matched:false,conversationId:null};
   window.__sellerFlow=flow;
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function ensureTable(){
@@ -449,7 +505,7 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
   }
   async function safeJson(response){const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{};}catch{}if(!response.ok)throw new Error(data.error||'服务暂时不可用');if(!data.answer)throw new Error(data.error||'AI 暂时没有返回完整回复');return data;}
   async function askAI(text){
-    const response=await fetch('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+(typeof authToken==='function'?authToken():'')},body:JSON.stringify({message:text,profile:profilePayload(),history:flow.history})});
+    const response=await fetch('/api/v1/agent/intake',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+(typeof authToken==='function'?authToken():'')},body:JSON.stringify({conversation_id:flow.conversationId,message:text,profile:profilePayload(),history:flow.history})});
     return safeJson(response);
   }
   function showFriendlyError(error){line('AI 暂时没有收到完整回复，请稍后重试。你的信息已保留。','agent');statusEl.textContent='等待服务恢复';}
@@ -480,4 +536,41 @@ simulateBuyerMessage=async function(){const content='我们预计第四季度开
 document.head.insertAdjacentHTML('beforeend','<style>#home{display:none!important}</style>');
 window.showHome=function(){location.href='index.html';};
 if(location.hash==='#home'||!location.hash)location.replace('index.html');
+</script><script>
+// Temporary hackathon demo access: enable only with DEMO_MODE=true and ?demo=1.
+(function enableDemoAccess(){
+  if(new URLSearchParams(location.search).get('demo')!=='1')return;
+  const nativeFetch=window.fetch.bind(window);
+  window.fetch=function(input,init={}){const headers=new Headers(init.headers||{});headers.set('X-Demo-Mode','1');return nativeFetch(input,{...init,headers});};
+  const originalAuthToken=window.authToken;
+  window.authToken=function(){return 'demo-mode';};
+  const authHint=document.querySelector('#status');if(authHint)authHint.textContent='演示模式 · AI 已连接';
+  const authCard=document.querySelector('#auth');if(authCard)authCard.style.display='none';
+})();
+</script><style>
+/* Keep the composer visible while only the conversation list scrolls. */
+.workspace{height:100dvh;min-height:0;overflow:hidden}
+.workspace .chat{height:100dvh;min-height:0;overflow:hidden}
+.workspace .chat-head{flex:0 0 66px}
+.workspace .messages{min-height:0;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;overscroll-behavior:contain}
+.workspace .composer{position:relative;z-index:3;flex:0 0 auto;padding-bottom:calc(13px + env(safe-area-inset-bottom, 0px));box-shadow:0 -3px 12px rgba(20,45,33,.06)}
+.toast{position:fixed;z-index:20;left:50%;bottom:20px;transform:translate(-50%,120%);transition:transform .2s;pointer-events:none}
+.toast.show{transform:translate(-50%,0)}
+@media(max-width:740px){.workspace{height:100dvh;overflow:hidden}.workspace .chat{height:100dvh;min-height:0}.workspace .chat-head{height:58px;flex-basis:58px}.workspace .messages{padding:14px 12px}.workspace .composer{padding:10px 10px calc(10px + env(safe-area-inset-bottom, 0px))}.workspace .composer textarea{min-height:42px;max-height:110px}}
+</style><script>
+/* Follow new messages only when the user is already near the latest message. */
+(function installConversationScroll(){
+  const box=document.querySelector('#messages');
+  if(!box)return;
+  let followLatest=true;
+  const nearBottom=()=>box.scrollHeight-box.scrollTop-box.clientHeight<96;
+  box.addEventListener('scroll',()=>{followLatest=nearBottom();},{passive:true});
+  const scrollLatest=(force=false)=>{if(force||followLatest)requestAnimationFrame(()=>box.scrollTo({top:box.scrollHeight,behavior:force?'auto':'smooth'}));};
+  const observer=new MutationObserver(()=>scrollLatest());
+  observer.observe(box,{childList:true,subtree:true});
+  window.scrollConversationToLatest=()=>scrollLatest(true);
+  window.addEventListener('resize',()=>scrollLatest(true));
+  window.visualViewport?.addEventListener('resize',()=>scrollLatest(true));
+  requestAnimationFrame(()=>scrollLatest(true));
+})();
 </script></body></html>
