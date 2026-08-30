@@ -83,6 +83,11 @@ def utc_now() -> str:
 def normalize_input_row(raw: dict[str, str]) -> dict[str, str]:
     """Map full-collection opportunity rows to the evidence-store contract."""
     row = dict(raw)
+    # 缺列硬化：aggregate 契约列缺失时不 KeyError，降级为可判定的中性值。
+    row.setdefault("category_code", "")
+    row.setdefault("source_code", row.get("source_role", "") or "UNKNOWN_SOURCE")
+    row.setdefault("truth_score", "0")
+    row.setdefault("truth_level", "D")
     description = row.get("description_raw", "")
     title = row.get("title", "")
     text = f"{title} {description}".casefold()
@@ -337,7 +342,18 @@ def insert_base_profile(conn: sqlite3.Connection, profile: dict[str, Any], now: 
 
 def build_store(input_csv: Path | None = None, profile_path: Path = DEFAULT_PROFILE, db_path: Path = DEFAULT_DB) -> dict[str, Any]:
     input_csv = input_csv or resolve_input()
+    if not input_csv.exists():
+        raise SystemExit(
+            f"输入 CSV 不存在：{input_csv} — 拒绝构建，现有库 {db_path} 保持不变"
+        )
     rows = load_rows(input_csv)
+    if not rows:
+        # 空文件 / 纯空行 / 仅表头：构建出 0 行库并 os.replace 会抹掉好库。
+        # 拒绝替换，保留现有库，非零退出让调用方（run.ps1 等）fail-fast。
+        raise SystemExit(
+            f"输入 CSV 无数据行（空文件/纯空行/仅表头）：{input_csv} — "
+            f"拒绝覆盖现有库 {db_path}，本次构建已跳过"
+        )
     profile = normalized_profile(json.loads(profile_path.read_text(encoding="utf-8")))
     catalog = load_catalog()
     now = utc_now()

@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -64,6 +65,20 @@ def _coerce_text(value: Any) -> str | None:
     return str(value)
 
 
+def _fail(message: str) -> None:
+    """结构化报错：一行中文信息 + exit 1（run.ps1 依赖 $LASTEXITCODE fail-fast）。"""
+    print(f"错误：{message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def _expect_text(value: Any, where: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        _fail(f"{where} 必须是字符串或 null，实际类型 {type(value).__name__}")
+    return value
+
+
 def _json_col(value: Any) -> str | None:
     if value is None:
         return None
@@ -74,18 +89,29 @@ def _json_col(value: Any) -> str | None:
 
 
 def build_outcome_rows(entries: dict[str, Any]) -> list[dict[str, Any]]:
-    """Pure transform: a6_outcomes entries -> deal_outcome rows."""
+    """Pure transform: a6_outcomes entries -> deal_outcome rows.
+
+    Malformed input (non-list, non-dict entries, wrong field types) is a
+    structured one-line error + exit 1 -- never a bare traceback.
+    """
+    a6_entries = entries.get("a6_outcomes")
+    if a6_entries is None:
+        a6_entries = []
+    if not isinstance(a6_entries, list):
+        _fail("entries.a6_outcomes 必须是数组（不能是其他类型）")
     out: list[dict[str, Any]] = []
-    for item in entries.get("a6_outcomes", []) or []:
-        outcome = _coerce_text(item.get("outcome"))
+    for item in a6_entries:
+        if not isinstance(item, dict):
+            _fail("a6_outcomes 条目必须是 JSON 对象")
+        outcome = _expect_text(item.get("outcome"), "a6_outcomes 条目 outcome")
         if outcome not in OUTCOME_STAGE:
             continue
-        opportunity_id = _coerce_text(item.get("opportunity_id"))
+        opportunity_id = _expect_text(item.get("opportunity_id"), "a6_outcomes 条目 opportunity_id")
         if not opportunity_id:
             continue
-        reported_at = _coerce_text(item.get("reported_at")) or _now()
+        reported_at = _expect_text(item.get("reported_at"), "a6_outcomes 条目 reported_at") or _now()
         stage = OUTCOME_STAGE[outcome]
-        reason = _coerce_text(item.get("reason")) or ""
+        reason = _expect_text(item.get("reason"), "a6_outcomes 条目 reason") or ""
         if outcome == "STOPPED" and not reason.startswith("STOP_CONTACT"):
             reason = f"STOP_CONTACT: {reason}".strip()
         out.append(
@@ -102,30 +128,54 @@ def build_outcome_rows(entries: dict[str, Any]) -> list[dict[str, Any]]:
 
 def build_target_rows(entries: dict[str, Any]) -> list[dict[str, Any]]:
     """Pure transform: a2_targets opportunity rows -> agent_discovered_target rows."""
+    a2_entries = entries.get("a2_targets")
+    if a2_entries is None:
+        a2_entries = []
+    if not isinstance(a2_entries, list):
+        _fail("entries.a2_targets 必须是数组（不能是其他类型）")
     out: list[dict[str, Any]] = []
-    for opp in entries.get("a2_targets", []) or []:
-        seed_key = _coerce_text(opp.get("seed_key"))
+    for opp in a2_entries:
+        if not isinstance(opp, dict):
+            _fail("a2_targets 条目必须是 JSON 对象")
+        seed_key = _expect_text(opp.get("seed_key"), "a2_targets 条目 seed_key")
         if not seed_key:
             continue
-        buyer = opp.get("buyer") or {}
-        a2 = opp.get("a2") or {}
+        buyer = opp.get("buyer")
+        if buyer is None:
+            buyer = {}
+        a2 = opp.get("a2")
+        if a2 is None:
+            a2 = {}
+        if not isinstance(buyer, dict):
+            _fail(f"a2_targets 条目 {seed_key!r} 的 buyer 必须是 JSON 对象（不能是其他类型）")
+        if not isinstance(a2, dict):
+            _fail(f"a2_targets 条目 {seed_key!r} 的 a2 必须是 JSON 对象（不能是其他类型）")
+        rank_score = a2.get("rank_score")
+        if rank_score is not None:
+            if isinstance(rank_score, bool) or not isinstance(rank_score, (int, float)):
+                _fail(f"a2_targets 条目 {seed_key!r} 的 a2.rank_score 必须是数字")
+            if isinstance(rank_score, float) and not math.isfinite(rank_score):
+                _fail(f"a2_targets 条目 {seed_key!r} 的 a2.rank_score 必须是有限数字")
         out.append(
             {
                 "id": f"tgt_{_sha(seed_key)}",
                 "seed_key": seed_key,
-                "buyer_id": _coerce_text(buyer.get("id")) or seed_key,
-                "buyer_name": _coerce_text(buyer.get("name")),
-                "country_code": _coerce_text(buyer.get("market") or buyer.get("country")),
-                "domain": _coerce_text(buyer.get("domain")),
+                "buyer_id": _expect_text(buyer.get("id"), f"{seed_key} 的 buyer.id") or seed_key,
+                "buyer_name": _expect_text(buyer.get("name"), f"{seed_key} 的 buyer.name"),
+                "country_code": _expect_text(
+                    buyer.get("market") or buyer.get("country"), f"{seed_key} 的 buyer.country"
+                ),
+                "domain": _expect_text(buyer.get("domain"), f"{seed_key} 的 buyer.domain"),
                 "contact_json": _json_col(opp.get("contact")),
-                "status": _coerce_text(opp.get("status")),
-                "stage": _coerce_text(opp.get("stage")),
-                "a2_rank_score": a2.get("rank_score"),
-                "source": _coerce_text(opp.get("source")) or "A2_PROACTIVE_BUYER_DEVELOPMENT",
+                "status": _expect_text(opp.get("status"), f"{seed_key} 的 status"),
+                "stage": _expect_text(opp.get("stage"), f"{seed_key} 的 stage"),
+                "a2_rank_score": rank_score,
+                "source": _expect_text(opp.get("source"), f"{seed_key} 的 source")
+                or "A2_PROACTIVE_BUYER_DEVELOPMENT",
                 "evidence_json": _json_col(opp.get("evidence_ids")),
                 "seller_json": _json_col(opp.get("seller")),
-                "first_seen_at": _coerce_text(opp.get("created_at")) or _now(),
-                "last_seen_at": _coerce_text(opp.get("updated_at")) or _now(),
+                "first_seen_at": _expect_text(opp.get("created_at"), f"{seed_key} 的 created_at") or _now(),
+                "last_seen_at": _expect_text(opp.get("updated_at"), f"{seed_key} 的 updated_at") or _now(),
             }
         )
     return out
@@ -237,8 +287,20 @@ def resolve_entities(conn: sqlite3.Connection, target_rows: list[dict[str, Any]]
 def load_payload(in_path: Path) -> dict[str, Any] | None:
     if not in_path.exists():
         return None
-    payload = json.loads(in_path.read_text(encoding="utf-8"))
-    return payload.get("entries", payload) if isinstance(payload, dict) else {}
+    try:
+        payload = json.loads(in_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        _fail(f"{in_path} 不是合法 JSON（截断或损坏，第 {exc.lineno} 行：{exc.msg}）")
+    except UnicodeDecodeError as exc:
+        _fail(f"{in_path} 不是 UTF-8 文本（{exc}）")
+    except RecursionError:
+        _fail(f"{in_path} 嵌套层级过深（超过解析器递归上限）")
+    if not isinstance(payload, dict):
+        _fail(f"{in_path} 根结构必须是 JSON 对象")
+    entries = payload.get("entries", payload)
+    if not isinstance(entries, dict):
+        _fail(f"{in_path} 的 entries 必须是 JSON 对象")
+    return entries
 
 
 def import_outcomes(db_path: Path, in_path: Path) -> dict[str, Any]:

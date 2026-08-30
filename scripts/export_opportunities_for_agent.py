@@ -164,6 +164,10 @@ def export(db_path: Path, out_path: Path) -> dict[str, Any]:
             f"decision store not found: {db_path}\n"
             "run: python pipeline/build_opportunity_store_v1.py"
         )
+    try:
+        db_rel = db_path.resolve().relative_to(ROOT)
+    except ValueError:
+        raise SystemExit(f"错误：--db 必须在仓库目录内（{db_path}）")
     with sqlite3.connect(db_path) as conn:
         rows = build_export_rows(conn)
         ruleset = conn.execute(
@@ -174,7 +178,7 @@ def export(db_path: Path, out_path: Path) -> dict[str, Any]:
         json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     meta = {
-        "source_db": str(db_path.relative_to(ROOT)),
+        "source_db": str(db_rel),
         "exported_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "row_count": len(rows),
         "ruleset_version": ruleset[0] if ruleset else None,

@@ -281,10 +281,43 @@ def audit_reverse_bridge() -> None:
         and after_outcomes == before_outcomes + 1
         and after_targets == before_targets + 1
     )
+    # Clean up the smoke rows -- unconditionally, even when the smoke itself
+    # failed: the audit must never leave a fabricated WON in the store it
+    # certifies (it would carry a +15 promotion bonus into Top-5 ordering).
+    # apply_promotions is zero-then-set, so recomputing restores whatever real
+    # bonuses exist. Deletes are keyed strictly by smoke-only fingerprints
+    # (reason text / seed_key prefix / .invalid domain / ISO stamp shape), so
+    # real agent write-back rows are never touched; this also sweeps residue
+    # left behind by earlier failed audits.
+    sys.path.insert(0, str(ROOT / "pipeline"))
+    from promotion_v1 import apply_promotions
+
+    cleanup_error = None
+    cleaned_outcomes = cleaned_targets = 0
+    try:
+        with sqlite3.connect(db) as conn:
+            cur = conn.execute(
+                "DELETE FROM deal_outcome WHERE reason = 'audit smoke' "
+                "AND reported_at GLOB '????-??-??T??:??:??+00:00'"
+            )
+            cleaned_outcomes = cur.rowcount
+            cur = conn.execute(
+                "DELETE FROM agent_discovered_target WHERE seed_key LIKE 'a2:audit:smoke%' "
+                "OR domain = 'audit-smoke.invalid' OR buyer_id = 'audit_buyer'"
+            )
+            cleaned_targets = cur.rowcount
+            apply_promotions(conn)
+    except Exception as exc:  # pragma: no cover - defensive
+        cleanup_error = exc
+    with sqlite3.connect(db) as conn:
+        final_outcomes = conn.execute("SELECT COUNT(*) FROM deal_outcome").fetchone()[0]
+        final_targets = conn.execute("SELECT COUNT(*) FROM agent_discovered_target").fetchone()[0]
     check("reverse bridge (agent -> Free)").record(
-        ok,
-        f"deal_outcome {before_outcomes}->{after_outcomes}, "
-        f"targets {before_targets}->{after_targets}, replay idempotent",
+        ok and cleanup_error is None,
+        f"smoke={ok}, deal_outcome {before_outcomes}->{after_outcomes}->{final_outcomes} "
+        f"(cleaned {cleaned_outcomes}), targets {before_targets}->{after_targets}->{final_targets} "
+        f"(cleaned {cleaned_targets})"
+        + (f", cleanup error: {cleanup_error}" if cleanup_error else ""),
     )
 
 
@@ -662,7 +695,7 @@ def completeness_matrix(store_counts: dict[str, int], dispatch: dict[str, Any]) 
             "runtime": "静态 — site/(index.html + opportunities.html)，vendored 自 origin/ui @ c7d5634",
             "state": "就绪(前门)",
             "evidence": "WebGL/canvas 首页 + 全球商机展示页（network-stage + deal-section）；离线地图数据自带；"
-            "nav-bridge.js 把登录/CTA 指向 demo；opportunities-live.js 把精选卡片/需求行/KPI 换成 /api/v1 实时数据"
+            "nav-bridge.js 把登录/CTA 指向 agent 工作台(3317)；opportunities-live.js 把精选卡片/需求行/KPI 换成 /api/v1 实时数据"
             "（API 失败静默回退静态样例，LIVE/FALLBACK 徽标）；run.ps1 -Up / make up 起在 4180",
             "gap": "作者 yayaw2826-oss 仍在 origin/ui 迭代（re-sync 时需重加两行 script）",
         },
@@ -764,7 +797,6 @@ def write_markdown(path: Path, matrix: list[dict[str, str]], dispatch: dict[str,
         "",
         "- 单语言统一（Node ↔ Python 移植）",
         "- 统一 Opportunity 主键（Phase 4，设计见 `contracts/opportunity-v2.md`）",
-        "- A2 自然语言入口接线",
         "- 实网 provider smoke（Smartlead / Apollo / Trademo 凭据）",
         "- 控制面实时反向写回（当前为文件桥，非 API）",
         "- `brand2` 前端增量 cherry-pick（联系方式解锁双态 UX）",

@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import { decideHandoff, calculateMatch, evaluateMarketAccess } from './decision-engine.js';
@@ -26,7 +26,9 @@ import { createAgentConversation } from './agent-conversation.js';
 import { A2_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 import { getQianPulseSkillMetadata } from '../skill-runtime/registry.js';
 
-const ROOT = fileURLToPath(new URL('..', import.meta.url));
+// On Windows fileURLToPath keeps a trailing separator ('agent\'); strip it so
+// `ROOT + sep` and `join(ROOT, file)` produce the same prefix (static-serve guard).
+const ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]+$/, '');
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
 // Repository root (agent/server/ -> agent/ -> repo root) for spawning the Python pipeline.
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -135,9 +137,17 @@ const initialState = () => ({
 let state;
 let persistTimer;
 
+async function atomicWrite(filePath, content) {
+  // tmp + rename: a process killed mid-write can never leave a truncated JSON
+  // behind (plain writeFile truncates the target first).
+  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  await writeFile(tmpPath, content);
+  await rename(tmpPath, filePath);
+}
+
 async function persist() {
   await mkdir(SERVER_DIR, { recursive: true });
-  await writeFile(STATE_FILE, JSON.stringify(state, null, 2));
+  await atomicWrite(STATE_FILE, JSON.stringify(state, null, 2));
 
   const entries = buildAgentOutcomesEntries(state.opportunities, now);
   const exportedAt = now();
@@ -156,8 +166,18 @@ async function persist() {
     direction: payload.direction
   };
   await mkdir(join(ROOT, 'db'), { recursive: true });
-  await writeFile(OUTCOMES_FILE, JSON.stringify(payload, null, 2));
-  await writeFile(OUTCOMES_META_FILE, JSON.stringify(meta, null, 2));
+  await atomicWrite(OUTCOMES_FILE, JSON.stringify(payload, null, 2));
+  await atomicWrite(OUTCOMES_META_FILE, JSON.stringify(meta, null, 2));
+}
+
+async function backupCorruptFile(filePath) {
+  // The renamed copy IS the recovery path: nothing is destroyed, the broken
+  // bytes are preserved for inspection/repair.
+  try {
+    await rename(filePath, `${filePath}.corrupt-${Date.now()}`);
+  } catch {
+    // file vanished or is locked; the caller rebuilds a valid copy regardless
+  }
 }
 
 function persistSoon() {
@@ -178,6 +198,9 @@ async function loadState() {
     state.sessions ||= {};
     state.collection_runs ||= {};
   } catch {
+    // Corrupt state: back it up first (recoverable), then rebuild. Never
+    // silently wipe user sessions without leaving the raw bytes behind.
+    await backupCorruptFile(STATE_FILE);
     state = initialState();
     await persist();
   }
@@ -820,6 +843,22 @@ const mime = {
 
 const baseLoadState = loadState;
 
+// A truncated agent-outcomes.json would crash scripts/import_agent_outcomes.py
+// on the next run.ps1 -Up. At boot: if either reverse-bridge file is unparseable,
+// back it up and rewrite valid JSON (empty entries, rebuilt from live state).
+async function recoverOutcomesFile() {
+  for (const filePath of [OUTCOMES_FILE, OUTCOMES_META_FILE]) {
+    if (!existsSync(filePath)) continue;
+    try {
+      JSON.parse(await readFile(filePath, 'utf8'));
+    } catch {
+      await backupCorruptFile(filePath);
+      await persist();
+      return;
+    }
+  }
+}
+
 // Re-read the Python bridge snapshot (agent/db/opportunities.json) and merge it
 // into live state. Runtime values win (fields/stage/status/a6 survive), decision
 // and score fields refresh from the new pipeline snapshot. Runs at boot and
@@ -844,6 +883,7 @@ async function refreshFreeOpportunities() {
 
 loadState = async function() {
   await baseLoadState();
+  await recoverOutcomesFile();
   // backfill sellers registered before capability-profile binding existed
   for (const user of Object.values(state.users || {})) {
     if (user.role === 'SELLER' && !user.profile?.seller_capability_profile_id) {
@@ -1001,10 +1041,32 @@ const server = createServer(async (req, res) => {
 
     if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' });
 
-    const file = url.pathname === '/' ? 'index.html' : normalize(url.pathname).replace(/^[/\\]+/, '');
+    let pathname;
+    try {
+      pathname = decodeURIComponent(url.pathname);
+    } catch {
+      return sendJson(res, 403, { error: 'Forbidden' });
+    }
+    const file = pathname === '/' ? 'index.html' : normalize(pathname).replace(/^[/\\]+/, '');
+    // No bare GET into data or code directories, and no dotfiles (agent-state.json
+    // holds user sessions, agent-outcomes.json is a data file, .gitignore/.env leak
+    // repo internals). reference/ (workbench docs) and assets stay open.
+    if (!file || file.split(/[\\/]+/).some(segment => segment.startsWith('.'))) {
+      return sendJson(res, 403, { error: 'Forbidden' });
+    }
+    const topSegment = file.split(/[\\/]+/)[0].toLowerCase();
+    if (topSegment === 'db' || topSegment === 'server' || topSegment === 'quarantine') {
+      return sendJson(res, 403, { error: 'Forbidden' });
+    }
     const filePath = join(ROOT, file);
-    if (!filePath.startsWith(ROOT)) return sendJson(res, 403, { error: 'Forbidden' });
-    const content = await readFile(filePath);
+    if (filePath !== ROOT && !filePath.startsWith(ROOT + sep)) return sendJson(res, 403, { error: 'Forbidden' });
+    let content;
+    try {
+      content = await readFile(filePath);
+    } catch (error) {
+      if (error.code === 'ENOENT' || error.code === 'EISDIR') return sendJson(res, 404, { error: '文件不存在' });
+      throw error;
+    }
     res.writeHead(200, { 'Content-Type': mime[extname(filePath)] || 'application/octet-stream' });
     res.end(content);
   } catch (error) {
@@ -1012,4 +1074,6 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => console.log(`QianPulse Agent API: http://localhost:${PORT}`));
+// Loopback-only, like the site (http.server) and api (uvicorn) processes:
+// agent-state.json holds user sessions and the workbench is a local tool.
+server.listen(PORT, '127.0.0.1', () => console.log(`QianPulse Agent API: http://127.0.0.1:${PORT}`));

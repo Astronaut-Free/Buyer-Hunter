@@ -54,10 +54,12 @@ _ALIASES = {
     "turkey": "TR", "greece": "GR", "ukraine": "UA", "latvia": "LV",
     "saudi arabia": "SA", "qatar": "QA", "oman": "OM", "kuwait": "KW",
     "new zealand": "NZ", "mexico": "MX", "brazil": "BR", "chile": "CL",
+    "china": "CN", "hong kong": "HK",
     "美国": "US", "英国": "GB", "日本": "JP", "德国": "DE", "荷兰": "NL",
     "法国": "FR", "意大利": "IT", "西班牙": "ES", "澳大利亚": "AU", "加拿大": "CA",
     "新加坡": "SG", "马来西亚": "MY", "韩国": "KR", "印度": "IN", "泰国": "TH",
     "越南": "VN", "印尼": "ID", "菲律宾": "PH", "阿联酋": "AE",
+    "中国": "CN", "香港": "HK",
 }
 
 # 常见港口/城市 -> 国家。只收录高置信度、无歧义的条目。
@@ -90,6 +92,36 @@ def _clean(span: str) -> str:
     return span.strip(" .,:;'-、，。").strip()
 
 
+_CJK = re.compile(r"[一-鿿]")
+
+
+def _iter_alias_matches(text: str):
+    """别名候选，最长最具体优先。
+
+    ASCII 别名保持词边界（"indiana" 不得命中 "india"）；CJK 别名要求前后
+    紧邻字符都不是 CJK（"中国香港"、"香港贸易有限公司" 不命中），符合
+    宁缺毋滥契约——"发到中国，" 这类标点邻接仍正常命中。
+    """
+    for name, iso in sorted(_ALIASES.items(), key=lambda kv: (-len(kv[0]), kv[0])):
+        if _CJK.search(name):
+            for match in re.finditer(re.escape(name), text):
+                start, end = match.span()
+                before = text[start - 1] if start > 0 else ""
+                after = text[end] if end < len(text) else ""
+                if not _CJK.fullmatch(before) and not _CJK.fullmatch(after):
+                    yield iso
+                    break
+        elif re.search(rf"(?<![A-Za-z]){re.escape(name)}(?![A-Za-z])", text):
+            yield iso
+
+
+def _iter_city_matches(text: str):
+    """城市候选，最长最具体优先（"port klang" 先于任何更短键）。"""
+    for city, iso in sorted(_CITY_TO_COUNTRY.items(), key=lambda kv: (-len(kv[0]), kv[0])):
+        if city in text:
+            yield iso
+
+
 def resolve_market(span: str) -> str | None:
     """把一段地名解析成 ISO-2；无法可靠判断时返回 None（绝不猜）。"""
     raw = _clean(span)
@@ -105,13 +137,12 @@ def resolve_market(span: str) -> str | None:
     text = raw.lower()
     if text in _ALIASES:
         return _ALIASES[text]
-    for city, iso in _CITY_TO_COUNTRY.items():
-        if city in text:
-            return iso
-    for name, iso in _ALIASES.items():
-        # 词边界匹配，避免 "indiana" 命中 "india"
-        if re.search(rf"(?<![A-Za-z]){re.escape(name)}(?![A-Za-z])", text):
-            return iso
+    codes = [iso for iso in _iter_city_matches(text)]
+    codes += [iso for iso in _iter_alias_matches(text)]
+    unique = set(codes)
+    if len(unique) == 1:
+        return codes[0]
+    # 多个不同国别码同时命中（如 "china but made in usa"）：冲突即放弃，绝不猜。
     return None
 
 
