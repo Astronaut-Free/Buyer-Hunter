@@ -470,9 +470,11 @@ async function refreshResults(){
       syncParseCard();
       const done=FIELDS.every(([k])=>state.profile[k]);
       if(done){
-        setStatus('企业能力档案已完成');
-        line('企业能力画像已建立，正在按此匹配全球采购需求…');
-        await refreshResults();
+        setStatus('企业能力档案已完成 · 正在自动采集');
+        line('企业能力画像已建立，正在自动采集全球采购信号并匹配…');
+        ensureCollectionPanel();
+        await loadCollectionState();
+        startCollection();
       }else setStatus('等待你的回答');
     }catch(e){line('对话失败：'+escapeHtml(e.message));setStatus('等待服务恢复');}
   };
