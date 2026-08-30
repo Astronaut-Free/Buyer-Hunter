@@ -178,9 +178,12 @@ async function resumeLatestRun(){if(!latestRun)return;try{const token=authToken(
 simulateBuyerMessage=async function(){const content='我们预计第四季度开始采购，首批需要 800kg，并希望确认 FDA 及有机认证。';line('买家模拟回复：'+content,'user');try{const token=authToken();if(!token){showAuth('login');return;}const response=await fetch('/api/v1/opportunities/opp_demo_001/messages',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({content,source:'simulated',idempotency_key:'demo-buyer-'+Date.now()})});const data=await response.json();if(!response.ok)throw new Error(data.error||'买家事件处理失败');latestRun=data.run;renderRunTimeline(data.run,data);line('Buyer Message Event 已持久化。变化字段：'+(data.changed_fields||[]).join('、')+'；增量能力：'+(data.capabilities_called||[]).join('、'));}catch(error){line(error.message);}};
  </script><style>
 /* 实时采集面板（collection panel）：平台勾选 + 一键触发 + 步骤进度 */
-.collection-panel{margin:14px 16px;background:#f4f8f5;border:1px solid #dbe8de;border-radius:6px;padding:12px;flex-shrink:0}
+.collection-panel{margin:14px 16px;background:#f4f8f5;border:1px solid #dbe8de;border-radius:6px;padding:12px;flex-shrink:0;transition:padding .25s}
+.collection-panel.collapsed .collection-sources,.collection-panel.collapsed .collection-hint,.collection-panel.collapsed .collection-actions,.collection-panel.collapsed .collection-steps{display:none}
+.collection-panel.collapsed{padding:8px 12px}
 .collection-panel header{display:flex;justify-content:space-between;align-items:center;color:var(--g);font-weight:800;font-size:12px}
 .collection-panel header small{color:var(--muted);font-weight:400}
+.collection-toggle{border:1px solid #b8d6c2;background:#fff;color:var(--g);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;margin-left:8px}
 .collection-sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px 10px;margin:10px 0 4px}
 .collection-sources label{display:flex;gap:6px;align-items:baseline;font-size:11px;color:#587466;cursor:pointer}
 .collection-sources label small{font-size:9px;color:var(--muted)}
@@ -209,7 +212,7 @@ function ensureCollectionPanel(){
   const panel=document.createElement('section');
   panel.id='collection-panel';
   panel.className='collection-panel';
-  panel.innerHTML='<header><span>实时采集</span><small id="collection-summary">采集公开平台最新采购信号</small></header>'+
+  panel.innerHTML='<header><span>实时采集</span><small id="collection-summary">采集公开平台最新采购信号</small><button class="collection-toggle" id="collection-toggle" onclick="toggleCollectionPanel()">收起</button></header>'+
     '<div class="collection-sources" id="collection-sources"></div>'+
     '<div class="collection-hint" id="collection-hint"></div>'+
     '<div class="collection-actions"><button class="collection-trigger" id="collection-trigger" onclick="startCollection()">开始采集</button><span class="collection-status" id="collection-status"></span></div>'+
@@ -260,7 +263,7 @@ async function loadCollectionState(){
   collectionConfig=data.config;
   renderCollectionConfig();
   const latest=data.runs[0];
-  if(latest){renderCollectionJob(latest);if(latest.status==='RUNNING')startCollectionPoll(latest.collection_id);}
+  if(latest){renderCollectionJob(latest);if(latest.status==='RUNNING')startCollectionPoll(latest.collection_id);else setTimeout(collapseCollectionPanel,300);}
 }
 async function startCollection(){
   const token=authToken();
@@ -284,10 +287,12 @@ async function pollCollection(id){
   renderCollectionJob(data);
   if(data.status!=='RUNNING'){
     clearInterval(collectionTimer);collectionTimer=null;
+    setTimeout(collapseCollectionPanel,800);
     if(data.status==='SUCCEEDED'){
       const failed=(data.steps||[]).filter(s=>s.status==='FAILED').map(s=>s.name);
       if(failed.length)line('实时采集部分完成（'+data.pipeline_status+'）· 失败步骤：'+failed.join('、')+'。可聚合部分已入库，工作台已刷新；门户「全球商机」页（4180）刷新可见。');
       else line('实时采集完成（'+(data.pipeline_status||'SUCCEEDED')+'）· 决策库已重建，工作台结果已刷新；门户「全球商机」页（4180）刷新页面可见最新数据。');
+      const sm=document.querySelector('#collection-summary');if(sm)sm.textContent='✓ 采集完成 · '+(data.steps||[]).filter(s=>s.status==='OK').length+' 步成功';
       refreshResults();
     }else if(data.status==='FAILED'){
       line('实时采集失败：'+(data.error||'未知错误')+'。可修正后重新触发。');
@@ -296,6 +301,20 @@ async function pollCollection(id){
     }
     loadCollectionState();
   }
+}
+function toggleCollectionPanel(){
+  const panel=document.querySelector('#collection-panel');
+  if(!panel)return;
+  const btn=document.querySelector('#collection-toggle');
+  panel.classList.toggle('collapsed');
+  if(btn)btn.textContent=panel.classList.contains('collapsed')?'展开':'收起';
+}
+function collapseCollectionPanel(){
+  const panel=document.querySelector('#collection-panel');
+  if(!panel||panel.classList.contains('collapsed'))return;
+  panel.classList.add('collapsed');
+  const btn=document.querySelector('#collection-toggle');
+  if(btn)btn.textContent='展开';
 }
 function escapeHtml(text){return String(text==null?'':text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function decisionTag(o){
