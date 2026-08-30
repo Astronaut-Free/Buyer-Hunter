@@ -355,7 +355,21 @@ function briefButton(o){
 async function refreshResults(){
   if(!authToken())return;
   const {response,data}=await collectionFetch('/api/v1/opportunities');
-  if(response.ok&&Array.isArray(data))renderOpportunityRows(data);
+  if(!response.ok||!Array.isArray(data))return;
+  const product=window._sellerProfile?.product||'';
+  if(product){
+    const CN_EN={抹茶:'matcha',蓝莓:'blueberry',刺梨:'rosa roxburghii',辣椒:'chili pepper',茶叶:'tea',咖啡:'coffee',蜂蜜:'honey'};
+    const kw=product.replace(/贵州|供应商/g,'').trim().toLowerCase();
+    if(kw){
+      const en=(CN_EN[kw]||'').toLowerCase();
+      const matched=data.filter(o=>{
+        const t=((o.fields?.demand_title||'')+(o.fields?.product||'')).toLowerCase();
+        return t.includes(kw)||(en&&t.includes(en));
+      });
+      if(matched.length)return renderOpportunityRows(matched);
+    }
+  }
+  renderOpportunityRows(data);
 }
 (function(){
   const origShowWorkspace=showWorkspace;
@@ -379,6 +393,7 @@ async function refreshResults(){
   ];
   const LABEL={product:'产品',specification:'规格',capacity:'月产能',moq:'MOQ',markets:'目标市场',buyer_type:'买家类型',certifications:'认证'};
   const state={profile:{},history:[],pending:null};
+  window._sellerProfile=state.profile;
 
   // 把回答归到某个字段：优先归到上一轮 AI 正在问的字段，否则按关键词猜
   const fieldFor=text=>{
