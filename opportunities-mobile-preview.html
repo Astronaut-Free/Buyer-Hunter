@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>黔脉 QianPulse｜手机尺寸整页预览</title>
+  <style>
+    :root{--green:#123b32;--warm:#f7f4ec;--gold:#d5a33f;--ink:#172720}*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0}body{overflow:hidden;color:var(--ink);background:#dfe6e1;font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}.preview-toolbar{position:relative;z-index:5;min-height:72px;display:flex;align-items:center;gap:18px;padding:10px 20px;color:#fff;background:var(--green);box-shadow:0 6px 22px rgba(6,35,27,.22)}.preview-brand{min-width:210px}.preview-title{margin:0;font-size:17px;line-height:1.1}.preview-note{margin:5px 0 0;color:rgba(255,255,255,.62);font-size:10px}.device-list,.section-list{display:flex;align-items:center;gap:7px}.device-button,.section-button,.open-page{min-height:40px;display:inline-flex;align-items:center;justify-content:center;padding:0 13px;color:rgba(255,255,255,.82);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);border-radius:9px;cursor:pointer;font:700 11px/1 ui-sans-serif,system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;text-decoration:none;white-space:nowrap}.device-button[aria-pressed="true"]{color:var(--green);background:var(--warm);border-color:var(--warm)}.section-list{margin-left:auto}.section-button{min-height:34px;padding:0 10px;font-size:10px}.section-button:hover,.open-page:hover{border-color:rgba(213,163,63,.8);background:rgba(213,163,63,.12)}.preview-stage{position:relative;height:calc(100vh - 72px);display:grid;place-items:center;overflow:auto;padding:24px;background-color:#dfe6e1;background-image:linear-gradient(rgba(18,59,50,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(18,59,50,.06) 1px,transparent 1px);background-size:24px 24px}.phone-mount{position:relative;flex:0 0 auto}.phone-shell{position:absolute;left:0;top:0;padding:10px;background:#13231e;border-radius:30px;box-shadow:0 30px 72px rgba(8,32,25,.34),0 0 0 1px rgba(255,255,255,.12) inset;transform-origin:left top}.phone-shell::before{content:"";position:absolute;z-index:3;left:50%;top:4px;width:82px;height:18px;background:#13231e;border-radius:0 0 13px 13px;transform:translateX(-50%);pointer-events:none}.phone-frame{display:block;width:100%;height:100%;overflow:hidden;background:#f7f4ec;border:0;border-radius:20px}.device-badge{position:absolute;left:18px;bottom:14px;padding:8px 11px;color:#dce9e1;background:rgba(18,59,50,.86);border:1px solid rgba(255,255,255,.16);border-radius:8px;font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;pointer-events:none}.scroll-tip{position:absolute;right:18px;bottom:14px;padding:8px 11px;color:#4e6259;background:rgba(247,244,236,.9);border:1px solid rgba(18,59,50,.12);border-radius:8px;font-size:10px;pointer-events:none}@media(max-width:1180px){.preview-toolbar{flex-wrap:wrap}.preview-brand{flex:1 0 100%}.section-list{margin-left:0}.preview-stage{height:calc(100vh - 122px)}}
+  </style>
+</head>
+<body>
+  <header class="preview-toolbar">
+    <div class="preview-brand"><h1 class="preview-title">黔脉 QianPulse · 手机尺寸整页预览</h1><p class="preview-note">在手机画布内直接滚动，查看已合并的完整主页面</p></div>
+    <div class="device-list" aria-label="手机尺寸">
+      <button class="device-button" type="button" data-size="360x800" aria-pressed="false">360 × 800</button>
+      <button class="device-button" type="button" data-size="390x844" aria-pressed="true">390 × 844</button>
+      <button class="device-button" type="button" data-size="393x852" aria-pressed="false">393 × 852</button>
+      <button class="device-button" type="button" data-size="430x932" aria-pressed="false">430 × 932</button>
+    </div>
+    <nav class="section-list" aria-label="分屏快捷跳转">
+      <button class="section-button" type="button" data-target="qpProductGallery">第一页</button>
+      <button class="section-button" type="button" data-target="global-demand">第二页</button>
+      <button class="section-button" type="button" data-target="core-capabilities">第三页</button>
+      <button class="section-button" type="button" data-target="deal-progression">第四页</button>
+      <button class="section-button" type="button" data-target="start-hunting">最后页</button>
+    </nav>
+    <a class="open-page" href="opportunities.html" target="_blank" rel="noopener">普通网页 ↗</a>
+  </header>
+  <main class="preview-stage" id="previewStage">
+    <div class="phone-mount" id="phoneMount"><div class="phone-shell" id="phoneShell"><iframe class="phone-frame" id="phoneFrame" src="opportunities.html?mobile-preview=1#qpProductGallery" title="黔脉完整主页面手机预览"></iframe></div></div>
+    <span class="device-badge" id="deviceBadge">390 × 844</span><span class="scroll-tip">在手机内滚动查看完整页面</span>
+  </main>
+  <script>
+  (()=>{
+    const stage=document.getElementById('previewStage'),mount=document.getElementById('phoneMount'),shell=document.getElementById('phoneShell'),frame=document.getElementById('phoneFrame'),badge=document.getElementById('deviceBadge');
+    let width=390,height=844;
+    function fitPhone(){shell.style.width=`${width+20}px`;shell.style.height=`${height+20}px`;frame.style.width=`${width}px`;frame.style.height=`${height}px`;const availableWidth=Math.max(280,stage.clientWidth-56),availableHeight=Math.max(500,stage.clientHeight-44),scale=Math.min(1,availableWidth/(width+20),availableHeight/(height+20));shell.style.transform=`scale(${scale})`;mount.style.width=`${(width+20)*scale}px`;mount.style.height=`${(height+20)*scale}px`;badge.textContent=`${width} × ${height} · ${Math.round(scale*100)}% 显示`}
+    document.querySelectorAll('[data-size]').forEach(button=>button.addEventListener('click',()=>{[width,height]=button.dataset.size.split('x').map(Number);document.querySelectorAll('[data-size]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));fitPhone()}));
+    document.querySelectorAll('[data-target]').forEach(button=>button.addEventListener('click',()=>{const target=frame.contentDocument?.getElementById(button.dataset.target);if(target)target.scrollIntoView({behavior:'instant',block:'start'});else frame.src=`opportunities.html?mobile-preview=1#${button.dataset.target}`}));
+    frame.addEventListener('load',()=>{const target=frame.contentDocument?.getElementById(location.hash.slice(1)||'qpProductGallery');target?.scrollIntoView({block:'start'})});window.addEventListener('resize',fitPhone,{passive:true});fitPhone();
+  })();
+  </script>
+</body>
+</html>

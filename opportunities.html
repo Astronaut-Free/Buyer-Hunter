@@ -570,6 +570,304 @@
       .qp-op-panel { min-height:230px; }
     }
 
+    @media (max-width:768px) {
+      .qp-html,.qp-body { width:100%; max-width:100%; overflow-x:hidden; }
+      .qp-body { padding-top:60px; }
+      .qp-top-nav {
+        height:60px;
+        gap:8px;
+        padding:0 12px;
+        overflow:visible;
+      }
+      .qp-nav-left { flex:1 1 auto; }
+      .qp-nav-logo { flex-basis:112px; height:44px; }
+      .qp-nav-logo-image { left:-2px; top:-6px; width:111px; }
+      .qp-main-nav {
+        position:absolute;
+        top:60px;
+        left:10px;
+        right:10px;
+        width:auto;
+        max-height:0;
+        margin:0;
+        overflow:hidden;
+        visibility:hidden;
+        opacity:0;
+        pointer-events:none;
+        background:rgba(255,255,255,.98);
+        border:1px solid rgba(18,59,50,.1);
+        border-radius:0 0 14px 14px;
+        box-shadow:0 14px 28px rgba(18,59,50,.2);
+        transition:max-height .28s ease,opacity .2s ease,visibility .2s ease;
+      }
+      .qp-top-nav.qp-mobile-nav-open .qp-main-nav {
+        max-height:320px;
+        visibility:visible;
+        opacity:1;
+        pointer-events:auto;
+      }
+      .qp-nav-links {
+        display:grid;
+        grid-template-columns:1fr;
+        gap:0;
+        width:100%;
+        padding:8px 14px 12px;
+        overflow:visible;
+        white-space:normal;
+      }
+      .qp-nav-link {
+        min-height:48px;
+        display:flex;
+        align-items:center;
+        padding:0 4px;
+        border-bottom:1px solid rgba(18,59,50,.09);
+        font-size:14px;
+      }
+      .qp-nav-links li:last-child .qp-nav-link { border-bottom:0; }
+      .qp-nav-link::after { bottom:5px; }
+      .qp-mobile-nav-toggle {
+        flex:0 0 44px;
+        width:44px;
+        height:44px;
+        display:grid;
+        place-items:center;
+        padding:0;
+        color:var(--qp-green);
+        background:var(--qp-warm);
+        border:1px solid rgba(18,59,50,.14);
+        border-radius:50%;
+        cursor:pointer;
+        touch-action:manipulation;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .qp-mobile-nav-icon,
+      .qp-mobile-nav-icon::before,
+      .qp-mobile-nav-icon::after {
+        width:18px;
+        height:2px;
+        display:block;
+        background:currentColor;
+        border-radius:999px;
+        transition:transform .22s ease,opacity .18s ease;
+      }
+      .qp-mobile-nav-icon { position:relative; }
+      .qp-mobile-nav-icon::before,.qp-mobile-nav-icon::after { content:""; position:absolute; left:0; }
+      .qp-mobile-nav-icon::before { top:-6px; }
+      .qp-mobile-nav-icon::after { top:6px; }
+      .qp-mobile-nav-toggle[aria-expanded="true"] .qp-mobile-nav-icon { background:transparent; }
+      .qp-mobile-nav-toggle[aria-expanded="true"] .qp-mobile-nav-icon::before { top:0; transform:rotate(45deg); }
+      .qp-mobile-nav-toggle[aria-expanded="true"] .qp-mobile-nav-icon::after { top:0; transform:rotate(-45deg); }
+      .qp-login { min-width:74px; height:44px; padding:0 6px 0 12px; font-size:13px; touch-action:manipulation; }
+      .qp-login-arrow { width:32px; height:32px; font-size:13px; }
+
+      .qp-product-gallery {
+        /* 2026-08-31 用户确认的首屏手机端参数；桌面端基础声明保持不变。 */
+        height:351px!important;
+        aspect-ratio:auto;
+        scroll-margin-top:60px;
+      }
+      .qp-product-image { object-fit:cover; }
+      .qp-product-slide-global .qp-product-image { object-position:62% center; }
+      .qp-product-slide-matcha .qp-product-image { object-position:58% center; }
+      .qp-product-slide-blueberry .qp-product-image { object-position:55% center; }
+      .qp-product-slide-rosa .qp-product-image { object-position:55% center; }
+      .qp-product-slide-global::after { background:linear-gradient(180deg,rgba(18,59,50,.7),rgba(18,59,50,.35) 55%,rgba(18,59,50,.68)); }
+      .qp-copy-upper {
+        left:22px;
+        right:22px;
+        top:56px;
+        transform:none;
+      }
+      .qp-copy-lower {
+        left:22px;
+        right:22px;
+        top:auto;
+        bottom:102px;
+        transform:none;
+      }
+      .qp-brand-name { font-size:28px; transform:translate3d(0,-14px,0); }
+      .qp-brand-title { max-width:340px; margin-top:20px; font-size:33.5px; line-height:1.08; white-space:normal; transform:translate3d(0,-24px,0); }
+      .qp-brand-slogan { max-width:330px; margin-top:16px; font-size:21.5px; line-height:1.3; transform:translate3d(0,-27px,0); }
+      .qp-brand-description { width:100%; transform:translate3d(0,4px,0); }
+      .qp-brand-description-line {
+        width:auto;
+        max-width:none;
+        margin:0;
+        white-space:normal;
+        font-size:14px;
+        line-height:1.65;
+      }
+      .qp-brand-description-desktop-break { display:none; }
+      .qp-brand-description-line-two { margin-top:2px; }
+      .qp-hero-glass-button {
+        right:22px;
+        bottom:30px;
+        width:154px;
+        height:48px;
+        padding:0 6px 0 18px;
+      }
+      .qp-glass-button.qp-hero-glass-button { font-size:14px; }
+      .qp-hero-glass-button .qp-glass-button-arrow { width:36px; height:36px; }
+
+      .qp-demand-section,.qp-core-section,.qp-deal-section {
+        width:100%;
+        padding:58px 16px 68px;
+        scroll-margin-top:60px;
+      }
+      /* 2026-09-01 用户确认的第三屏手机端参数。 */
+      .qp-core-section { padding-top:57px; }
+      .qp-core-kicker { font-size:12px; transform:translate3d(0,-34px,0); }
+      .qp-core-title { font-size:39.8px; transform:translate3d(0,-45px,0); }
+      .qp-core-intro { font-size:15px; transform:translate3d(0,-52px,0); }
+      /* 2026-09-01 用户确认的第二屏手机端文字与 Scroll Stack 参数。 */
+      .qp-demand-section-head { margin-bottom:40px; }
+      .qp-section-title,.qp-core-title,.qp-deal-title { font-size:clamp(36px,10.2vw,44px); line-height:1.16; overflow-wrap:anywhere; }
+      .qp-section-intro,.qp-core-intro,.qp-deal-intro { margin-top:18px; font-size:15px; line-height:1.75; }
+      .qp-demand-section .qp-section-kicker { font-size:12px; transform:translate3d(0,-39px,0); }
+      .qp-demand-section .qp-section-title { font-size:26px; transform:translate3d(0,-47px,0); }
+      .qp-demand-section .qp-section-intro { font-size:11.5px; transform:translate3d(0,-54px,0); }
+      .qp-demand-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .qp-demand-kpi { padding:16px 12px; }
+      .qp-demand-kpi:nth-child(2) { border-right:0; }
+      .qp-demand-kpi:nth-child(-n+2) { border-bottom:1px solid #E0E4E1; }
+      .qp-demand-kpis { transform:translate3d(0,-82px,0); }
+      .qp-demand-kpi-value { font-size:28.5px; }
+      .qp-demand-kpi-label { font-size:11.5px; }
+      .qp-demand-layout { gap:42px; }
+      .qp-featured-live { font-size:10px; transform:translate3d(0,-63px,0); }
+      .qp-featured-title { font-size:20px; transform:translate3d(0,-60px,0); }
+      .qp-order-stack {
+        --qp-mobile-stack-height:381px;
+        --qp-mobile-stack-distance:13px;
+        --qp-mobile-card-distance:21px;
+        --qp-mobile-base-scale:.895;
+        --qp-mobile-item-scale:.025;
+        position:relative;
+        height:var(--qp-mobile-stack-height);
+        margin-top:-64px;
+        padding:8px 0 0;
+        overflow-x:visible;
+        overflow-y:auto;
+        overscroll-behavior-y:auto;
+        -webkit-overflow-scrolling:touch;
+        scroll-behavior:smooth;
+        scrollbar-width:none;
+        transform:translateZ(0);
+        will-change:scroll-position;
+      }
+      .qp-order-stack::-webkit-scrollbar { display:none; }
+      .qp-order-card-list { display:block; padding-bottom:var(--qp-stack-end-space,64px); }
+      .qp-order-card {
+        --qp-stack-index:0;
+        --qp-stack-scale:1;
+        position:sticky;
+        top:calc(8px + var(--qp-stack-index) * var(--qp-mobile-stack-distance));
+        z-index:calc(10 + var(--qp-stack-index));
+        min-height:258px;
+        margin:0 0 var(--qp-mobile-card-distance);
+        padding:16px;
+        backface-visibility:hidden;
+        transform:scale(var(--qp-stack-scale)) translateZ(0);
+        transform-origin:top center;
+        transform-style:preserve-3d;
+        will-change:transform,filter;
+        box-shadow:0 16px 34px rgba(18,59,50,.12);
+      }
+      .qp-order-card:nth-child(1) { --qp-stack-index:0; }
+      .qp-order-card:nth-child(2) { --qp-stack-index:1; }
+      .qp-order-card:nth-child(3) { --qp-stack-index:2; }
+      .qp-order-card:nth-child(4) { --qp-stack-index:3; }
+      .qp-order-card-head { flex-wrap:wrap; }
+      .qp-order-updated { margin-left:0; flex:1 1 100%; }
+      .qp-order-product { font-size:19px; }
+      .qp-order-requirement {
+        overflow:visible;
+        white-space:normal;
+        text-overflow:clip;
+        font-size:11px;
+        line-height:1.55;
+      }
+      .qp-order-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .qp-order-metric-value {
+        overflow:visible;
+        white-space:normal;
+        text-overflow:clip;
+        overflow-wrap:anywhere;
+      }
+      .qp-demand-board { height:640px; padding:16px 12px 14px; }
+      .qp-board-head { min-height:62px; padding:0 4px 12px; }
+      .qp-board-live { font-size:10px; transform:translate3d(0,0,0); }
+      .qp-board-title { font-size:20px; transform:translate3d(0,-2px,0); }
+      .qp-show-all { min-height:44px; padding:0 4px; }
+      .qp-demand-list { gap:4px; }
+      .qp-demand-row {
+        flex-basis:166px;
+        min-height:166px;
+        grid-template-columns:minmax(0,1fr) auto;
+        grid-template-rows:auto auto 1fr;
+        grid-template-areas:"primary status" "signal quantity" "source time";
+        gap:8px 14px;
+        padding:14px 10px 9px;
+      }
+      .qp-demand-primary { grid-area:primary; min-width:0; align-self:start; }
+      .qp-demand-meta,.qp-demand-state,.qp-demand-volume { display:contents; }
+      .qp-buyer-name { overflow:visible; white-space:normal; text-overflow:clip; font-size:14px; }
+      .qp-demand-name { display:block; overflow:visible; margin-top:4px; -webkit-line-clamp:unset; font-size:11.5px; }
+      .qp-signal-code { grid-area:signal; align-self:center; font-size:15px; }
+      .qp-status { grid-area:status; align-self:start; min-width:68px; min-height:30px; padding:0 9px; }
+      .qp-quantity { grid-area:quantity; align-self:center; font-size:15px; text-align:right; }
+      .qp-source-button { grid-area:source; align-self:end; justify-self:start; min-height:44px; margin:0; border-bottom:0; font-size:9.5px; }
+      .qp-time { grid-area:time; align-self:end; justify-self:end; margin:0; font-size:9.5px; text-align:right; }
+      .qp-demand-board:has(.qp-demand-list.qp-is-expanded) { height:auto; overflow:visible; }
+      .qp-demand-list.qp-is-expanded { height:auto; overflow:visible; padding-right:0; }
+
+      .qp-network-stage { gap:22px; margin-top:-32px; padding:14px; }
+      .qp-network-route { padding:14px 12px; }
+      .qp-network-route-demand,.qp-network-route-expand { transform:translate3d(0,0,0); }
+      .qp-network-route-demand .qp-network-route-title,.qp-network-route-expand .qp-network-route-title { font-size:16px; }
+      .qp-network-route-flow { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; text-align:center; }
+      .qp-network-side { height:280px; }
+      .qp-network-side-head,.qp-network-question { transform:translate3d(0,0,0); }
+      .qp-network-side-title { font-size:31px; }
+      .qp-network-question { font-size:14px; }
+      .qp-network-engine { width:min(200px,74vw); }
+      .qp-network-engine-skill-one { left:-4%; }
+      .qp-network-engine-skill-two { right:-8%; }
+      .qp-network-engine-skill-three { left:-6%; }
+      .qp-network-engine-skill-four { right:-4%; }
+      /* 第四屏手机端：标题可视化参数与四张卡片 2 × 2 等比例布局。 */
+      .qp-deal-section { padding-top:58px; }
+      .qp-deal-kicker { font-size:12px; transform:translate3d(0,-27px,0); }
+      .qp-deal-title { font-size:36px; transform:translate3d(0,-36px,0); }
+      .qp-deal-intro { font-size:12.5px; transform:translate3d(0,-41px,0); }
+      .qp-deal-section .qp-bento-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:-22px; }
+      .qp-deal-section .qp-bento-card,.qp-deal-section .qp-bento-card:first-child,.qp-deal-section .qp-bento-card.qp-op-card {
+        width:100%;
+        min-height:0;
+        aspect-ratio:.79;
+        padding:clamp(10px,3.1vw,13px);
+        border-radius:clamp(12px,4vw,17px);
+      }
+      .qp-deal-section .qp-op-text-card .qp-op-card-head { min-height:0; padding-bottom:clamp(8px,2.5vw,11px); }
+      .qp-deal-section .qp-op-step { margin-bottom:clamp(7px,2.1vw,9px); font-size:clamp(8px,2.25vw,10px); }
+      .qp-deal-section .qp-op-card .qp-bento-card-title { font-size:clamp(17px,5vw,21px); overflow-wrap:anywhere; }
+      .qp-deal-section .qp-op-fields { min-height:0; margin-top:clamp(9px,2.6vw,11px); font-size:clamp(8.5px,2.45vw,10.5px); line-height:1.58; }
+      .qp-deal-section .qp-op-core-question { min-height:0; margin-top:clamp(8px,2.3vw,10px); padding:clamp(8px,2.3vw,10px); border-left-width:2px; border-radius:clamp(7px,2.3vw,10px); font-size:clamp(11px,3.1vw,13px); line-height:1.42; }
+      .qp-deal-section .qp-op-conclusion { margin-top:clamp(8px,2.3vw,10px); padding-top:clamp(7px,2.1vw,9px); font-size:clamp(9px,2.55vw,11px); line-height:1.5; }
+      .qp-specular-button,.qp-glass-button { min-height:48px; }
+      .qp-final-cta { height:349px; min-height:349px; scroll-margin-top:60px; }
+      .qp-final-cta-content { width:calc(100% - 32px); }
+      /* 最后一屏手机端编辑锚点：两行标题分别缩放且各自保持单行。 */
+      .qp-final-cta-title { width:100%; max-width:none; line-height:1.18; }
+      .qp-final-cta-title-line { width:max-content; max-width:none; margin-right:auto; margin-left:auto; white-space:nowrap; }
+      .qp-final-cta-title-line:first-child { font-size:33px; transform:translate3d(0,9px,0); }
+      .qp-final-cta-title-line:last-child { font-size:33px; transform:translate3d(0,23px,0); }
+      .qp-final-cta-copy { margin-top:20px; font-size:12px; line-height:1.75; transform:translate3d(0,18px,0); }
+      .qp-final-cta .qp-final-cta-image,.qp-final-cta.qp-final-cta-reveal .qp-final-cta-image { object-position:50% 54%; transform:translate3d(0,0,0) scale(1.015); }
+      #qpGlassStart { width:188px; height:58px; font-size:15px; transform:translate3d(0,5px,0); }
+      img { max-width:100%; }
+    }
+
     @media (prefers-reduced-motion:reduce) {
       .qp-html { scroll-behavior:auto; }
       .qp-product-slide.qp-is-entering,.qp-product-slide.qp-is-leaving { animation-duration:.01ms; }
@@ -594,6 +892,7 @@
         <li><a class="qp-nav-link" href="#qpProductGallery">关于黔脉</a></li>
       </ul>
     </nav>
+    <button class="qp-mobile-nav-toggle qp-button" id="qpMobileNavToggle" type="button" aria-label="打开主导航" aria-controls="qpNavLinks" aria-expanded="false" hidden><span class="qp-mobile-nav-icon" aria-hidden="true"></span></button>
     <button class="qp-login qp-button" id="qpLogin" type="button"><span id="qpLoginText">登录</span><span class="qp-login-arrow" aria-hidden="true">↗</span></button>
   </header>
 
@@ -611,12 +910,11 @@
         </div>
         <div class="qp-copy-lower">
           <div class="qp-brand-description">
-            <p class="qp-brand-description-line qp-brand-description-line-one">持续盯住全球需求变化，判断商机价值，自动完成研究、联络和跟进，</p>
-            <p class="qp-brand-description-line qp-brand-description-line-two">帮企业不断找销路、开新渠道，把更多机会变成营收。</p>
+            <p class="qp-brand-description-line qp-brand-description-line-one">持续盯住全球需求变化，判断商机价值，自动完成研究、联络和跟进，<br class="qp-brand-description-desktop-break" />帮企业不断找销路、开新渠道，把更多机会变成营收。</p>
           </div>
         </div>
       </div>
-      <button class="qp-glass-button qp-hero-glass-button qp-button" id="qpHeroStart" type="button" aria-label="即刻开始（跳转功能待接入）">
+      <button class="qp-glass-button qp-hero-glass-button qp-button" id="qpHeroStart" type="button" aria-label="即刻开始，跳转至全球采购需求">
         <span class="qp-glass-button-text">即刻开始</span>
         <span class="qp-glass-button-arrow" aria-hidden="true">→</span>
       </button>
@@ -722,40 +1020,40 @@
           <div class="qp-demand-viewport" id="qpDemandViewport">
             <div class="qp-demand-list" id="qpDemandList">
               <article class="qp-demand-row qp-demand-row-tint">
-                <div><strong class="qp-buyer-name">德国｜食品原料进口</strong><span class="qp-demand-name">采购食品级抹茶原料</span></div>
-                <div><strong class="qp-signal-code">#QP-26841</strong><button class="qp-source-button qp-button" type="button" data-source="企业官网 · 08/29">查看来源</button></div>
-                <div><span class="qp-status qp-status-confirmed">已核验</span></div>
-                <div><strong class="qp-quantity">1,000 kg</strong><time class="qp-time">12 分钟前</time></div>
+                <div class="qp-demand-primary"><strong class="qp-buyer-name">德国｜食品原料进口</strong><span class="qp-demand-name">采购食品级抹茶原料</span></div>
+                <div class="qp-demand-meta"><strong class="qp-signal-code">#QP-26841</strong><button class="qp-source-button qp-button" type="button" data-source="企业官网 · 08/29">查看来源</button></div>
+                <div class="qp-demand-state"><span class="qp-status qp-status-confirmed">已核验</span></div>
+                <div class="qp-demand-volume"><strong class="qp-quantity">1,000 kg</strong><time class="qp-time">12 分钟前</time></div>
               </article>
               <article class="qp-demand-row">
-                <div><strong class="qp-buyer-name">英国｜健康食品品牌</strong><span class="qp-demand-name">寻找冻干蓝莓粉供应商</span></div>
-                <div><strong class="qp-signal-code">#QP-26796</strong><button class="qp-source-button qp-button" type="button" data-source="采购目录 · 08/29">查看来源</button></div>
-                <div><span class="qp-status qp-status-tracking">跟进中</span></div>
-                <div><strong class="qp-quantity">2.5 t</strong><time class="qp-time">37 分钟前</time></div>
+                <div class="qp-demand-primary"><strong class="qp-buyer-name">英国｜健康食品品牌</strong><span class="qp-demand-name">寻找冻干蓝莓粉供应商</span></div>
+                <div class="qp-demand-meta"><strong class="qp-signal-code">#QP-26796</strong><button class="qp-source-button qp-button" type="button" data-source="采购目录 · 08/29">查看来源</button></div>
+                <div class="qp-demand-state"><span class="qp-status qp-status-tracking">跟进中</span></div>
+                <div class="qp-demand-volume"><strong class="qp-quantity">2.5 t</strong><time class="qp-time">37 分钟前</time></div>
               </article>
               <article class="qp-demand-row qp-demand-row-tint">
-                <div><strong class="qp-buyer-name">新加坡｜饮料制造</strong><span class="qp-demand-name">采购刺梨浓缩汁原料</span></div>
-                <div><strong class="qp-signal-code">#QP-26732</strong><button class="qp-source-button qp-button" type="button" data-source="招标公告 · 08/29">查看来源</button></div>
-                <div><span class="qp-status qp-status-verifying">核验中</span></div>
-                <div><strong class="qp-quantity">6 t</strong><time class="qp-time">1 小时前</time></div>
+                <div class="qp-demand-primary"><strong class="qp-buyer-name">新加坡｜饮料制造</strong><span class="qp-demand-name">采购刺梨浓缩汁原料</span></div>
+                <div class="qp-demand-meta"><strong class="qp-signal-code">#QP-26732</strong><button class="qp-source-button qp-button" type="button" data-source="招标公告 · 08/29">查看来源</button></div>
+                <div class="qp-demand-state"><span class="qp-status qp-status-verifying">核验中</span></div>
+                <div class="qp-demand-volume"><strong class="qp-quantity">6 t</strong><time class="qp-time">1 小时前</time></div>
               </article>
               <article class="qp-demand-row">
-                <div><strong class="qp-buyer-name">荷兰｜茶饮原料分销</strong><span class="qp-demand-name">寻找有机抹茶长期供应商</span></div>
-                <div><strong class="qp-signal-code">#QP-26688</strong><button class="qp-source-button qp-button" type="button" data-source="企业官网 · 08/29">查看来源</button></div>
-                <div><span class="qp-status qp-status-confirmed">已核验</span></div>
-                <div><strong class="qp-quantity">800 kg</strong><time class="qp-time">2 小时前</time></div>
+                <div class="qp-demand-primary"><strong class="qp-buyer-name">荷兰｜茶饮原料分销</strong><span class="qp-demand-name">寻找有机抹茶长期供应商</span></div>
+                <div class="qp-demand-meta"><strong class="qp-signal-code">#QP-26688</strong><button class="qp-source-button qp-button" type="button" data-source="企业官网 · 08/29">查看来源</button></div>
+                <div class="qp-demand-state"><span class="qp-status qp-status-confirmed">已核验</span></div>
+                <div class="qp-demand-volume"><strong class="qp-quantity">800 kg</strong><time class="qp-time">2 小时前</time></div>
               </article>
               <article class="qp-demand-row qp-demand-row-tint">
-                <div><strong class="qp-buyer-name">法国｜天然饮品品牌</strong><span class="qp-demand-name">采购刺梨果粉与浓缩液</span></div>
-                <div><strong class="qp-signal-code">#QP-26641</strong><button class="qp-source-button qp-button" type="button" data-source="采购平台 · 08/29">查看来源</button></div>
-                <div><span class="qp-status qp-status-verifying">核验中</span></div>
-                <div><strong class="qp-quantity">4 t</strong><time class="qp-time">3 小时前</time></div>
+                <div class="qp-demand-primary"><strong class="qp-buyer-name">法国｜天然饮品品牌</strong><span class="qp-demand-name">采购刺梨果粉与浓缩液</span></div>
+                <div class="qp-demand-meta"><strong class="qp-signal-code">#QP-26641</strong><button class="qp-source-button qp-button" type="button" data-source="采购平台 · 08/29">查看来源</button></div>
+                <div class="qp-demand-state"><span class="qp-status qp-status-verifying">核验中</span></div>
+                <div class="qp-demand-volume"><strong class="qp-quantity">4 t</strong><time class="qp-time">3 小时前</time></div>
               </article>
               <article class="qp-demand-row">
-                <div><strong class="qp-buyer-name">日本｜食品配料贸易</strong><span class="qp-demand-name">寻找贵州抹茶稳定供应商</span></div>
-                <div><strong class="qp-signal-code">#QP-26590</strong><button class="qp-source-button qp-button" type="button" data-source="进口商目录 · 08/29">查看来源</button></div>
-                <div><span class="qp-status qp-status-tracking">跟进中</span></div>
-                <div><strong class="qp-quantity">1.2 t</strong><time class="qp-time">4 小时前</time></div>
+                <div class="qp-demand-primary"><strong class="qp-buyer-name">日本｜食品配料贸易</strong><span class="qp-demand-name">寻找贵州抹茶稳定供应商</span></div>
+                <div class="qp-demand-meta"><strong class="qp-signal-code">#QP-26590</strong><button class="qp-source-button qp-button" type="button" data-source="进口商目录 · 08/29">查看来源</button></div>
+                <div class="qp-demand-state"><span class="qp-status qp-status-tracking">跟进中</span></div>
+                <div class="qp-demand-volume"><strong class="qp-quantity">1.2 t</strong><time class="qp-time">4 小时前</time></div>
               </article>
             </div>
           </div>
@@ -860,8 +1158,10 @@
   <script>
     (() => {
       const qpGallery = document.getElementById('qpProductGallery');
+      const qpLayoutPreview = new URLSearchParams(window.location.search).get('preview') === '1';
 
       function qpSyncVisualRatio() {
+        if (qpLayoutPreview) return;
         const qpVisualHeight = qpGallery.getBoundingClientRect().width * 1350 / 2940;
         qpGallery.style.height = `${qpVisualHeight}px`;
       }
@@ -909,6 +1209,7 @@
 
       const qpFeaturedOrders = document.querySelector('.qp-featured-orders');
       const qpOrderStack = document.querySelector('.qp-order-stack');
+      const qpOrderCardList = qpOrderStack?.querySelector('.qp-order-card-list');
       const qpOrderCards = qpOrderStack ? [...qpOrderStack.querySelectorAll('.qp-order-card')] : [];
       const qpOrderCardStartRatios = qpOrderStack
         ? qpOrderCards.map(qpCard => (qpCard.getBoundingClientRect().top - qpOrderStack.getBoundingClientRect().top + qpOrderStack.scrollTop) / qpOrderStack.clientWidth)
@@ -923,15 +1224,51 @@
       }
 
       function qpGetOrderStackLimit() {
-        if (!qpOrderStack || !qpOrderCards.length || window.innerWidth <= 1080) return qpOrderStack?.scrollHeight || 0;
+        if (!qpOrderStack || !qpOrderCards.length) return 0;
+        if (window.innerWidth <= 768) return Math.max(0,qpOrderStack.scrollHeight - qpOrderStack.clientHeight);
+        if (window.innerWidth <= 1080) return qpOrderStack.scrollHeight;
         const qpLastIndex = qpOrderCards.length - 1;
         const qpLastPinTop = Number.parseFloat(getComputedStyle(qpOrderCards[qpLastIndex]).top) || 0;
         return Math.max(0,qpOrderCardStartRatios[qpLastIndex] * qpOrderStack.clientWidth - qpLastPinTop);
       }
 
+      function qpSyncOrderStackEndSpace() {
+        if (!qpOrderStack || !qpOrderCardList || !qpOrderCards.length) return;
+        if (window.innerWidth > 768) {
+          qpOrderCardList.style.removeProperty('--qp-stack-end-space');
+          return;
+        }
+        const qpLastCard = qpOrderCards[qpOrderCards.length - 1];
+        const qpLastCardStyles = getComputedStyle(qpLastCard);
+        const qpLastPinTop = Number.parseFloat(qpLastCardStyles.top) || 0;
+        const qpLastMarginBottom = Number.parseFloat(qpLastCardStyles.marginBottom) || 0;
+        const qpEndSpace = Math.max(18,qpOrderStack.clientHeight - qpLastPinTop - qpLastCard.offsetHeight - qpLastMarginBottom);
+        qpOrderCardList.style.setProperty('--qp-stack-end-space',`${Math.round(qpEndSpace)}px`);
+      }
+
       function qpUpdateOrderStack() {
         qpOrderStackFrame = 0;
-        if (!qpOrderStack || window.innerWidth <= 1080) {
+        if (!qpOrderStack) return;
+
+        if (window.innerWidth <= 768) {
+          qpSyncOrderStackEndSpace();
+          const qpStackStyles = getComputedStyle(qpOrderStack);
+          const qpBaseScale = Number.parseFloat(qpStackStyles.getPropertyValue('--qp-mobile-base-scale')) || .91;
+          const qpItemScale = Number.parseFloat(qpStackStyles.getPropertyValue('--qp-mobile-item-scale')) || .025;
+          const qpScrollTop = qpOrderStack.scrollTop;
+          qpOrderCards.forEach((qpCard,qpIndex) => {
+            const qpPinTop = Number.parseFloat(getComputedStyle(qpCard).top) || 0;
+            const qpTrigger = qpOrderCardStartRatios[qpIndex] * qpOrderStack.clientWidth - qpPinTop;
+            const qpDuration = Math.max(1,qpCard.offsetHeight * .72);
+            const qpProgress = Math.min(1,Math.max(0,(qpScrollTop - qpTrigger) / qpDuration));
+            const qpTargetScale = Math.min(1,qpBaseScale + qpIndex * qpItemScale);
+            const qpScale = qpReducedMotion ? 1 : 1 - qpProgress * (1 - qpTargetScale);
+            qpCard.style.setProperty('--qp-stack-scale',qpScale.toFixed(3));
+          });
+          return;
+        }
+
+        if (window.innerWidth <= 1080) {
           qpOrderCards.forEach(qpCard => qpCard.style.setProperty('--qp-stack-scale','1'));
           return;
         }
@@ -1057,6 +1394,36 @@
           qpNavLinks.forEach(qpOtherLink => qpOtherLink.removeAttribute('aria-current'));
           qpNavLink.setAttribute('aria-current','location');
         });
+      });
+
+      const qpMobileNavQuery = window.matchMedia('(max-width: 768px)');
+      const qpTopNav = document.querySelector('.qp-top-nav');
+      const qpMobileNavToggle = document.getElementById('qpMobileNavToggle');
+      const qpNavList = document.querySelector('.qp-nav-links');
+      if (qpNavList) qpNavList.id = 'qpNavLinks';
+      function qpCloseMobileNav() {
+        qpTopNav?.classList.remove('qp-mobile-nav-open');
+        qpMobileNavToggle?.setAttribute('aria-expanded','false');
+        qpMobileNavToggle?.setAttribute('aria-label','打开主导航');
+      }
+      function qpSyncMobileNav() {
+        if (!qpMobileNavToggle) return;
+        qpMobileNavToggle.hidden = !qpMobileNavQuery.matches;
+        if (!qpMobileNavQuery.matches) qpCloseMobileNav();
+      }
+      qpMobileNavToggle?.addEventListener('click',() => {
+        const qpOpen = !qpTopNav?.classList.contains('qp-mobile-nav-open');
+        qpTopNav?.classList.toggle('qp-mobile-nav-open',qpOpen);
+        qpMobileNavToggle.setAttribute('aria-expanded',String(qpOpen));
+        qpMobileNavToggle.setAttribute('aria-label',qpOpen ? '关闭主导航' : '打开主导航');
+      });
+      qpNavList?.addEventListener('click',qpCloseMobileNav);
+      document.addEventListener('keydown',qpEvent => { if (qpEvent.key === 'Escape') qpCloseMobileNav(); });
+      qpMobileNavQuery.addEventListener?.('change',qpSyncMobileNav);
+      qpSyncMobileNav();
+
+      document.getElementById('qpHeroStart')?.addEventListener('click',() => {
+        document.getElementById('global-demand')?.scrollIntoView({behavior:qpReducedMotion ? 'auto' : 'smooth',block:'start'});
       });
 
       const qpFinalCta = document.getElementById('start-hunting');

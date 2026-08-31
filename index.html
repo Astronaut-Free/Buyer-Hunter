@@ -86,6 +86,123 @@
       .nav-links::-webkit-scrollbar { display:none; }
       .nav-links a { padding:19px 0; font-size:13px; }
     }
+    @media (max-width:768px) {
+      /* 用户确认的首页手机端布局参数：文字 50.5/14/100，地球 50/67.5/113.8，按钮 50/-11.9/1.08。 */
+      html,body { width:100%; max-width:100%; min-height:100%; overflow:hidden; }
+      .hero { min-height:100svh; }
+      .lightfall-canvas { inset:60px 0 0; height:calc(100% - 60px); }
+      .hero-copy-art {
+        --copy-x:50.5%;
+        --copy-y:14vh;
+        --copy-width:100vw;
+        width:min(var(--copy-width),430px);
+      }
+      .globe-wrap {
+        --globe-x:50%;
+        --globe-y:67.5%;
+        --globe-size:113.8vmin;
+        width:var(--globe-size);
+        max-width:none;
+        opacity:.9;
+      }
+      .hero-cta {
+        --cta-x:50%;
+        --cta-y:-11.9%;
+        min-width:166px;
+        height:48px;
+        gap:9px;
+        padding:0 6px 0 18px;
+        font-size:15px;
+        scale:1.08;
+      }
+      .hero-cta__arrow { width:36px; height:36px; font-size:15px; }
+      .top-nav {
+        height:60px;
+        gap:8px;
+        padding:0 12px;
+        overflow:visible;
+      }
+      .nav-left { flex:1 1 auto; }
+      .nav-logo { flex-basis:112px; height:44px; }
+      .nav-logo__image { left:-2px; top:-6px; width:111px; }
+      .top-nav > nav {
+        position:absolute;
+        top:60px;
+        left:10px;
+        right:10px;
+        width:auto;
+        max-height:0;
+        margin:0;
+        overflow:hidden;
+        visibility:hidden;
+        opacity:0;
+        pointer-events:none;
+        background:rgba(255,255,255,.98);
+        border:1px solid rgba(18,59,50,.1);
+        border-radius:0 0 14px 14px;
+        box-shadow:0 14px 28px rgba(18,59,50,.2);
+        transition:max-height .28s ease,opacity .2s ease,visibility .2s ease;
+      }
+      .top-nav.is-mobile-nav-open > nav {
+        max-height:320px;
+        visibility:visible;
+        opacity:1;
+        pointer-events:auto;
+      }
+      .nav-links {
+        display:grid;
+        grid-template-columns:1fr;
+        gap:0;
+        width:100%;
+        padding:8px 14px 12px;
+        overflow:visible;
+        white-space:normal;
+      }
+      .nav-links a {
+        min-height:48px;
+        display:flex;
+        align-items:center;
+        padding:0 4px;
+        border-bottom:1px solid rgba(18,59,50,.09);
+        font-size:14px;
+      }
+      .nav-links li:last-child a { border-bottom:0; }
+      .nav-links a::after { bottom:5px; }
+      .mobile-nav-toggle {
+        flex:0 0 44px;
+        width:44px;
+        height:44px;
+        display:grid;
+        place-items:center;
+        padding:0;
+        color:#123b32;
+        background:#f7f4ec;
+        border:1px solid rgba(18,59,50,.14);
+        border-radius:50%;
+        cursor:pointer;
+        touch-action:manipulation;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .mobile-nav-toggle__icon,
+      .mobile-nav-toggle__icon::before,
+      .mobile-nav-toggle__icon::after {
+        width:18px;
+        height:2px;
+        display:block;
+        background:currentColor;
+        border-radius:999px;
+        transition:transform .22s ease,opacity .18s ease;
+      }
+      .mobile-nav-toggle__icon { position:relative; }
+      .mobile-nav-toggle__icon::before,.mobile-nav-toggle__icon::after { content:""; position:absolute; left:0; }
+      .mobile-nav-toggle__icon::before { top:-6px; }
+      .mobile-nav-toggle__icon::after { top:6px; }
+      .mobile-nav-toggle[aria-expanded="true"] .mobile-nav-toggle__icon { background:transparent; }
+      .mobile-nav-toggle[aria-expanded="true"] .mobile-nav-toggle__icon::before { top:0; transform:rotate(45deg); }
+      .mobile-nav-toggle[aria-expanded="true"] .mobile-nav-toggle__icon::after { top:0; transform:rotate(-45deg); }
+      .login-button { min-width:74px; height:44px; padding:0 6px 0 12px; font-size:13px; touch-action:manipulation; }
+      .login-button__arrow { width:32px; height:32px; font-size:13px; }
+    }
     @media (prefers-reduced-motion:reduce) {
       .globe-breath-lines path { animation:none; stroke-opacity:.12; }
     }
@@ -108,6 +225,7 @@
           <li><a href="#about-qianpulse">关于黔脉</a></li>
         </ul>
       </nav>
+      <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="打开主导航" aria-controls="mainNavLinks" aria-expanded="false" hidden><span class="mobile-nav-toggle__icon" aria-hidden="true"></span></button>
       <button class="login-button" id="loginButton" type="button"><span>登录</span><span class="login-button__arrow" aria-hidden="true">↗</span></button>
     </header>
     <img class="hero-copy-art" src="assets/qianpulse-hero-copy.png" alt="全球采购商机智能平台——捕捉全球需求脉搏，让贵品出海" />
@@ -124,6 +242,36 @@
       <div id="fallback" class="fallback-globe" aria-hidden="true"></div>
     </div>
   </main>
+  <script>
+  (() => {
+    const mobileQuery=window.matchMedia('(max-width: 768px)');
+    const header=document.querySelector('.top-nav');
+    const toggle=document.getElementById('mobileNavToggle');
+    const nav=document.querySelector('.top-nav > nav');
+    const links=document.querySelector('.nav-links');
+    if(!header||!toggle||!nav||!links)return;
+    links.id='mainNavLinks';
+    const closeMenu=()=>{
+      header.classList.remove('is-mobile-nav-open');
+      toggle.setAttribute('aria-expanded','false');
+      toggle.setAttribute('aria-label','打开主导航');
+    };
+    const syncMobileNav=()=>{
+      toggle.hidden=!mobileQuery.matches;
+      if(!mobileQuery.matches)closeMenu();
+    };
+    toggle.addEventListener('click',()=>{
+      const open=!header.classList.contains('is-mobile-nav-open');
+      header.classList.toggle('is-mobile-nav-open',open);
+      toggle.setAttribute('aria-expanded',String(open));
+      toggle.setAttribute('aria-label',open?'关闭主导航':'打开主导航');
+    });
+    links.addEventListener('click',closeMenu);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu();});
+    mobileQuery.addEventListener?.('change',syncMobileNav);
+    syncMobileNav();
+  })();
+  </script>
   <script>
   (() => {
     const canvas=document.getElementById('lightfallCanvas');
