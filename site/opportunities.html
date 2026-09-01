@@ -345,7 +345,8 @@
     .qp-glass-button:hover .qp-glass-button-arrow,.qp-glass-button:focus-visible .qp-glass-button-arrow { color:#173C32; background:#D5A33F; transform:translate(2px,-1px) rotate(-7deg); }
     .qp-glass-button:focus-visible { outline:2px solid rgba(247,244,236,.9); outline-offset:4px; }
     .qp-glass-button:active { transform:translate3d(var(--qp-glass-magnet-x),calc(var(--qp-glass-magnet-y) + 1px),0) scale(.985); }
-    .qp-glass-button[aria-disabled="true"] { opacity:.48; cursor:not-allowed; pointer-events:none; filter:grayscale(.28); }
+    .qp-auth-notice { position:fixed; z-index:1000; left:50%; top:82px; padding:12px 20px; color:#fff; background:rgba(18,59,50,.96); border:1px solid rgba(213,163,63,.5); border-radius:999px; box-shadow:0 10px 28px rgba(6,31,25,.24); opacity:0; pointer-events:none; transform:translate(-50%,-10px); transition:opacity .2s ease,transform .2s ease; font:600 14px/1.2 ui-sans-serif,system-ui,-apple-system,"PingFang SC",sans-serif; letter-spacing:.04em; }
+    .qp-auth-notice.is-visible { opacity:1; transform:translate(-50%,0); }
     .qp-hero-glass-button { position:absolute; z-index:7; right:8.4%; bottom:13.5%; margin-top:0; pointer-events:auto; color:#123B32; background:rgba(247,244,236,.72); border-color:rgba(255,255,255,.76); box-shadow:0 1px 0 rgba(255,255,255,.92) inset,0 -1px 0 rgba(18,59,50,.12) inset,0 12px 32px rgba(8,38,31,.22),0 0 20px rgba(255,255,255,.16) inset; -webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3); }
     .qp-glass-button.qp-hero-glass-button { font-size:clamp(17px,1.05cqw,28px); font-weight:650; letter-spacing:.1em; }
     .qp-hero-glass-button::before { background:radial-gradient(140px circle at var(--qp-glass-x) var(--qp-glass-y),rgba(255,255,255,.76),rgba(213,163,63,.16) 34%,transparent 70%); }

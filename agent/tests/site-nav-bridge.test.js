@@ -14,6 +14,12 @@ class FakeElement {
     this.listeners = {};
     this.attributes = {};
     this.disabled = false;
+    this.className = '';
+    this.classList = {
+      values: new Set(),
+      add: value => this.classList.values.add(value),
+      remove: value => this.classList.values.delete(value)
+    };
     this.parentNode = {
       replaceChild: (replacement) => { nodes[id] = replacement; }
     };
@@ -21,10 +27,7 @@ class FakeElement {
   cloneNode() { return new FakeElement(this.id, this.nodes); }
   addEventListener(type, listener) { this.listeners[type] = listener; }
   setAttribute(name, value) { this.attributes[name] = value; }
-  async click() {
-    if (this.disabled) return;
-    await this.listeners.click?.({ preventDefault() {} });
-  }
+  async click() { await this.listeners.click?.({ preventDefault() {} }); }
 }
 
 async function runBridge({ token = '', authOk = true } = {}) {
@@ -47,7 +50,9 @@ async function runBridge({ token = '', authOk = true } = {}) {
     document: {
       readyState: 'complete',
       getElementById(id) { return nodes[id] || null; },
-      querySelector() { return null; }
+      querySelector() { return null; },
+      createElement() { return new FakeElement('', nodes); },
+      body: { appendChild(node) { nodes[node.id] = node; } }
     },
     localStorage: {
       getItem(key) { return storage.get(key) || null; },
@@ -56,21 +61,22 @@ async function runBridge({ token = '', authOk = true } = {}) {
     async fetch(url, options) {
       fetchCalls.push({ url, options });
       return { ok: authOk };
-    }
+    },
+    setTimeout() { return 1; },
+    clearTimeout() {}
   };
   vm.runInNewContext(source, context);
-  await new Promise(resolve => setImmediate(resolve));
   await nodes.qpHeroStart.click();
-  return { assigned, fetchCalls, storage, node: nodes.qpHeroStart };
+  return { assigned, fetchCalls, storage, node: nodes.qpHeroStart, notice: nodes.qianpulseLoginNotice };
 }
 
-test('workspace CTA is disabled for signed-out users', async () => {
+test('workspace CTA prompts signed-out users to log in without navigating', async () => {
   const result = await runBridge();
   assert.deepEqual(result.assigned, []);
   assert.equal(result.fetchCalls.length, 0);
-  assert.equal(result.node.disabled, true);
-  assert.equal(result.node.attributes['aria-disabled'], 'true');
-  assert.equal(result.node.attributes.title, '请先使用右上角登录');
+  assert.equal(result.node.disabled, false);
+  assert.equal(result.notice.textContent, '请先登录帐号');
+  assert.equal(result.notice.classList.values.has('is-visible'), true);
 });
 
 test('workspace CTA enters workspace only after the session is verified', async () => {
@@ -78,14 +84,13 @@ test('workspace CTA enters workspace only after the session is verified', async 
   assert.deepEqual(result.assigned, ['http://127.0.0.1:3317/workspace/#workspace']);
   assert.equal(result.fetchCalls[0].url, 'http://127.0.0.1:3317/api/v1/auth/me');
   assert.equal(result.fetchCalls[0].options.headers.Authorization, 'Bearer valid-token');
-  assert.equal(result.node.disabled, false);
-  assert.equal(result.node.attributes['aria-disabled'], 'false');
+  assert.equal(result.notice, undefined);
 });
 
-test('workspace CTA stays disabled after clearing an expired session', async () => {
+test('workspace CTA clears an expired session and shows the login prompt', async () => {
   const result = await runBridge({ token: 'expired-token', authOk: false });
   assert.deepEqual(result.assigned, []);
   assert.equal(result.storage.has('qianpulse-auth-token'), false);
   assert.equal(result.storage.has('qianpulse-auth-user'), false);
-  assert.equal(result.node.disabled, true);
+  assert.equal(result.notice.textContent, '请先登录帐号');
 });

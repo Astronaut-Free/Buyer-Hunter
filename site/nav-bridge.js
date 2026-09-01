@@ -63,32 +63,42 @@
     if (!el) return;
     const node = el.cloneNode(true);
     el.parentNode.replaceChild(node, el);
-    let authenticated = false;
-    function setLocked(locked) {
-      node.disabled = locked;
-      node.setAttribute("aria-disabled", String(locked));
-      node.setAttribute("title", locked ? "请先使用右上角登录" : "进入买家猎手工作台");
+    node.setAttribute("title", "进入买家猎手工作台");
+    function showLoginNotice() {
+      let notice = document.getElementById("qianpulseLoginNotice");
+      if (!notice) {
+        notice = document.createElement("div");
+        notice.id = "qianpulseLoginNotice";
+        notice.className = "qp-auth-notice";
+        notice.setAttribute("role", "status");
+        notice.setAttribute("aria-live", "polite");
+        document.body.appendChild(notice);
+      }
+      notice.textContent = "请先登录帐号";
+      notice.classList.add("is-visible");
+      clearTimeout(notice.hideTimer);
+      notice.hideTimer = setTimeout(() => notice.classList.remove("is-visible"), 2400);
     }
-    setLocked(true);
-    node.addEventListener("click", event => {
-      event.preventDefault();
-      if (authenticated) window.location.assign(appUrl("#workspace"));
-    });
-    (async () => {
+    const authReady = (async () => {
       const token = localStorage.getItem("qianpulse-auth-token") || "";
-      if (!token) return;
+      if (!token) return false;
       try {
         const response = await fetch(`${appOrigin()}/api/v1/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!response.ok) throw new Error("session expired");
-        authenticated = true;
-        setLocked(false);
+        return true;
       } catch {
         localStorage.removeItem("qianpulse-auth-token");
         localStorage.removeItem("qianpulse-auth-user");
+        return false;
       }
     })();
+    node.addEventListener("click", async event => {
+      event.preventDefault();
+      if (await authReady) window.location.assign(appUrl("#workspace"));
+      else showLoginNotice();
+    });
   }
 
   function wireWorkspaceCtas() {
