@@ -581,7 +581,7 @@ async function authHandler(req, res, path) {
     return sendJson(res, 201, {
       user: publicUser(user),
       token,
-      next: role === 'SELLER' ? 'seller-onboarding' : role === 'BUYER' ? 'buyer-onboarding' : 'workspace'
+      next: 'workspace'
     });
   }
 
@@ -600,7 +600,7 @@ async function authHandler(req, res, path) {
     return sendJson(res, 200, {
       user: publicUser(user),
       token,
-      next: user.role === 'SELLER' ? 'seller-onboarding' : user.role === 'BUYER' ? 'buyer-onboarding' : 'workspace'
+      next: 'workspace'
     });
   }
 

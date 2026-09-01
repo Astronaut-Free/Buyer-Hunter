@@ -110,3 +110,27 @@ test('INTERNAL registration stays closed without INTERNAL_INVITE_CODE', async ()
     await rm(stateFile, { force: true });
   }
 });
+
+test('seller registration and login both direct users to the workspace', async () => {
+  const { child, stateFile, getStderr } = await spawnServer({});
+  try {
+    const registered = await register({
+      role: 'SELLER', email: 'seller@qianpulse.test', password: 'password123', company_name: 'Guizhou Tea'
+    });
+    assert.equal(registered.status, 201);
+    assert.equal((await registered.json()).next, 'workspace');
+
+    const loggedIn = await fetch(`http://127.0.0.1:${PORT}/api/v1/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'seller@qianpulse.test', password: 'password123' })
+    });
+    assert.equal(loggedIn.status, 200);
+    assert.equal((await loggedIn.json()).next, 'workspace');
+  } catch (error) {
+    throw new Error(`${error.message}\nserver stderr:\n${getStderr()}`);
+  } finally {
+    child.kill('SIGKILL');
+    await rm(stateFile, { force: true });
+  }
+});
