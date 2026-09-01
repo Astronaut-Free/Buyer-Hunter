@@ -57,13 +57,16 @@ test('agent serves the portal as the only homepage and isolates the workspace', 
 
     const portal = await fetch(`http://127.0.0.1:${PORT}/`);
     assert.equal(portal.status, 200);
-    assert.match(await portal.text(), /nav-bridge\.js/);
+    const portalSource = await portal.text();
+    assert.match(portalSource, /nav-bridge\.js/);
+    assert.match(portalSource, /id="heroCta" href="opportunities\.html"/);
 
     const bridge = await fetch(`http://127.0.0.1:${PORT}/nav-bridge.js`);
     assert.equal(bridge.status, 200);
     const bridgeSource = await bridge.text();
     assert.match(bridgeSource, /\/workspace\//);
-    assert.match(bridgeSource, /wire\("heroCta", "#workspace"/);
+    assert.doesNotMatch(bridgeSource, /wire\("heroCta", "#workspace"/);
+    assert.match(bridgeSource, /wire\("qpHeroStart", "#workspace"/);
 
     const workspaceRedirect = await fetch(`http://127.0.0.1:${PORT}/workspace`, { redirect: 'manual' });
     assert.equal(workspaceRedirect.status, 302);

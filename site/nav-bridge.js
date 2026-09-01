@@ -58,13 +58,9 @@
     wire("qpLogin", "#auth", "登录买家猎手");        // opportunities.html
   }
 
-  function wirePrimaryCta() {
-    // 即刻开始 goes straight to the workbench. Both live on opportunities.html:
-    // qpHeroStart is the first-screen CTA (upstream shipped it unwired,
-    // aria-label "跳转功能待接入"), qpGlassStart is the closing one.
-    // The homepage CTA is the shortest path into the product. The opportunity
-    // page keeps its own two entry points as well.
-    wire("heroCta", "#workspace", "进入买家猎手工作台");
+  function wireWorkspaceCtas() {
+    // 首页 heroCta 保留原始 href（opportunities.html），进入门户商机主页。
+    // opportunities.html 内的两个产品入口才进入工作台。
     wire("qpHeroStart", "#workspace", "进入买家猎手工作台");
     wire("qpGlassStart", "#workspace", "进入买家猎手工作台");
   }
@@ -72,7 +68,7 @@
   function init() {
     try {
       wireLogin();
-      wirePrimaryCta();
+      wireWorkspaceCtas();
     } catch (err) {
       console.warn("[nav-bridge] wiring skipped:", err);
     }
