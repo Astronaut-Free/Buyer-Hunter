@@ -66,7 +66,9 @@ test('agent serves the portal as the only homepage and isolates the workspace', 
     const bridgeSource = await bridge.text();
     assert.match(bridgeSource, /\/workspace\//);
     assert.doesNotMatch(bridgeSource, /wire\("heroCta", "#workspace"/);
-    assert.match(bridgeSource, /wire\("qpHeroStart", "#workspace"/);
+    assert.match(bridgeSource, /wireProtectedWorkspace\("qpHeroStart"\)/);
+    assert.match(bridgeSource, /\/api\/v1\/auth\/me/);
+    assert.match(bridgeSource, /qianpulse-auth-token/);
 
     const workspaceRedirect = await fetch(`http://127.0.0.1:${PORT}/workspace`, { redirect: 'manual' });
     assert.equal(workspaceRedirect.status, 302);

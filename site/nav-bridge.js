@@ -58,11 +58,41 @@
     wire("qpLogin", "#auth", "登录买家猎手");        // opportunities.html
   }
 
+  function wireProtectedWorkspace(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const node = el.cloneNode(true);
+    el.parentNode.replaceChild(node, el);
+    node.setAttribute("title", "登录后进入买家猎手工作台");
+    node.addEventListener("click", async event => {
+      event.preventDefault();
+      const token = localStorage.getItem("qianpulse-auth-token") || "";
+      if (!token) {
+        window.location.assign(appUrl("#auth"));
+        return;
+      }
+      node.disabled = true;
+      try {
+        const response = await fetch(`${appOrigin()}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error("session expired");
+        window.location.assign(appUrl("#workspace"));
+      } catch {
+        localStorage.removeItem("qianpulse-auth-token");
+        localStorage.removeItem("qianpulse-auth-user");
+        window.location.assign(appUrl("#auth"));
+      } finally {
+        node.disabled = false;
+      }
+    });
+  }
+
   function wireWorkspaceCtas() {
     // 首页 heroCta 保留原始 href（opportunities.html），进入门户商机主页。
-    // opportunities.html 内的两个产品入口才进入工作台。
-    wire("qpHeroStart", "#workspace", "进入买家猎手工作台");
-    wire("qpGlassStart", "#workspace", "进入买家猎手工作台");
+    // opportunities.html 内的两个产品入口仅在登录有效时进入工作台。
+    wireProtectedWorkspace("qpHeroStart");
+    wireProtectedWorkspace("qpGlassStart");
   }
 
   function init() {
