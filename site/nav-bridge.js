@@ -63,29 +63,32 @@
     if (!el) return;
     const node = el.cloneNode(true);
     el.parentNode.replaceChild(node, el);
-    node.setAttribute("title", "登录后进入买家猎手工作台");
-    node.addEventListener("click", async event => {
+    let authenticated = false;
+    function setLocked(locked) {
+      node.disabled = locked;
+      node.setAttribute("aria-disabled", String(locked));
+      node.setAttribute("title", locked ? "请先使用右上角登录" : "进入买家猎手工作台");
+    }
+    setLocked(true);
+    node.addEventListener("click", event => {
       event.preventDefault();
+      if (authenticated) window.location.assign(appUrl("#workspace"));
+    });
+    (async () => {
       const token = localStorage.getItem("qianpulse-auth-token") || "";
-      if (!token) {
-        window.location.assign(appUrl("#auth"));
-        return;
-      }
-      node.disabled = true;
+      if (!token) return;
       try {
         const response = await fetch(`${appOrigin()}/api/v1/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!response.ok) throw new Error("session expired");
-        window.location.assign(appUrl("#workspace"));
+        authenticated = true;
+        setLocked(false);
       } catch {
         localStorage.removeItem("qianpulse-auth-token");
         localStorage.removeItem("qianpulse-auth-user");
-        window.location.assign(appUrl("#auth"));
-      } finally {
-        node.disabled = false;
       }
-    });
+    })();
   }
 
   function wireWorkspaceCtas() {
