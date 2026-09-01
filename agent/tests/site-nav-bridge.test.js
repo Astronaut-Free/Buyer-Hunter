@@ -30,7 +30,7 @@ class FakeElement {
   async click() { await this.listeners.click?.({ preventDefault() {} }); }
 }
 
-async function runBridge({ token = '', authOk = true } = {}) {
+async function runBridge({ token = '', authOk = true, targetId = 'qpHeroStart', locationOverrides = {} } = {}) {
   const source = await readFile(BRIDGE, 'utf8');
   const nodes = {};
   for (const id of ['loginButton', 'qpLogin', 'qpHeroStart', 'qpGlassStart']) {
@@ -41,7 +41,8 @@ async function runBridge({ token = '', authOk = true } = {}) {
   const fetchCalls = [];
   const location = {
     protocol: 'http:', hostname: '127.0.0.1', port: '3317', origin: 'http://127.0.0.1:3317', pathname: '/opportunities.html',
-    assign(url) { assigned.push(url); }
+    assign(url) { assigned.push(url); },
+    ...locationOverrides
   };
   const context = {
     console,
@@ -66,9 +67,17 @@ async function runBridge({ token = '', authOk = true } = {}) {
     clearTimeout() {}
   };
   vm.runInNewContext(source, context);
-  await nodes.qpHeroStart.click();
+  await nodes[targetId].click();
   return { assigned, fetchCalls, storage, node: nodes.qpHeroStart, notice: nodes.qianpulseLoginNotice };
 }
+
+test('login button opened from a local HTML file reaches the running login page', async () => {
+  const result = await runBridge({
+    targetId: 'qpLogin',
+    locationOverrides: { protocol: 'file:', hostname: '', port: '', origin: 'null', pathname: '/local/opportunities.html' }
+  });
+  assert.deepEqual(result.assigned, ['http://127.0.0.1:3317/workspace/#auth']);
+});
 
 test('workspace CTA prompts signed-out users to log in without navigating', async () => {
   const result = await runBridge();

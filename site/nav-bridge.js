@@ -11,8 +11,9 @@
  * App URL resolution order:
  *   1. window.QIANPULSE_APP_URL          (set before this script runs)
  *   2. <meta name="qianpulse-app" content="...">
- *   3. same origin when served by the agent
- *   4. same host, port 3317 (standalone site via run.ps1 -Up / make up)
+ *   3. local agent URL when the HTML file is opened directly
+ *   4. same origin when served by the agent
+ *   5. same host, port 3317 (standalone site via run.ps1 -Up / make up)
  *
  * This file is ours, not upstream's. If it is absent or the app is down, the
  * pages still render and every in-site link keeps working.
@@ -28,6 +29,7 @@
       || document.querySelector('meta[name="qianpulse-app"]')?.content
       || "";
     if (explicit) return explicit.replace(/#.*$/, "").replace(/\/+$/, "");
+    if (location.protocol === "file:") return "http://127.0.0.1:3317";
     if (location.port === "3317") return location.origin;
     const host = location.hostname || "localhost";
     return `${location.protocol}//${host}:3317`;
