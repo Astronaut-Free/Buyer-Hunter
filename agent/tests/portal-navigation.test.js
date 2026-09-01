@@ -67,7 +67,16 @@ test('agent serves the portal and both navigation directions share one origin', 
 
     const workspace = await fetch(`http://127.0.0.1:${PORT}/`);
     assert.equal(workspace.status, 200);
-    assert.match(await workspace.text(), /location\.origin\}\/portal\//);
+    const workspaceSource = await workspace.text();
+    assert.match(workspaceSource, /location\.origin\}\/portal\//);
+    assert.match(workspaceSource, /installMessageAvatars/);
+    assert.match(workspaceSource, /assets\/chat-bg-desktop\.png/);
+
+    for (const asset of ['agent-avatar.png', 'user-avatar.png', 'chat-bg-desktop.png', 'chat-bg-mobile.png']) {
+      const response = await fetch(`http://127.0.0.1:${PORT}/assets/${asset}`);
+      assert.equal(response.status, 200, `${asset} should be publicly available to the workspace`);
+      assert.equal(response.headers.get('content-type'), 'image/png');
+    }
   } finally {
     await stopChild(child);
     await rm(temp, { recursive: true, force: true });

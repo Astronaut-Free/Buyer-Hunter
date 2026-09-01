@@ -35,7 +35,17 @@
 <script>
 const DATA=[{id:1,c:'matcha',score:94,status:'窗口打开',country:'美国',buyer:'饮料品牌',title:'采购有机抹茶粉，用于新品饮料',qty:'500 kg / 月',tags:['Organic','OEM','800目+'],why:'7天前发布新 RFQ，官网同步上线抹茶新品。',fit:'5 / 6 项满足',access:'补条件',action:'先发样品与认证清单',risk:'USDA Organic 文件待确认；FDA 食品进口要求已覆盖。'},{id:2,c:'matcha',score:87,status:'可进入',country:'日本',buyer:'食品企业',title:'寻找稳定的第二抹茶供应源',qty:'1 t / 季',tags:['食品级','JAS','长期合作'],why:'采购频率提升，并出现第二供应商信号。',fit:'6 / 6 项满足',access:'PASS',action:'切入第二供应源',risk:'预算未披露，建议首轮确认目标价格带。'},{id:3,c:'matcha',score:81,status:'风险',country:'欧盟',buyer:'零售品牌',title:'定制品牌抹茶粉与零售包装',qty:'2,000 units',tags:['Private label','农残','定制包装'],why:'定制需求明确，但农残标准和有机文件待核验。',fit:'4 / 6 项满足',access:'待复核',action:'先做准入核验',risk:'欧盟农残限量、标签声称与有机文件待确认。'},{id:4,c:'blueberry',score:79,status:'窗口打开',country:'韩国',buyer:'烘焙集团',title:'冷冻蓝莓原料年度采购',qty:'20 t / 年',tags:['IQF','冷链','框架采购'],why:'年度采购即将截止，买家正比较第二供应源。',fit:'5 / 6 项满足',access:'PASS',action:'立即报价并寄样',risk:'冷链交付时效需确认。'}];let selected=1,filter='all';const cards=document.querySelector('#opps'),details=document.querySelector('#details');function tone(o){return o.status==='风险'?'risk':o.status==='可进入'?'':'warn'}function draw(){document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===filter));cards.innerHTML=DATA.filter(o=>filter==='all'||o.c===filter||(filter==='open'&&o.status==='窗口打开')).map(o=>`<article class="card ${o.id===selected?'selected':''}" onclick="showHomeDetail(${o.id})"><div class="card-image"><span class="status ${tone(o)}">${o.status}</span><span class="card-score">${o.score}</span></div><div class="card-body"><div class="dots"><i></i><i></i><i></i></div><h3>${o.country} · ${o.buyer}<br>${o.title}</h3><p>${o.why}</p><div class="chips">${o.tags.map(t=>`<span style="font-size:10px;background:#f2f4f0;padding:3px 5px;border-radius:4px;margin-right:4px">${t}</span>`).join('')}</div><div class="card-foot"><b>${o.qty}</b><button>查看　→</button></div></div></article>`).join('')}function showHomeDetail(id){selected=id;draw();const o=DATA.find(x=>x.id===id);details.className='details show';details.innerHTML=`<div><small style="color:var(--g);font-weight:800;letter-spacing:1px">${o.country} · 采购机会详情</small><h2>${o.title}</h2><p>${o.why} 建议下一步：${o.action}。</p><div class="facts"><div><small>原始 RFQ</small><b>需求已采集</b></div><div><small>买家变化</small><b>近期出现新信号</b></div><div><small>供需匹配</small><b>${o.fit}</b></div></div></div><aside class="decision"><small>机会分</small><b>${o.score}</b><p style="font-size:12px">市场准入：${o.access}</p><div class="risk-box">${o.risk}</div><button onclick="mail()">生成首封跟进邮件　→</button></aside>`}function mail(){const t=document.querySelector('#toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300)}document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{filter=b.dataset.f;draw()});draw();
 let running=false,shown=0;const messages=document.querySelector('#messages'),rows=document.querySelector('#rows');function line(text,cls='agent'){const d=document.createElement('div');d.className='bubble '+cls;d.innerHTML=cls==='agent'?'<div class="agent-title">买家猎手 AI</div>'+text:text;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;return d}function startScan(){if(running)return;running=true;document.querySelector('#parse-card').querySelector('.confirm').innerHTML='<span style="color:var(--g);font-weight:800">任务已确认，正在扫描公开信号…</span>';document.querySelector('#status').textContent='AI 正在执行';line('<div class="step done"><i>✓</i>已锁定：美国 · 有机饮品级抹茶 · 500kg/月以上</div><div class="step live"><i>…</i>正在扫描公开 RFQ、企业新品和采购变化</div>');const steps=['已读取 36 条可追溯公开信号','正在识别买家主体与采购窗口','正在比对贵州供应能力与出口准入','已完成去重和优先级排序'];let n=0;const timer=setInterval(()=>{if(n<steps.length){line('<div class="step done"><i>✓</i>'+steps[n]+'</div>');if(n===1)appendRow();if(n===2)appendRow();n++}else{clearInterval(timer);appendRow();appendRow();running=false;document.querySelector('#status').textContent='任务已完成';line('扫描完成：从 36 条公开信号中确认 4 条高优机会。其中 1 条可直接报价，2 条需补充 Organic 文件，1 条建议先确认规格。<div class="suggestions"><button onclick="refine(\'只看最近7天\')">只看最近7天</button><button onclick="refine(\'仅可直接报价\')">仅可直接报价</button><button onclick="refine(\'再扩展50条\')">再扩展50条</button></div>')}} ,850)}function appendRow(){if(shown===0)rows.innerHTML='';if(shown>=DATA.length)return;const o=DATA[shown++],tag=o.access==='PASS'?'tag':o.access==='补条件'?'tag wait':'tag block';const r=document.createElement('div');r.className='tr';r.innerHTML=`<input type="checkbox"><div class="buyer"><b>${o.country} · ${o.buyer}</b><small>采购买家</small></div><div class="demand"><b>${o.need||o.title}</b><small>${o.why}</small></div><div class="platform"><i class="dot"></i>公开信号</div><div class="score2">${o.score}</div><div><span class="${tag}">${o.access}</span></div><button class="action" onclick="openAction('${o.buyer}')">${o.action}　→</button>`;rows.appendChild(r);document.querySelector('#count').textContent=shown+' 条'}function refine(text){line(text,'user');line('已应用条件：“'+text+'”。结果表已按当前筛选重新排序。')}function editTask(){line('请直接补充或修改市场、产品、数量、认证、交期等条件。')}function send(){const i=document.querySelector('#input'),v=i.value.trim();if(!v)return;line(v,'user');i.value='';line('已收到追问，我将按新条件更新机会结果。')}function openAction(buyer){line('请为「'+buyer+'」生成下一步行动方案：默认输出样品清单、认证资料清单和英文首封邮件草稿。')}function resetTask(){location.reload()}function showWorkspace(){document.querySelector('#home').classList.remove('active');document.querySelector('#workspace').classList.add('active');location.hash='workspace'}function showHome(){document.querySelector('#workspace').classList.remove('active');document.querySelector('#home').classList.add('active');location.hash='home'}if(location.hash==='#workspace')showWorkspace();
-</script><script>
+</script><style>
+/* Agent 分支中原有的聊天视觉资产：在当前工作台中复用。 */
+#workspace .chat{position:relative;isolation:isolate;background:#f4f8f6 url('assets/chat-bg-desktop.png') center/cover no-repeat}
+#workspace .chat::before{content:'';position:absolute;inset:0;z-index:0;background:rgba(255,255,255,.78);pointer-events:none}
+#workspace .chat-head,#workspace .profile-nudge,#workspace .messages,#workspace .composer{position:relative;z-index:1}
+#workspace .messages{background:rgba(255,255,255,.24)}
+#workspace .composer{background:rgba(255,255,255,.94)}
+.message-row{display:flex;align-items:flex-start;gap:9px;margin:10px 0}.message-row.user{justify-content:flex-end}.message-avatar{flex:0 0 32px;width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid rgba(15,72,54,.15);box-shadow:0 2px 8px rgba(14,63,48,.12)}
+.message-row .bubble{margin:0}.message-row.user .bubble{order:1}.message-row.user .message-avatar{order:2}
+@media(max-width:740px){#workspace .chat{background-image:url('assets/chat-bg-mobile.png')}#workspace .chat::before{background:rgba(255,255,255,.82)}.message-avatar{width:28px;height:28px;flex-basis:28px}}
+</style><script>
 /* 演示状态：LLM 只负责理解与提问，接管判断由可解释规则完成。 */
 Object.assign(DATA[0],{fitScore:72,intentScore:81,conversationScore:58,confirmedFields:['用途','月采购量','样品测试'],missingFields:['预算','交付时间'],hardGaps:[],riskTopics:[],conversationStatus:'已确认样品意向'});
 Object.assign(DATA[1],{fitScore:86,intentScore:70,conversationScore:55,confirmedFields:['产品规格','采购周期','第二供应源意向'],missingFields:['目标价格'],hardGaps:[],riskTopics:[],conversationStatus:'已确认合作意向'});
@@ -479,5 +489,40 @@ async function refreshResults(){
   }
   routeHash();
   window.addEventListener('hashchange',routeHash);
+})();
+</script><script>
+/* 为已有欢迎语和后续所有消息添加头像，不改动对话业务逻辑。 */
+(function installMessageAvatars(){
+  const container=document.querySelector('#messages');
+  if(!container)return;
+  const assetFor=cls=>cls==='user'?'assets/user-avatar.png':'assets/agent-avatar.png';
+  function avatar(cls){
+    const img=document.createElement('img');
+    img.className='message-avatar';
+    img.src=assetFor(cls);
+    img.alt=cls==='user'?'用户头像':'黔脉智能体头像';
+    return img;
+  }
+  function wrap(bubble){
+    if(bubble.parentElement?.classList.contains('message-row'))return;
+    const cls=bubble.classList.contains('user')?'user':'agent';
+    const row=document.createElement('div');
+    row.className='message-row '+cls;
+    bubble.parentNode.insertBefore(row,bubble);
+    if(cls==='agent')row.append(avatar(cls),bubble);else row.append(bubble,avatar(cls));
+  }
+  container.querySelectorAll(':scope > .bubble').forEach(wrap);
+  window.line=function(text,cls='agent'){
+    const type=cls==='user'?'user':'agent';
+    const bubble=document.createElement('div');
+    bubble.className='bubble '+type;
+    bubble.innerHTML=type==='agent'?'<div class="agent-title">黔脉智能体</div>'+text:text;
+    const row=document.createElement('div');
+    row.className='message-row '+type;
+    if(type==='agent')row.append(avatar(type),bubble);else row.append(bubble,avatar(type));
+    container.appendChild(row);
+    container.scrollTop=container.scrollHeight;
+    return bubble;
+  };
 })();
 </script></body></html>
