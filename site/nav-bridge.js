@@ -11,7 +11,8 @@
  * App URL resolution order:
  *   1. window.QIANPULSE_APP_URL          (set before this script runs)
  *   2. <meta name="qianpulse-app" content="...">
- *   3. same host, port 3317 (agent 工作台, run.ps1 -Up / make up default)
+ *   3. same origin when served by the agent under /portal/
+ *   4. same host, port 3317 (standalone site via run.ps1 -Up / make up)
  *
  * This file is ours, not upstream's. If it is absent or the app is down, the
  * pages still render and every in-site link keeps working.
@@ -27,6 +28,9 @@
       || document.querySelector('meta[name="qianpulse-app"]')?.content
       || "";
     if (explicit) return explicit.replace(/#.*$/, "").replace(/\/+$/, "");
+    if (location.pathname === "/portal" || location.pathname.startsWith("/portal/")) {
+      return location.origin;
+    }
     const host = location.hostname || "localhost";
     return `${location.protocol}//${host}:3317`;
   }
@@ -60,7 +64,9 @@
     // 即刻开始 goes straight to the workbench. Both live on opportunities.html:
     // qpHeroStart is the first-screen CTA (upstream shipped it unwired,
     // aria-label "跳转功能待接入"), qpGlassStart is the closing one.
-    // index.html's #heroCta stays an in-site link to opportunities.html.
+    // The homepage CTA is the shortest path into the product. The opportunity
+    // page keeps its own two entry points as well.
+    wire("heroCta", "#workspace", "进入买家猎手工作台");
     wire("qpHeroStart", "#workspace", "进入买家猎手工作台");
     wire("qpGlassStart", "#workspace", "进入买家猎手工作台");
   }

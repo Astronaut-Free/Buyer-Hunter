@@ -32,6 +32,9 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]+$/, ''
 const SERVER_DIR = fileURLToPath(new URL('.', import.meta.url));
 // Repository root (agent/server/ -> agent/ -> repo root) for spawning the Python pipeline.
 const REPO_ROOT = fileURLToPath(new URL('../..', import.meta.url));
+// Serve the public portal through the agent as well. This keeps portal <->
+// workspace navigation usable when the optional standalone site server is down.
+const SITE_ROOT = fileURLToPath(new URL('../../site', import.meta.url)).replace(/[\\/]+$/, '');
 // Env-overridable (full paths) so tests can isolate their state (single machine, one server).
 const STATE_FILE = process.env.AGENT_STATE_FILE || join(SERVER_DIR, 'agent-state.json');
 // Reverse-bridge output (contract v2): consumed by scripts/import_agent_outcomes.py.
@@ -838,7 +841,13 @@ const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8'
+  '.json': 'application/json; charset=utf-8',
+  '.geojson': 'application/geo+json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp'
 };
 
 const baseLoadState = loadState;
@@ -1041,13 +1050,21 @@ const server = createServer(async (req, res) => {
 
     if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' });
 
+    if (url.pathname === '/portal') {
+      res.writeHead(302, { Location: '/portal/' });
+      return res.end();
+    }
+
     let pathname;
     try {
       pathname = decodeURIComponent(url.pathname);
     } catch {
       return sendJson(res, 403, { error: 'Forbidden' });
     }
-    const file = pathname === '/' ? 'index.html' : normalize(pathname).replace(/^[/\\]+/, '');
+    const servesPortal = pathname.startsWith('/portal/');
+    const staticRoot = servesPortal ? SITE_ROOT : ROOT;
+    const staticPathname = servesPortal ? pathname.slice('/portal'.length) : pathname;
+    const file = staticPathname === '/' ? 'index.html' : normalize(staticPathname).replace(/^[/\\]+/, '');
     // No bare GET into data or code directories, and no dotfiles (agent-state.json
     // holds user sessions, agent-outcomes.json is a data file, .gitignore/.env leak
     // repo internals). reference/ (workbench docs) and assets stay open.
@@ -1058,8 +1075,8 @@ const server = createServer(async (req, res) => {
     if (topSegment === 'db' || topSegment === 'server' || topSegment === 'quarantine') {
       return sendJson(res, 403, { error: 'Forbidden' });
     }
-    const filePath = join(ROOT, file);
-    if (filePath !== ROOT && !filePath.startsWith(ROOT + sep)) return sendJson(res, 403, { error: 'Forbidden' });
+    const filePath = join(staticRoot, file);
+    if (filePath !== staticRoot && !filePath.startsWith(staticRoot + sep)) return sendJson(res, 403, { error: 'Forbidden' });
     let content;
     try {
       content = await readFile(filePath);
