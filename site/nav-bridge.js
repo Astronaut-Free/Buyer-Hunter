@@ -3,15 +3,15 @@
  *
  * Vendored `site/` (origin/ui) is a standalone marketing site. In the integrated
  * repo it is the front door; the functional product is the Node agent frontend
- * in `agent/` (served at 3317). This shim points the "登录" control and the
- * primary CTA at the agent workspace so the whole product is walkable locally:
- *   site (4180) -> agent workspace (3317/#workspace).
+ * under `/workspace/` (served at 3317). This shim points the "登录" control
+ * and the primary CTA at that workspace so the whole product is walkable locally:
+ *   site (4180) -> agent workspace (3317/workspace/#workspace).
  * (The old React demo at demo/4173 is retired — code kept for reference.)
  *
  * App URL resolution order:
  *   1. window.QIANPULSE_APP_URL          (set before this script runs)
  *   2. <meta name="qianpulse-app" content="...">
- *   3. same origin when served by the agent under /portal/
+ *   3. same origin when served by the agent
  *   4. same host, port 3317 (standalone site via run.ps1 -Up / make up)
  *
  * This file is ours, not upstream's. If it is absent or the app is down, the
@@ -28,14 +28,12 @@
       || document.querySelector('meta[name="qianpulse-app"]')?.content
       || "";
     if (explicit) return explicit.replace(/#.*$/, "").replace(/\/+$/, "");
-    if (location.pathname === "/portal" || location.pathname.startsWith("/portal/")) {
-      return location.origin;
-    }
+    if (location.port === "3317") return location.origin;
     const host = location.hostname || "localhost";
     return `${location.protocol}//${host}:3317`;
   }
 
-  const appUrl = (hash = "#workspace") => `${appOrigin()}/${hash}`;
+  const appUrl = (hash = "#workspace") => `${appOrigin()}/workspace/${hash}`;
 
   const goTo = hash => function (event) {
     if (event) event.preventDefault();

@@ -1050,8 +1050,14 @@ const server = createServer(async (req, res) => {
 
     if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' });
 
-    if (url.pathname === '/portal') {
-      res.writeHead(302, { Location: '/portal/' });
+    // The public QianPulse portal is the one and only front door. The former
+    // in-workbench marketing page is no longer reachable as a homepage.
+    if (url.pathname === '/portal' || url.pathname === '/portal/') {
+      res.writeHead(302, { Location: '/' });
+      return res.end();
+    }
+    if (url.pathname === '/workspace') {
+      res.writeHead(302, { Location: '/workspace/#workspace' });
       return res.end();
     }
 
@@ -1061,9 +1067,9 @@ const server = createServer(async (req, res) => {
     } catch {
       return sendJson(res, 403, { error: 'Forbidden' });
     }
-    const servesPortal = pathname.startsWith('/portal/');
-    const staticRoot = servesPortal ? SITE_ROOT : ROOT;
-    const staticPathname = servesPortal ? pathname.slice('/portal'.length) : pathname;
+    const servesWorkspace = pathname.startsWith('/workspace/');
+    const staticRoot = servesWorkspace ? ROOT : SITE_ROOT;
+    const staticPathname = servesWorkspace ? pathname.slice('/workspace'.length) : pathname;
     const file = staticPathname === '/' ? 'index.html' : normalize(staticPathname).replace(/^[/\\]+/, '');
     // No bare GET into data or code directories, and no dotfiles (agent-state.json
     // holds user sessions, agent-outcomes.json is a data file, .gitignore/.env leak

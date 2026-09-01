@@ -34,7 +34,7 @@ async function stopChild(child) {
   if (child.exitCode === null) child.kill('SIGKILL');
 }
 
-test('agent serves the portal and both navigation directions share one origin', async () => {
+test('agent serves the portal as the only homepage and isolates the workspace', async () => {
   const temp = await mkdtemp(join(tmpdir(), 'qianpulse-portal-test-'));
   const child = spawn(process.execPath, ['server/bootstrap.js'], {
     cwd: ROOT,
@@ -51,29 +51,33 @@ test('agent serves the portal and both navigation directions share one origin', 
   try {
     await waitForHealth(child);
 
-    const redirect = await fetch(`http://127.0.0.1:${PORT}/portal`, { redirect: 'manual' });
-    assert.equal(redirect.status, 302);
-    assert.equal(redirect.headers.get('location'), '/portal/');
+    const legacyPortal = await fetch(`http://127.0.0.1:${PORT}/portal`, { redirect: 'manual' });
+    assert.equal(legacyPortal.status, 302);
+    assert.equal(legacyPortal.headers.get('location'), '/');
 
-    const portal = await fetch(`http://127.0.0.1:${PORT}/portal/`);
+    const portal = await fetch(`http://127.0.0.1:${PORT}/`);
     assert.equal(portal.status, 200);
     assert.match(await portal.text(), /nav-bridge\.js/);
 
-    const bridge = await fetch(`http://127.0.0.1:${PORT}/portal/nav-bridge.js`);
+    const bridge = await fetch(`http://127.0.0.1:${PORT}/nav-bridge.js`);
     assert.equal(bridge.status, 200);
     const bridgeSource = await bridge.text();
-    assert.match(bridgeSource, /location\.pathname\.startsWith\("\/portal\/"\)/);
+    assert.match(bridgeSource, /\/workspace\//);
     assert.match(bridgeSource, /wire\("heroCta", "#workspace"/);
 
-    const workspace = await fetch(`http://127.0.0.1:${PORT}/`);
+    const workspaceRedirect = await fetch(`http://127.0.0.1:${PORT}/workspace`, { redirect: 'manual' });
+    assert.equal(workspaceRedirect.status, 302);
+    assert.equal(workspaceRedirect.headers.get('location'), '/workspace/#workspace');
+
+    const workspace = await fetch(`http://127.0.0.1:${PORT}/workspace/`);
     assert.equal(workspace.status, 200);
     const workspaceSource = await workspace.text();
-    assert.match(workspaceSource, /location\.origin\}\/portal\//);
+    assert.match(workspaceSource, /function portalUrl/);
     assert.match(workspaceSource, /installMessageAvatars/);
     assert.match(workspaceSource, /assets\/chat-bg-desktop\.png/);
 
     for (const asset of ['agent-avatar.png', 'user-avatar.png', 'chat-bg-desktop.png', 'chat-bg-mobile.png']) {
-      const response = await fetch(`http://127.0.0.1:${PORT}/assets/${asset}`);
+      const response = await fetch(`http://127.0.0.1:${PORT}/workspace/assets/${asset}`);
       assert.equal(response.status, 200, `${asset} should be publicly available to the workspace`);
       assert.equal(response.headers.get('content-type'), 'image/png');
     }

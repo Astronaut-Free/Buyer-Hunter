@@ -464,7 +464,7 @@ async function refreshResults(){
     const explicit=(typeof window.QIANPULSE_PORTAL_URL==='string'&&window.QIANPULSE_PORTAL_URL)
       ||document.querySelector('meta[name="qianpulse-portal"]')?.content||'';
     if(explicit)return explicit;
-    return `${location.origin}/portal/`;
+    return `${location.origin}/`;
   }
   function goPortal(event){ if(event)event.preventDefault(); window.location.assign(portalUrl()); }
 
@@ -480,11 +480,12 @@ async function refreshResults(){
     el.title='返回黔脉门户首页';
   }
 
-  // hash 路由：#auth 打开登录页，#workspace 打开工作台
+  // hash 路由：#auth 打开登录页；工作台入口不再提供旧首页视图。
   function routeHash(){
     const h=location.hash;
     if(h==='#auth'&&typeof showAuth==='function')showAuth('login');
-    else if(h==='#workspace'&&typeof showWorkspace==='function')showWorkspace();
+    else if(h==='#home')window.location.replace(portalUrl());
+    else if(typeof showWorkspace==='function')showWorkspace();
   }
   routeHash();
   window.addEventListener('hashchange',routeHash);
