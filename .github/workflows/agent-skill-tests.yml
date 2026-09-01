@@ -1,0 +1,27 @@
+name: Agent Skill Tests (A2/A6 runtime)
+
+on:
+  push:
+    branches: [integration, MVP, MVP-a2a6-runtime-fix]
+    paths:
+      - 'agent/**'
+      - '.github/workflows/agent-skill-tests.yml'
+  pull_request:
+    paths:
+      - 'agent/**'
+      - '.github/workflows/agent-skill-tests.yml'
+
+defaults:
+  run:
+    working-directory: agent
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm test
+      - run: node scripts/skill-dispatch-audit.mjs

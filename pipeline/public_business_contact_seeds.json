@@ -1,0 +1,15 @@
+[
+  {
+    "company_names": ["BERRY FRESH LLC", "BERRY FRESH PRODUCE LLC"],
+    "official_domain": "berryfresh.com",
+    "official_pages": ["https://berryfresh.com/contact/"],
+    "supplemental_contacts": [
+      {
+        "contact_type": "email",
+        "contact_value": "hello@berryfresh.com",
+        "source_url": "https://attend.organicproducesummit.com/event/organic-produce-summit-2026/exhibitor/RXhoaWJpdG9yXzI0NDA5Mjk%3D",
+        "verification_status": "PUBLIC_INDUSTRY_EVENT_SALES_INQUIRY"
+      }
+    ]
+  }
+]

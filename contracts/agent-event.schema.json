@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buyer-hunter/contracts/agent-event-v1",
+  "title": "AgentEvent",
+  "description": "Every change that drives the QianPulse agent runtime. Emitted by agent/server/a2a6-live-runtime.js (runProactive, runBuyerMessage) and by webhooks/smartlead-router.js. Persisted to state.events before any capability runs; the idempotency_key dedupes replays.",
+  "type": "object",
+  "required": ["event_id", "event_type", "actor_role", "payload", "timestamp", "idempotency_key"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "SELLER_PROACTIVE_DEVELOPMENT",
+        "SYSTEM_NEW_PROSPECT_SIGNAL",
+        "PRE_REPLY_FOLLOWUP_DUE",
+        "BUYER_MESSAGE",
+        "QUOTE_UPDATED",
+        "SAMPLE_UPDATED",
+        "APPROVAL_RESULT",
+        "EVIDENCE_ADDED",
+        "MANUAL_RESUME"
+      ]
+    },
+    "actor_role": {
+      "type": "string",
+      "enum": ["SELLER", "BUYER", "INTERNAL", "SYSTEM"]
+    },
+    "actor_id": { "type": ["string", "null"] },
+    "opportunity_id": {
+      "type": ["string", "null"],
+      "description": "null for SELLER_PROACTIVE_DEVELOPMENT (opportunity does not exist yet); set for every buyer-side event."
+    },
+    "thread_id": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "description": "Event-specific. For BUYER_MESSAGE: { message: { content, evidence_ref, source_message_id }, field_updates? }. For SELLER_PROACTIVE_DEVELOPMENT: the A2 input contract.",
+      "properties": {
+        "message": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" },
+            "evidence_ref": { "type": "string" },
+            "source_message_id": { "type": ["string", "null"] }
+          }
+        },
+        "field_updates": { "type": "object" }
+      }
+    },
+    "source": {
+      "type": "string",
+      "enum": ["api", "smartlead", "system"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "evidence_ref": { "type": ["string", "null"] },
+    "idempotency_key": {
+      "type": "string",
+      "description": "Required. Missing -> IDEMPOTENCY_KEY_REQUIRED. A replayed key returns the cached result."
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

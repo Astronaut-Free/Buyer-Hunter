@@ -1,0 +1,27 @@
+{
+  "id": "seller-guizhou-specialty-demo",
+  "seller_id": "seller-demo-001",
+  "name": "贵州特色农产品出口企业（Demo）",
+  "category_codes": ["MATCHA", "BLUEBERRY", "ROSA_ROXBURGHII", "CHILI", "TEA"],
+  "target_markets": ["US", "JP", "EU", "GB", "AU"],
+  "attributes": {
+    "product": {
+      "form": "beverage_grade_matcha",
+      "grades": ["beverage", "bakery"],
+      "oem": true,
+      "moq_kg": 100
+    },
+    "capacity": {"monthly_kg": 8000},
+    "certifications": ["HACCP", "ISO22000"],
+    "services": ["OEM", "SAMPLE", "COA"],
+    "documents": {
+      "english_specification": true,
+      "coa_batches": 3,
+      "usda_organic_import_scope": null,
+      "eu_organic_ecoi": null,
+      "japanese_label": null
+    }
+  },
+  "privacy": "PRIVATE_MATCHING_ONLY",
+  "version": 1
+}

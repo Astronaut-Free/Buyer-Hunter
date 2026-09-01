@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Deprecated QianPulse A2 Batch Result Alias","deprecated":true,"$ref":"./a2-result.schema.json"}

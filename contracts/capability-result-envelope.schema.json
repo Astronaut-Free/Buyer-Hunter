@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buyer-hunter/contracts/capability-result-envelope-v1",
+  "title": "CapabilityResultEnvelope",
+  "description": "The single result shape every QianPulse capability returns. A3/A4/A5 are emitted only by their authoritative Python runtimes through scripts/capability_cli.py; Node routes, validates, traces, and persists the envelope without reproducing domain semantics.",
+  "type": "object",
+  "required": [
+    "capability_id",
+    "capability_version",
+    "run_status",
+    "changed_fields",
+    "missing_evidence",
+    "evidence_refs",
+    "human_review_required",
+    "domain_result"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "description": "e.g. qianpulse.a4.supply_match"
+    },
+    "capability_version": {
+      "type": "string",
+      "description": "Capability or ruleset version. Runtime failures use runtime-error."
+    },
+    "run_status": {
+      "type": "string",
+      "enum": ["DONE", "MORE_EVIDENCE", "BLOCKED", "NOT_APPLICABLE", "ERROR"],
+      "description": "DONE / NOT_APPLICABLE / BLOCKED count as refreshed; MORE_EVIDENCE waits for evidence; ERROR indicates infrastructure or invalid runtime output."
+    },
+    "changed_fields": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "missing_evidence": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_review_required": { "type": "boolean" },
+    "domain_result": {
+      "type": "object",
+      "description": "Capability-specific payload. Conventional keys: A3 { purchase_window, timing_signal, readiness, timing_score }; A4 { match_status, supply_pool_status, best_verdict, best_fit_score, summary_zh }; A5 { status, decision, destination, market_access }. The integration layer adds capability_runtime='python' and source='python' provenance; infrastructure failures return ERROR instead of a semantic fallback.",
+      "properties": {
+        "status": { "type": "string" },
+        "decision": { "type": "string" },
+        "capability_runtime": { "type": "string", "enum": ["python"] },
+        "source": { "type": "string", "enum": ["python"] }
+      }
+    },
+    "error": {
+      "type": ["object", "string", "null"]
+    }
+  }
+}

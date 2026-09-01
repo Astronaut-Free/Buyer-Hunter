@@ -1,0 +1,35 @@
+capability_id: qianpulse.a6.opportunity_progression
+version: 1.1.0
+description: Analyze buyer or system events and produce evidence-controlled Opportunity progression.
+required_inputs:
+  - opportunity_id
+  - evaluated_at
+  - trigger_event
+  - conversation_context
+  - opportunity_state
+  - skill_results
+  - seller_execution_policy
+produced_outputs:
+  - buyer_reply
+  - field_observations
+  - affected_skills
+  - stage_transition
+  - decision_state
+  - next_action
+  - communication_brief
+  - outcome
+status_contract: [DONE, MORE_EVIDENCE, BLOCKED, NOT_APPLICABLE, ERROR]
+allowed_tools:
+  - opportunity_store.read
+  - conversation_store.read
+  - evidence_store.read
+  - capability_result.read
+timeout_seconds: 90
+enabled: true
+human_gate:
+  price: HUMAN
+  payment: HUMAN
+  complaint: HUMAN
+  sample: APPROVAL
+idempotency:
+  external_action_required: true

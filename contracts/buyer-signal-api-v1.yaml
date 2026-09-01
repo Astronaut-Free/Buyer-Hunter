@@ -1,0 +1,320 @@
+openapi: 3.1.0
+info:
+  title: Buyer Hunter Buyer Signal API
+  version: 1.0.0
+  description: >-
+    Database-facing API for collected buyer requirements, evidence, four-dimension
+    truth scores, crawl runs, and membership-gated public business contact channels.
+    A truth score is evidence confidence, not a deal probability.
+servers:
+  - url: http://localhost:8000/api/v1
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      security: []
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service health
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Health'}
+  /sources:
+    get:
+      operationId: listSources
+      parameters:
+        - {name: enabled, in: query, schema: {type: boolean}}
+        - {name: layer, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Source registry and current adapter status
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Source'}
+  /crawl-runs:
+    post:
+      operationId: createCrawlRun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category_codes, source_codes]
+              properties:
+                category_codes:
+                  type: array
+                  minItems: 1
+                  items: {$ref: '#/components/schemas/CategoryCode'}
+                source_codes:
+                  type: array
+                  minItems: 1
+                  items: {type: string}
+      responses:
+        '202':
+          description: Crawl accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CrawlRun'}
+  /crawl-runs/{run_id}:
+    get:
+      operationId: getCrawlRun
+      parameters:
+        - {$ref: '#/components/parameters/RunId'}
+      responses:
+        '200':
+          description: Crawl status and stage counters
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CrawlRun'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /buyer-signals:
+    get:
+      operationId: listBuyerSignals
+      description: >-
+        Returns deduplicated signals. Default sorting is truth_score DESC,
+        published_at DESC, id ASC. D/C records are never silently promoted.
+      parameters:
+        - name: category_code
+          in: query
+          schema: {$ref: '#/components/schemas/CategoryCode'}
+        - {name: buyer_country_code, in: query, schema: {type: string, pattern: '^[A-Z]{2}$'}}
+        - {name: source_code, in: query, schema: {type: string}}
+        - {name: min_truth_score, in: query, schema: {type: integer, minimum: 0, maximum: 100, default: 40}}
+        - {name: truth_level, in: query, schema: {type: string, enum: [A, B, C, D]}}
+        - {name: qualification_status, in: query, schema: {type: string, enum: [FORMALLY_QUALIFIED, QUALIFIED_PENDING_ENTITY, NEEDS_VERIFICATION, BACKGROUND_OR_STALE, WEAK_SIGNAL, REJECT_NOT_DIRECT_REQUIREMENT, REJECT_MISSING_EVIDENCE]}}
+        - {name: published_after, in: query, schema: {type: string, format: date}}
+        - {name: cursor, in: query, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+      responses:
+        '200':
+          description: Cursor-paginated buyer signals
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor]
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/BuyerSignalSummary'}
+                  next_cursor: {type: [string, 'null']}
+  /buyer-signals/{signal_id}:
+    get:
+      operationId: getBuyerSignal
+      parameters:
+        - {$ref: '#/components/parameters/SignalId'}
+      responses:
+        '200':
+          description: Normalized requirement, truth evidence and provenance
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BuyerSignalDetail'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /buyers/{buyer_id}:
+    get:
+      operationId: getBuyer
+      description: Canonical buyer entity. Legal subsidiaries remain related entities, not aliases.
+      parameters:
+        - {$ref: '#/components/parameters/BuyerId'}
+      responses:
+        '200':
+          description: Buyer identity and entity-resolution evidence
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Buyer'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /buyer-signals/{signal_id}/access-channels:
+    get:
+      operationId: listBuyerAccessChannels
+      description: >-
+        Requires an active membership and access grant. Only public business
+        channels are returned; personal/private contact data is never exposed.
+      parameters:
+        - {$ref: '#/components/parameters/SignalId'}
+      responses:
+        '200':
+          description: Verified public procurement/contact channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/AccessChannel'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+  /data-quality/runs/{run_id}:
+    get:
+      operationId: getDataQualityRun
+      parameters:
+        - {$ref: '#/components/parameters/RunId'}
+      responses:
+        '200':
+          description: Completeness, uniqueness, validity and freshness checks
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DataQualityReport'}
+        '404': {$ref: '#/components/responses/NotFound'}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+  parameters:
+    RunId: {name: run_id, in: path, required: true, schema: {type: string}}
+    SignalId: {name: signal_id, in: path, required: true, schema: {type: string}}
+    BuyerId: {name: buyer_id, in: path, required: true, schema: {type: string, format: uuid}}
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+    Forbidden:
+      description: Membership/access grant missing
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+  schemas:
+    CategoryCode:
+      type: string
+      enum: [MATCHA, BLUEBERRY, ROSA_ROXBURGHII, CHILI, TEA]
+    Health:
+      type: object
+      required: [status, database, ruleset_version]
+      properties:
+        status: {type: string, enum: [ok, degraded]}
+        database: {type: string, enum: [ok, error]}
+        ruleset_version: {type: string, const: truth-v1.0.0}
+    Source:
+      type: object
+      required: [code, layer, access_mode, adapter_status, entry_url]
+      properties:
+        code: {type: string}
+        name: {type: string}
+        layer: {type: string, enum: [DIRECT_RFQ, BUYER_DIRECTORY_AND_RFQ, OFFICIAL_PROCUREMENT, BUSINESS_MATCHING, RETAIL_BUYER_MATCHING, BUSINESS_DEMAND_AND_MARKET_SIGNAL, TRADE_HISTORY_BACKGROUND]}
+        access_mode: {type: string}
+        adapter_status: {type: string, enum: [LIVE, LIVE_PARTIAL, READY, DISCOVERED, DISCOVERY_ONLY, ROUTE_TO_VERIFY, EVALUATE_QUALITY, WAITING_CREDENTIALS, BACKGROUND_ONLY]}
+        entry_url: {type: string, format: uri}
+    CrawlRun:
+      type: object
+      required: [id, status, stage, raw_count, normalized_count, qualified_count, started_at]
+      properties:
+        id: {type: string}
+        status: {type: string, enum: [QUEUED, RUNNING, SUCCEEDED, PARTIAL, FAILED]}
+        stage: {type: string, enum: [DISCOVER, FETCH, NORMALIZE, RESOLVE, SCORE, QUALITY_CHECK, COMPLETE]}
+        raw_count: {type: integer, minimum: 0}
+        normalized_count: {type: integer, minimum: 0}
+        qualified_count: {type: integer, minimum: 0}
+        retry_count: {type: integer, minimum: 0}
+        started_at: {type: string, format: date-time}
+        completed_at: {type: [string, 'null'], format: date-time}
+    TruthDimensions:
+      type: object
+      required: [demand_explicitness, account_business_context, recency, corroboration]
+      properties:
+        demand_explicitness: {type: integer, minimum: 0, maximum: 35, description: 'D1: product 10 + action 10 + specs 5 + quantity/frequency 5 + destination/terms 5'}
+        account_business_context: {type: integer, minimum: 0, maximum: 25, description: 'D2: traceable procurement route 10 + public account/contact 5 + country 5 + explicit buying action 5; does not verify a legal entity'}
+        recency: {type: integer, enum: [0, 8, 18, 25], description: 'D3: <=7d 25; 8-30d 18; 31-90d 8; older/unknown 0'}
+        corroboration: {type: integer, minimum: 0, maximum: 15, description: 'D4: independent source 7 + repeat within 90d 4 + public business channel 4'}
+    BuyerSignalSummary:
+      type: object
+      required: [id, category_code, title, buyer_country_code, published_at, truth_score, truth_level, qualification_status, access_status]
+      properties:
+        id: {type: string}
+        category_code: {$ref: '#/components/schemas/CategoryCode'}
+        title: {type: string}
+        buyer_display_name: {type: [string, 'null'], description: Masked in preview mode}
+        buyer_country_code: {type: [string, 'null'], pattern: '^[A-Z]{2}$'}
+        quantity_raw: {type: [string, 'null']}
+        published_at: {type: [string, 'null'], format: date}
+        truth_score: {type: integer, minimum: 0, maximum: 100}
+        truth_level: {type: string, enum: [A, B, C, D]}
+        qualification_status: {type: string}
+        account_holder_type: {type: string, enum: [ORGANIZATION, PERSON_OR_AGENT, UNKNOWN]}
+        business_context_status: {type: string, enum: [CONFIRMED, SUPPORTING_ONLY, UNCONFIRMED]}
+        buyer_entity_status: {type: string, enum: [CONFIRMED, UNRESOLVED]}
+        buyer_identity_status: {type: string, enum: [LEGAL_VERIFIED, DOMAIN_LINKED, PLATFORM_ACCOUNT, PERSON_ONLY, UNRESOLVED]}
+        access_status: {type: string, enum: [PREVIEW, UNLOCKED]}
+    BuyerSignalDetail:
+      allOf:
+        - {$ref: '#/components/schemas/BuyerSignalSummary'}
+        - type: object
+          required: [buying_action, truth_dimensions, hard_gate_pass, evidence, ruleset_version]
+          properties:
+            buying_action: {type: [string, 'null']}
+            specs_present: {type: boolean}
+            destination_present: {type: boolean}
+            contact_person_raw: {type: [string, 'null'], description: Public business-context contact; not assumed to be a legal company name}
+            truth_dimensions: {$ref: '#/components/schemas/TruthDimensions'}
+            hard_gate_pass: {type: boolean}
+            missing_fields: {type: array, items: {type: string}}
+            dedupe_fingerprint: {type: string}
+            duplicate_count: {type: integer, minimum: 1}
+            evidence:
+              type: array
+              items: {$ref: '#/components/schemas/Evidence'}
+            ruleset_version: {type: string, const: truth-v1.0.0}
+    Evidence:
+      type: object
+      required: [source_code, source_type, url, observed_at, excerpt, snapshot_sha256, data_mode, verification_status]
+      properties:
+        source_code: {type: string}
+        source_type: {type: string}
+        url: {type: string, format: uri}
+        published_at: {type: [string, 'null'], format: date}
+        observed_at: {type: string, format: date-time}
+        excerpt: {type: string, maxLength: 1000}
+        snapshot_sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        data_mode: {type: string, enum: [LIVE, CACHED, SAMPLE]}
+        verification_status: {type: string}
+    Buyer:
+      type: object
+      required: [id, canonical_name, country_code, aliases, relations]
+      properties:
+        id: {type: string, format: uuid}
+        canonical_name: {type: string}
+        country_code: {type: string, pattern: '^[A-Z]{2}$'}
+        domain: {type: [string, 'null']}
+        registration_id: {type: [string, 'null']}
+        aliases: {type: array, items: {type: string}}
+        relations:
+          type: array
+          items:
+            type: object
+            required: [target_buyer_id, relation_type, confidence]
+            properties:
+              target_buyer_id: {type: string, format: uuid}
+              relation_type: {type: string, enum: [SUBSIDIARY_OF, BRAND_OF, OPERATED_BY, ALIAS_OF]}
+              confidence: {type: number, minimum: 0, maximum: 1}
+    AccessChannel:
+      type: object
+      required: [channel_type, value, evidence_url, verified_at]
+      properties:
+        channel_type: {type: string, enum: [PROCUREMENT_PAGE, BUSINESS_CONTACT_PAGE, PUBLIC_BUSINESS_EMAIL, PUBLIC_BUSINESS_PHONE, COMPANY_LINKEDIN]}
+        value: {type: string}
+        evidence_url: {type: string, format: uri}
+        verified_at: {type: string, format: date-time}
+        risk: {type: [string, 'null']}
+    DataQualityReport:
+      type: object
+      required: [run_id, grain, raw_count, deduplicated_count, duplicate_rows_removed, qualified_count, hard_gate_failure_count, future_date_count, required_field_null_rates]
+      properties:
+        run_id: {type: string}
+        grain: {type: string}
+        raw_count: {type: integer, minimum: 0}
+        deduplicated_count: {type: integer, minimum: 0}
+        duplicate_rows_removed: {type: integer, minimum: 0}
+        qualified_count: {type: integer, minimum: 0}
+        hard_gate_failure_count: {type: integer, minimum: 0}
+        future_date_count: {type: integer, minimum: 0}
+        required_field_null_rates:
+          type: object
+          additionalProperties: {type: [number, 'null'], minimum: 0, maximum: 1}
+    Error:
+      type: object
+      required: [code, message, request_id]
+      properties:
+        code: {type: string}
+        message: {type: string}
+        request_id: {type: string}

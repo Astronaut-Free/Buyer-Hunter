@@ -1,100 +1,82 @@
-# Buyer Hunter MVP
+# 买家猎手 / 黔脉 QianPulse
 
-QianPulse Buyer Hunter MVP，前端首页、AI 工作台和 Node.js Agent 后端已合并在同一个项目中。首页和 AI 工作台通过页面内导航切换；需要启动后端后使用登录、匹配和 DeepSeek 对话功能。
+面向贵州卖家的 **全球采购商机智能平台**：持续抓取、清洗、验证海外买方需求，结合卖方能力判断今天最值得追的机会，并围绕目标市场自动开发潜在客户、推进已进入对话的商机。
 
-## GitHub 上传
+商业模式：卖家购买决策会员，获得每日 Top 5、为什么现在、供需匹配、市场准入、风险、Gap 和下一步行动。采购入口与公开 B2B 联系方式是独立的 Lead Access 执行资源。Demo 只模拟会员权限与额度，不接真实支付。
 
-1. 将本目录全部上传到 GitHub 的 `MVP` 分支（不要上传 `.env`、`node_modules` 或 `server/agent-state.json`）。
-2. 在支持 Node.js 的服务器上执行 `npm install && npm start`。
-3. 浏览器访问服务器地址，例如 `http://服务器IP:3317/`。
+---
 
-AI 工作台入口使用 `index.html#workspace`，首页使用 `index.html#home`。
+## 架构：一个仓库，两个运行时 + 一个静态前门
 
-页面中的图片区域均为留白占位，可按提示替换为最终图片资源。
+| 运行时 | 语言 | 覆盖模块 | 目录 | 测试 |
+|---|---|---|---|---|
+| **pipeline + api** | Python 3.12 / FastAPI / SQLite | A1 采集 · A3 时机 · A4 供需匹配 · A5 准入风控 · 机会决策引擎 · 读接口 | `pipeline/` `api/` `db/` | `pytest` — 115 |
+| **agent** | Node.js（零依赖） | A2 主动商机拓展 · A6 成交自动推进 · A3/A4/A5 会话内刷新 · Agent 控制面 | `agent/` | `npm test` — 127 |
+| demo | React / Vite | 卖家决策台（5 屏） | `demo/` | `npm run build` |
+| site | 静态 HTML（无构建） | 门户前门：首页 + 全球商机展示页（vendored 自 `ui` 分支） | `site/` | 审计静态校验 |
 
-GitHub Pages 等静态托管只能展示首页，不能运行 Agent 后端；要使用注册、买家匹配和 DeepSeek 对话，必须部署 Node.js 服务。
+两个运行时通过 **双向数据桥** 连接：Python 流水线产出 `runtime/buyer_hunter.db`，`scripts/export_opportunities_for_agent.py` 导出为 `agent/db/opportunities.json`，agent 启动时读入（merge-on-reload 保留 A6 变更）；反向 agent 的 A6 结果与 A2 发现目标经 `agent/db/agent-outcomes.json` 由 `scripts/import_agent_outcomes.py` 幂等回写 Free store（`deal_outcome` + `agent_discovered_target`，含 domain 实体解析）。契约见 [`contracts/opportunity-bridge-v1.md`](contracts/opportunity-bridge-v1.md)。A6 会话内刷新 A3/A4/A5 时经 capability CLI 调 Python 权威实现（`contracts/capability-result-envelope.schema.json`），运行时故障返回结构化 `ERROR`，不切换到另一套业务算法。前门 `site/` 通过 `site/nav-bridge.js` 把登录/CTA 指向 demo，商机页经 `site/opportunities-live.js` 拉 `/api/v1` 实时数据（API 不可用时回退静态样例）。
 
-## AI 初筛与人工接管演示
+```
+site:4180 前门 ──「立即寻找商机 / 登录」──→ demo:4173 工作台 ──VITE_BUYER_HUNTER_API──→ api:8000
 
-在 AI 工作台点击“确认并开始扫描”后，结果表会展示匹配度、采购意向、沟通完整度和人工接管状态。只有同时满足匹配度 ≥ 60、采购意向 ≥ 60、沟通完整度 ≥ 50，且没有硬性履约阻断或高风险商务议题的买家，才进入“待人工接管”。
-
-“接管并回复”和“编辑 AI 草稿”均只生成待人工确认的内容；本 MVP 不会向买家真实发送任何信息。
-
-## 业务模块
-
-- `业务工作台`：卖家供给档案（企业能力与准入字段）与独立的产品库（SKU、规格、MOQ、产能、样品周期、目标国家）；两者是分开的入口和数据区域，另含买家主动需求发布。
-- `证据`：查看来源链接、采集日期、原文片段、AI 事实/推断/建议和可信度。
-- `CRM 接管看板`：按待接管、已接管、已联系、等待回复、样品/报价阶段查看机会。
-
-当前模块使用浏览器内存中的演示数据；接入后端时，将 `DATA`、保存档案、发布需求和 CRM 状态替换为 API 请求即可。
-
-## QianPulse V15 信息架构
-
-首页一级 Tab 已按 `qianpulse_website_layout_v15.svg` 统一为：`全球商机`、`核心能力`、`主动拓展`、`真实案例`、`关于黔脉`。其中 `主动拓展` 进入卖家供给档案 / 买家需求发布业务入口；首页底部 `黔脉智能体` 区块进入 AI 工作台。AI 工作台侧栏对应：`商机任务`、`企业能力`、`今日 Top 5`；产品库、买家主动需求和 CRM 看板作为业务工作台中的具体功能。
-
-## 后端接口契约（建议 v0.1）
-
-前端模块已经按以下资源边界组织，数据库完成后可以逐步替换本地状态：
-
-```text
-GET    /api/opportunities?market=US&category=matcha
-GET    /api/opportunities/:id/evidence
-POST   /api/sellers/:sellerId/products
-PATCH  /api/sellers/:sellerId/profile
-POST   /api/buyer-demands
-POST   /api/matches/:id/handoff
-PATCH  /api/crm/opportunities/:id   { stage, owner_id, next_follow_up_at, note }
-GET    /api/crm/opportunities?stage=waiting_reply
+A1 采集 ─┐
+         ├─→ 清洗/验真/去重 ─→ A3 时机 ─→ A4 供需 ─→ A5 风控 ─→ 机会决策 ─→ runtime/buyer_hunter.db
+         │                                                                        │
+A2 目标市场 ─→ 发现买家 ─→ Fit ─→ 联系人 ─→ 首封邮件(Human Gate) ─→ Smartlead ──┐   │ 数据桥
+                                                                              ↓   ↓
+                                              买家回复 ─→ A6 Analysis ─→ 刷新 A3/A4/A5 ─→ A6 Final ─→ Communication Brief ─→ Reply Composer ─→ Human Gate
 ```
 
-统一返回建议包含 `id`、`status`、`updated_at`；匹配结果保留 `fit_score`、`intent_score`、`conversation_score`、`evidence_score`、`decision` 和 `reasons`。证据接口必须区分 `facts`（原文事实）、`inferences`（AI 推断）和 `recommendations`（行动建议），避免把推断误认为事实。
+---
 
-## DeepSeek Agent 服务
+## 运行
 
-目录中的 `server/index.js` 是可运行的 Node.js API 骨架，使用 DeepSeek OpenAI 兼容接口。启动方式：
+```powershell
+# Windows
+.\run.ps1 -Setup      # pip install + npm ci
+.\run.ps1 -Build      # 从 committed fixture 重建决策 store
+.\run.ps1 -Export     # 桥：store -> agent feed + agent 结果回写 store（双向）
+.\run.ps1 -Up         # 起 site(:4180) + demo(:4173) + api(:8000) + agent(:3317)
+.\run.ps1 -Down       # 停
+.\run.ps1 -Test       # pytest + npm test
+.\run.ps1 -Audit      # 跨运行时审计 -> docs/AUDIT_<date>.md
+```
 
 ```bash
-cp .env.example .env
-# 在 .env 中填写 DEEPSEEK_API_KEY
-npm start
+# Linux / macOS / WSL / CI
+make setup && make up
+make test
+make audit
 ```
 
-默认访问地址为 `http://localhost:3317`；如果你的环境允许 3000 端口，可在 `.env` 中设置 `PORT=3000`。
+起来后打开 **http://127.0.0.1:4180**（前门）或 **http://127.0.0.1:4173**（工作台）。
+端口：site `4180` · demo `4173` · FastAPI `8000` · agent `3317`。
 
-可用接口：`POST /api/agent/parse-demand`、`/qualify-buyer`、`/draft-reply`、`/match-explain`、`/handoff-summary`，以及 `GET /api/health`。没有配置 Key 时，解析、草稿和解释接口会返回安全的规则兜底；不会把 Key 暴露给浏览器。
+实网（真实外联）需要 `QIANPULSE_EXTERNAL_MODE=live` + `SMARTLEAD_API_KEY` `SMARTLEAD_CAMPAIGN_ID` `SMARTLEAD_WEBHOOK_SECRET` `APOLLO_API_KEY` `TRADEMO_BUYER_LIST_URL`。未配置时以 sandbox 模式运行。详见 [`docs/18_整合架构与运行.md`](docs/18_整合架构与运行.md)。
 
-## QianPulse Agent Control Plane（PRD V1.1）
+---
 
-后端已加入一期控制面，严格区分 Agent 调度与专业能力：
+## 文档索引
 
-- `POST /api/v1/agent/runs`：创建 AgentRun，支持 `SELLER_QUERY`、`SELLER_UPDATE`、`SYSTEM_REFRESH`、`MANUAL_RESUME` 等事件。
-- `GET /api/v1/agent/runs/:run_id`：读取运行状态。
-- `POST /api/v1/agent/runs/:run_id/resume`：从最近运行继续。
-- `POST /api/v1/opportunities/:opportunity_id/messages`：写入模拟买家消息并触发增量路由。
-- `GET /api/v1/opportunities/:opportunity_id/threads`：读取 Seller / Buyer Thread。
-- `POST /api/v1/approvals/:approval_id`：Approve、Edit 或 Reject 对外动作。
-- `GET /api/v1/agent/runs/:run_id/trace`：读取完整 Trace。
-- `GET /api/v1/agent/capabilities`：读取能力注册表。
+**产品与范围**
+1. [项目理解与范围](docs/00_项目理解与范围.md) · [PRD](docs/01_PRD.md) · [数据工程与后端实现](docs/02_数据工程与后端实现.md)
+2. [参考稿冲突矩阵与统一方案 V2](docs/04_参考稿冲突矩阵与统一方案_v2.md) · [五人分工](docs/05_五人分工与3号位执行手册.md)
 
-本地演示使用 `server/agent-state.json` 保存 Opportunity、ConversationEvent、AgentRun、AgentStep、Checkpoint、Approval 和 Trace；该文件已加入 `.gitignore`。买家消息中的普通致谢不会触发能力重跑，预算、交期、数量、认证和规格等变化只会触发路由策略中受影响的能力。任何回复草稿都标记为待人工确认，不会自动发送。
+**A1 / A3 / A4 / A5（Python）**
+3. [采集清洗验真与数据库 API V1.0](docs/11_采集清洗验真与数据库API_v1.0.md) · [全平台采集与 API 接入状态](docs/14_全平台采集与API接入状态总表.md)
+4. [机会决策驱动重构说明](docs/15_机会决策驱动重构说明.md) · [真实数据到机会决策 API 闭环](docs/16_真实数据到机会决策API闭环.md)
+5. [Opportunity Decision OpenAPI](contracts/opportunity-decision-api-v1.yaml) · [SQLite Schema](db/schema.sql)
 
-## 注册与登录
+**A2 / A6（Node）**
+6. [A2/A6 模块索引](docs/17_A2_A6_模块索引.md)
 
-首页登录入口使用统一认证页。用户可注册为 `SELLER` 或 `BUYER`，后端使用 Node `scrypt` 保存密码哈希，登录返回 7 天会话 Token。卖家注册后进入卖家供给档案，买家注册后进入买家需求发布页。认证状态保存在服务端 `server/agent-state.json`，前端只保存 Token；生产环境请设置随机 `AUTH_SECRET` 环境变量并迁移到正式数据库。
+**整合**
+7. [整合架构与运行](docs/18_整合架构与运行.md) · [数据桥契约](contracts/opportunity-bridge-v1.md) · [最新审计](docs/AUDIT_20260829.md)
 
-认证接口：
+**Demo**
+8. [交互 Demo](demo/README.md)
 
-```text
-POST /api/v1/auth/register  { email, password, role, company_name }
-POST /api/v1/auth/login     { email, password }
-GET  /api/v1/auth/me
-POST /api/v1/auth/logout
-```
+---
 
-控制面安全约束：Agent 写入接口必须提供 `idempotency_key`；事件会保存到 `state.events` 后再执行。Run、Thread 和 Opportunity 按登录角色做访问校验，完整 Trace 只允许 `INTERNAL`，Approval 只能由 `INTERNAL` 审批；Buyer 投影不会返回内部评分、风险或调试字段。
-
-AI 工作台已接入 AgentRun：确认扫描会创建 `SYSTEM_NEW_SIGNAL` Run，卖家追问会创建 `SELLER_QUERY` Run，结果区会展示 Run Timeline、能力调用和 Checkpoint 状态。Run 处于等待证据或失败状态时可点击“从 Checkpoint 恢复”。真实服务运行时需先登录；当前示例 Opportunity 对已登录的买家或卖家开放，正式环境应替换为数据库中的成员关系。
-
-## Free 分支数据导入
-
-已导入 Free 分支的核心 SQLite 迁移结构到 `db/schema.sql`，并将 `demo/src/data.js` 中的 5 条机会整理为 `db/free-opportunities.json`。`server/repository.js` 在服务启动时加载这些机会，标记数据源为 `origin/Free`；`GET /api/v1/opportunities` 会按登录角色返回投影后的机会列表。后续接 PostgreSQL 时只需替换 Repository，不改 Agent 控制面。
+平台当前不是店铺、商品展示商城、买家名录或双边交易市场。合同、支付、订单、报关、物流与履约不在开发范围。所有对外动作经人工审批；只采集公开 B2B 信息。

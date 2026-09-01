@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QianPulse A6 Domain Result v1.1",
+  "type": "object",
+  "required": ["opportunity_id", "buyer_reply", "field_observations", "affected_skills", "stage_transition", "decision_state", "next_action", "communication_brief", "outcome", "evaluated_at", "ruleset_version"],
+  "properties": {
+    "opportunity_id": { "type": "string" },
+    "pass": { "enum": ["ANALYSIS", "FINAL"] },
+    "buyer_reply": { "type": "object" },
+    "field_observations": {
+      "type": "object",
+      "required": ["updates", "mentions"],
+      "properties": {
+        "updates": { "type": "array", "items": { "type": "object", "required": ["field", "before", "after", "source", "confidence", "evidence_ref", "raw_span"] } },
+        "mentions": { "type": "array", "items": { "type": "object", "required": ["field", "evidence_ref", "raw_span"] } }
+      }
+    },
+    "affected_skills": { "type": "array", "items": { "type": "string" } },
+    "stage_transition": {
+      "type": "object",
+      "required": ["before", "after", "transition_applied", "reason"],
+      "properties": {
+        "before": { "type": "string" },
+        "after": { "type": "string" },
+        "transition_applied": { "type": "boolean" },
+        "reason": { "type": "string" }
+      }
+    },
+    "decision_state": { "enum": ["PROCEED", "VERIFY", "WAIT", "STOP", "HUMAN"] },
+    "next_action": {
+      "type": "object",
+      "required": ["action", "reason", "owner", "execution_mode", "prerequisites", "success_condition", "stop_condition", "due_at"]
+    },
+    "key_question": { "type": ["object", "null"] },
+    "communication_brief": { "type": ["object", "null"] },
+    "follow_up": { "type": ["object", "null"] },
+    "outcome": { "type": ["object", "null"] },
+    "decision_evidence": { "type": "object" },
+    "dependency_refresh": { "type": "object" },
+    "evaluated_at": { "type": "string" },
+    "ruleset_version": { "const": "a6-opportunity-progression-v1.1.0" },
+    "human_review_required": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

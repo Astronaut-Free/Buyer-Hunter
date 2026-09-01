@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>买家猎手｜商业核心逻辑·手机版</title>
+<style>
+:root{
+  --bg:#07101b;--card:#0d1a29;--card2:#102238;--line:#213650;--text:#f4f7fb;
+  --muted:#9cafc3;--blue:#54b9ff;--gold:#e0b862;--green:#6ed8a6;--red:#ff8b8b;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#0b1d30 0,#07101b 26%,#07101b 100%);color:var(--text);font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.45}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 80% 0%,rgba(84,185,255,.10),transparent 28%)}
+.shell{width:min(100%,480px);margin:0 auto;padding:0 16px 48px;position:relative}
+.top{position:sticky;top:0;z-index:20;margin:0 -16px;padding:10px 16px;background:rgba(7,16,27,.86);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:14px;font-weight:850;letter-spacing:.3px}.badge{font-size:10px;color:#bfe7ff;border:1px solid rgba(84,185,255,.28);background:rgba(84,185,255,.08);padding:5px 8px;border-radius:999px}
+.hero{padding:42px 0 22px}.eyebrow{font-size:10px;color:var(--gold);font-weight:800;letter-spacing:1.6px;text-transform:uppercase}.hero h1{font-size:44px;line-height:1;margin:10px 0 12px;letter-spacing:-1.8px}.hero .lead{font-size:19px;font-weight:750;line-height:1.45;margin:0;color:#e4edf7}.hero .lead em{font-style:normal;color:var(--blue)}
+.one-line{margin-top:18px;padding:17px;border-radius:17px;border:1px solid var(--line);background:linear-gradient(145deg,#11233a,#0c1928);box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.one-line small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.2px;font-weight:800}.one-line strong{display:block;font-size:17px;line-height:1.5;margin-top:7px}
+.section{padding:23px 0 4px}.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px}.section h2{font-size:23px;margin:2px 0 0;letter-spacing:-.5px}.section-no{font-size:10px;color:var(--gold);font-weight:800}
+.card{border:1px solid var(--line);background:rgba(13,26,41,.94);border-radius:16px;padding:15px;margin-bottom:10px}.card h3{font-size:16px;margin:0 0 6px}.card p{font-size:13px;margin:0;color:#c6d3e0}.big{font-size:21px!important;font-weight:850!important;color:#fff!important;line-height:1.35!important}.muted{color:var(--muted)!important}.accent{color:var(--blue)}.good{color:var(--green)}.danger{color:var(--red)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metric{padding:13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025)}.metric b{display:block;font-size:14px;margin-bottom:4px}.metric span{display:block;font-size:11px;color:var(--muted);line-height:1.4}
+.flow{display:flex;flex-direction:column;gap:0}.step{position:relative;padding:13px 14px 13px 42px;border:1px solid var(--line);border-radius:14px;background:#0c1928;margin-bottom:18px}.step:last-child{margin-bottom:0}.step:after{content:"↓";position:absolute;left:18px;bottom:-19px;color:var(--blue);font-weight:900}.step:last-child:after{display:none}.step .n{position:absolute;left:11px;top:12px;width:22px;height:22px;border-radius:8px;background:rgba(84,185,255,.12);color:#9ed8ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}.step b{display:block;font-size:14px;margin-bottom:3px}.step span{display:block;color:var(--muted);font-size:11px}
+.arch{border-left:1px solid #2b4563;margin-left:8px;padding-left:15px}.layer{position:relative;margin-bottom:17px}.layer:before{content:"";position:absolute;left:-19px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px #0c1928}.layer .title{font-size:13px;font-weight:850;color:var(--gold);margin-bottom:7px}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{font-size:11px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025);color:#d2deea}
+.score{padding:15px;border-radius:15px;border:1px dashed rgba(224,184,98,.55);background:linear-gradient(110deg,rgba(224,184,98,.08),rgba(84,185,255,.05));font-size:13px}.score strong{display:block;font-size:16px;margin-bottom:7px}.score-line{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}.score-line:last-child{border-bottom:0}.score-line span{font-size:12px;color:#c9d5e2}.score-line b{font-size:12px;color:#fff}
+.gate{display:flex;gap:10px;align-items:flex-start}.gate i{font-style:normal;flex:0 0 25px;height:25px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(224,184,98,.10);color:var(--gold);font-size:11px;font-weight:900}.gate div b{display:block;font-size:13px;margin-bottom:2px}.gate div span{display:block;font-size:11px;color:var(--muted)}
+.demo{display:grid;grid-template-columns:1fr;gap:8px}.demo-item{padding:12px;border-radius:13px;background:#0c1928;border:1px solid var(--line)}.demo-item b{font-size:13px;display:block}.demo-item span{font-size:11px;color:var(--muted)}
+.team{display:grid;gap:8px}.role{display:grid;grid-template-columns:68px 1fr;gap:10px;align-items:start;padding:12px;border-radius:13px;border:1px solid var(--line);background:#0c1928}.role .who{font-size:11px;color:var(--gold);font-weight:850}.role b{font-size:13px;display:block}.role span{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+.compare{display:grid;grid-template-columns:1fr;gap:8px}.compare .row{padding:12px;border-radius:13px;border:1px solid var(--line);background:#0c1928}.compare b{display:block;font-size:13px}.compare span{font-size:11px;color:var(--muted)}
+details{border:1px solid var(--line);border-radius:15px;background:rgba(13,26,41,.94);margin-bottom:9px;overflow:hidden}summary{list-style:none;padding:14px 15px;font-weight:800;font-size:13px;cursor:pointer}summary::-webkit-details-marker{display:none}summary:after{content:"＋";float:right;color:var(--blue)}details[open] summary:after{content:"－"}.detail-body{padding:0 15px 14px;font-size:11px;color:var(--muted)}
+.cta{margin-top:25px;padding:20px 17px;border-radius:18px;border:1px solid rgba(84,185,255,.28);background:linear-gradient(145deg,rgba(84,185,255,.11),rgba(224,184,98,.06))}.cta small{font-size:10px;color:var(--gold);font-weight:850;letter-spacing:1.2px}.cta strong{display:block;font-size:20px;line-height:1.4;margin-top:7px}.cta p{font-size:12px;color:var(--muted);margin:8px 0 0}
+.footer{text-align:center;font-size:10px;color:#63798f;padding-top:28px}
+@media(min-width:700px){body{padding:28px 0}.shell{border:1px solid rgba(255,255,255,.06);border-radius:28px;background:rgba(5,12,21,.35);box-shadow:0 40px 90px rgba(0,0,0,.35);overflow:hidden}.top{margin:0 -16px}.hero{padding-top:48px}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top"><div class="logo">买家猎手</div><div class="badge">Buying Moment Engine</div></div>
+
+  <header class="hero">
+    <div class="eyebrow">GUIKE · PRODUCT CORE</div>
+    <h1>买家猎手</h1>
+    <p class="lead">找到<em>采购窗口正在打开</em>的企业，并告诉销售今天该追谁。</p>
+    <div class="one-line">
+      <small>ONE-LINE DEFINITION</small>
+      <strong>从采购信号、交易行为和企业变化中识别高概率采购时刻，再匹配给合适的贵州供应商。</strong>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">01 · BUSINESS</div><h2>先回答谁愿意付钱</h2></div></div>
+    <div class="metrics">
+      <div class="metric"><b>付费方</b><span>出口企业<br>外贸销售团队</span></div>
+      <div class="metric"><b>核心损耗</b><span>大量时间耗在低概率客户</span></div>
+      <div class="metric"><b>购买理由</b><span>提高有效机会密度</span></div>
+      <div class="metric"><b>最终决策</b><span>今天最该联系哪5家</span></div>
+    </div>
+    <div class="card" style="margin-top:10px"><p class="big">核心价值：<span class="accent">提高销售资源配置效率</span>，名单只是原始输入。</p></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">02 · CORE LOOP</div><h2>产品只跑一条主链</h2></div></div>
+    <div class="flow">
+      <div class="step"><div class="n">1</div><b>发现信号</b><span>RFQ、进口记录、新品、扩产、招聘、供应商变化</span></div>
+      <div class="step"><div class="n">2</div><b>识别变化</b><span>采购关系松动 / 需求新生 / 采购频率变化</span></div>
+      <div class="step"><div class="n">3</div><b>判断意图</b><span>强度 × 频率 × 新鲜度</span></div>
+      <div class="step"><div class="n">4</div><b>匹配供给</b><span>规格、认证、MOQ、产能、价格带、国家</span></div>
+      <div class="step"><div class="n">5</div><b>输出行动</b><span>Top 5 + Why Now + Gap + Next Action</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">03 · HARD GATES</div><h2>四个硬门槛</h2></div></div>
+    <div class="card gate"><i>01</i><div><b>必须有证据</b><span>来源、时间、原文可复核。</span></div></div>
+    <div class="card gate"><i>02</i><div><b>必须有近期变化</b><span>历史采购只能作为背景，近期触发事件优先。</span></div></div>
+    <div class="card gate"><i>03</i><div><b>硬条件冲突直接降级</b><span>认证、MOQ、规格、市场准入出现硬冲突时停止推荐。</span></div></div>
+    <div class="card gate"><i>04</i><div><b>必须给下一步</b><span>报价、寄样、第二供应源切入、补认证后触达。</span></div></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">04 · SCORE</div><h2>机会评分</h2></div></div>
+    <div class="score">
+      <strong>Opportunity Score</strong>
+      <div class="score-line"><span>采购意图 Intent</span><b>45%</b></div>
+      <div class="score-line"><span>供需匹配 Fit</span><b>30%</b></div>
+      <div class="score-line"><span>时点 Timing</span><b>15%</b></div>
+      <div class="score-line"><span>可触达 Reachability</span><b>10%</b></div>
+      <div class="score-line"><span>风险项</span><b class="danger">Penalty</b></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">05 · ARCHITECTURE</div><h2>手机纵向架构图</h2></div></div>
+    <div class="arch">
+      <div class="layer"><div class="title">① Signal Sources</div><div class="chips"><span class="chip">RFQ</span><span class="chip">贸易记录</span><span class="chip">官网 / 新闻</span><span class="chip">招聘</span></div></div>
+      <div class="layer"><div class="title">② Data Pipeline</div><div class="chips"><span class="chip">Connector</span><span class="chip">Normalizer</span><span class="chip">Entity Resolution</span><span class="chip">Evidence Store</span></div></div>
+      <div class="layer"><div class="title">③ Opportunity Engine</div><div class="chips"><span class="chip">Change Detector</span><span class="chip">Intent</span><span class="chip">Fit</span><span class="chip">Risk / Gap</span></div></div>
+      <div class="layer"><div class="title">④ Agent Layer</div><div class="chips"><span class="chip">Rank Top 5</span><span class="chip">Why Now</span><span class="chip">Next Action</span></div></div>
+      <div class="layer"><div class="title">⑤ Product</div><div class="chips"><span class="chip">供应商画像</span><span class="chip">今日机会</span><span class="chip">买家详情</span><span class="chip">行动中心</span></div></div>
+      <div class="layer"><div class="title">⑥ Infra / Fallback</div><div class="chips"><span class="chip">API</span><span class="chip">DB / Cache</span><span class="chip">LLM</span><span class="chip">离线兜底</span></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">06 · 36H MVP</div><h2>比赛只证明这一件事</h2></div></div>
+    <div class="card"><p class="big">贵州抹茶 → 真实采购信号 → Top 5 买家 → 证据 → 缺口 → 下一步。</p></div>
+    <div class="demo">
+      <div class="demo-item"><b>01｜输入</b><span>贵州抹茶 / 可OEM / 目标欧美</span></div>
+      <div class="demo-item"><b>02｜扫描</b><span>2–3个公开源，30–50条候选信号</span></div>
+      <div class="demo-item"><b>03｜筛选</b><span>去掉过期、低相关、硬条件冲突</span></div>
+      <div class="demo-item"><b>04｜输出</b><span>今日最值得联系的5个买家</span></div>
+      <div class="demo-item"><b>05｜行动</b><span>打开一家公司，看 Why Now / Gap / Next Action</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">07 · TEAM</div><h2>5人并行</h2></div></div>
+    <div class="team">
+      <div class="role"><div class="who">产品</div><div><b>商业 / 产品负责人</b><span>规则、页面、Demo链、商业叙事</span></div></div>
+      <div class="role"><div class="who">Research</div><div><b>买家情报</b><span>真实信号、来源、强弱样本</span></div></div>
+      <div class="role"><div class="who">Data</div><div><b>数据 / 后端</b><span>采集、清洗、统一 Schema、API</span></div></div>
+      <div class="role"><div class="who">AI</div><div><b>Agent</b><span>Intent / Fit / Gap / Rank / Action</span></div></div>
+      <div class="role"><div class="who">Demo</div><div><b>前端</b><span>4屏产品、缓存、离线兜底</span></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">08 · COMMERCIAL</div><h2>商业化从窄场景起</h2></div></div>
+    <div class="compare">
+      <div class="row"><b>中小出口企业</b><span>每日高意向机会｜订阅制</span></div>
+      <div class="row"><b>外贸销售团队</b><span>行业雷达 + Watchlist｜团队 SaaS</span></div>
+      <div class="row"><b>园区 / 政府</b><span>产业出海机会雷达｜年度服务</span></div>
+      <div class="row"><b>出海服务机构</b><span>机会引擎 API｜按调用/企业数</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><div class="section-no">09 · DETAILS</div><h2>需要时再展开</h2></div></div>
+    <details><summary>核心数据字段</summary><div class="detail-body">Seller：产品、规格、认证、MOQ、产能、目标市场、OEM、价格带。<br><br>Opportunity：Buyer、Score、Why Now、Evidence、Fit、Gap、Risk、Next Action。</div></details>
+    <details><summary>比赛阶段暂缓</summary><div class="detail-body">全网实时覆盖、完整CRM、复杂企业知识图谱、自动群发、多行业同时铺开、真实成交概率预测。</div></details>
+    <details><summary>和普通找客工具的边界</summary><div class="detail-body">重点监控近期变化，识别采购窗口；所有结论保留证据链；结果直接进入销售动作。</div></details>
+  </section>
+
+  <div class="cta">
+    <small>FINAL POSITIONING</small>
+    <strong>把有限销售资源，投给此刻更值得追的客户。</strong>
+    <p>长期可扩展为贵州产业出海机会雷达：持续监控市场变化，把需求窗口分发给最匹配的本地企业。</p>
+  </div>
+
+  <div class="footer">Buyer Hunter · Mobile Product Blueprint</div>
+</div>
+</body>
+</html>

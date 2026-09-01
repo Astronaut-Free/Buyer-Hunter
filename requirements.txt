@@ -1,0 +1,10 @@
+# Python side: A1 collectors + clean/score + A3/A4/A5 decision engine + FastAPI read API.
+# Tested versions in parentheses; pins are lower bounds.
+fastapi>=0.115        # (0.138.1)
+uvicorn>=0.30         # (0.49.0)
+httpx>=0.27           # (0.28.1) - FastAPI TestClient
+requests>=2.31        # (2.34.2) - collectors
+beautifulsoup4>=4.12  # (4.15.0) - HTML parsing
+fpdf2>=2.7            # (2.8.8) - 商机简报 PDF
+pypdf>=4.0            # (6.4.0) - 简报 PDF 测试断言
+pytest>=8.0           # (9.1.1)

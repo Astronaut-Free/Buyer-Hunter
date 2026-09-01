@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "market": "US",
+  "categories": [
+    {
+      "code": "MATCHA",
+      "name_zh": "抹茶",
+      "exact_terms": ["matcha", "matcha powder", "ceremonial matcha", "culinary matcha", "organic matcha"],
+      "conditional_terms": ["green tea powder"],
+      "forms": ["powder", "bulk ingredient", "private label", "OEM"],
+      "exclude_terms": ["matcha color", "matcha candle", "matcha perfume"]
+    },
+    {
+      "code": "BLUEBERRY",
+      "name_zh": "蓝莓",
+      "exact_terms": ["blueberry", "blueberries", "fresh blueberry", "frozen blueberry", "IQF blueberry", "dried blueberry", "blueberry powder", "blueberry extract", "blueberry puree", "blueberry juice concentrate"],
+      "conditional_terms": ["berry powder", "berries"],
+      "forms": ["fresh", "frozen", "IQF", "dried", "powder", "extract", "puree", "concentrate"],
+      "exclude_terms": ["blueberry vape", "blueberry gloves", "blueberry balloon", "blueberry shoes", "blueberry fragrance", "blueberry color"]
+    },
+    {
+      "code": "ROSA_ROXBURGHII",
+      "name_zh": "刺梨",
+      "exact_terms": ["Rosa roxburghii", "Rosa roxburghii fruit", "Rosa roxburghii juice", "Rosa roxburghii extract", "cili fruit", "cili juice", "chestnut rose fruit", "burr rose fruit", "chinquapin rose fruit"],
+      "conditional_terms": ["chestnut rose", "burr rose", "chinquapin rose"],
+      "forms": ["fresh fruit", "juice", "concentrate", "powder", "extract", "freeze dried"],
+      "exclude_terms": ["rose plant", "rose seed", "ornamental rose", "garden rose", "rose flower"]
+    },
+    {
+      "code": "CHILI",
+      "name_zh": "辣椒",
+      "exact_terms": ["chili pepper", "chilli pepper", "red chili", "red chilli", "dried chili", "dried chilli", "chili powder", "chilli powder", "hot pepper", "capsicum", "paprika"],
+      "conditional_terms": ["pepper", "red pepper"],
+      "forms": ["fresh", "dried whole", "flakes", "powder", "paste", "extract", "oleoresin"],
+      "exclude_terms": ["pepper spray", "pepper gun", "chili software", "Red Hot Chili Peppers"]
+    },
+    {
+      "code": "TEA",
+      "name_zh": "茶",
+      "exact_terms": ["tea leaves", "green tea", "black tea", "white tea", "oolong tea", "instant tea", "tea powder", "tea extract", "bulk tea", "organic tea"],
+      "conditional_terms": ["tea"],
+      "forms": ["loose leaf", "tea bag", "powder", "instant", "extract", "private label", "bulk ingredient"],
+      "exclude_terms": ["tea set", "tea kettle", "tea table", "tea tree oil", "steam", "team", "teacher", "teaching"]
+    }
+  ],
+  "buyer_intent": {
+    "strong": ["looking for supplier", "seeking supplier", "request for quote", "need quotation", "want to import", "looking for manufacturer", "wholesale requirement", "bulk purchase", "private label", "OEM", "distributor wanted", "monthly requirement", "container load"],
+    "medium": ["where can we source", "available in bulk", "MOQ", "lead time", "food grade certificate", "send catalog", "send specification", "commercial price"],
+    "consumer_exclusions": ["where can I buy one", "looks delicious", "link please", "recipe", "how to make", "I love this", "personal use"]
+  }
+}

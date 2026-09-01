@@ -1,0 +1,496 @@
+openapi: 3.1.0
+info:
+  title: Buyer Hunter Signal API
+  version: 0.1.0-demo
+  description: 36-hour demo contract. Scores are sales-priority scores, not transaction probabilities.
+servers:
+  - url: http://localhost:8000/api/v1
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Runtime dependencies and fallback readiness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /matching-templates:
+    get:
+      operationId: listMatchingTemplates
+      responses:
+        '200':
+          description: Generic product templates with matcha and blueberry examples
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchingTemplate'
+  /seller-capability-profiles:
+    post:
+      operationId: upsertSellerCapabilityProfile
+      description: Private matching criteria for a seller. This does not create a public product listing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SellerCapabilityProfileInput'
+      responses:
+        '201':
+          description: Seller product snapshot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerCapabilityProfile'
+  /crawl-runs:
+    post:
+      operationId: createCrawlRun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_product]
+              properties:
+                target_product:
+                  type: string
+                  minLength: 1
+                  description: Product term used to collect overseas buyer requirements. Collection is independent of any seller profile.
+                source_codes:
+                  type: array
+                  maxItems: 3
+                  items: {type: string}
+      responses:
+        '202':
+          description: Crawl accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlRun'
+  /crawl-runs/{run_id}:
+    get:
+      operationId: getCrawlRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Crawl and pipeline stage status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlRun'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /buyer-requirements:
+    get:
+      operationId: listBuyerRequirements
+      description: Lists aggregated and verified overseas buyer requirements before seller-specific matching.
+      parameters:
+        - name: target_product
+          in: query
+          required: true
+          schema: {type: string, minLength: 1}
+        - name: min_truth_score
+          in: query
+          schema: {type: number, minimum: 0, maximum: 100, default: 40}
+      responses:
+        '200':
+          description: Buyer requirements ordered by truth score and recency
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BuyerRequirementSummary'
+  /opportunities:
+    get:
+      operationId: listOpportunities
+      parameters:
+        - name: seller_capability_profile_id
+          in: query
+          required: true
+          schema: {type: string, format: uuid}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 50, default: 5}
+        - name: truth_level
+          in: query
+          schema: {type: string, enum: [A, B, C, D]}
+        - name: country
+          in: query
+          schema: {type: string, minLength: 2, maxLength: 2}
+      responses:
+        '200':
+          description: Stable order by score desc, latest signal desc, id asc
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OpportunitySummary'
+  /opportunities/{opportunity_id}:
+    get:
+      operationId: getOpportunity
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      responses:
+        '200':
+          description: Evidence-backed opportunity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /opportunities/{opportunity_id}/follow-ups:
+    post:
+      operationId: recordSellerFollowUp
+      description: Records that the seller chose to follow up through a public channel. The platform does not send messages.
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [access_channel_id]
+              properties:
+                access_channel_id: {type: string, format: uuid}
+                note: {type: string, maxLength: 500}
+      responses:
+        '201':
+          description: Seller follow-up recorded; the API does not send a message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowUpRecord'
+  /me/membership:
+    get:
+      operationId: getMyMembership
+      responses:
+        '200':
+          description: Current seller membership and unlock quota
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembershipStatus'
+  /opportunities/{opportunity_id}/access-grants:
+    post:
+      operationId: unlockBuyerAccess
+      description: Validates an active membership and atomically grants access to buyer identity, procurement entry, and verified public B2B channels.
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      responses:
+        '201':
+          description: Access granted; repeated calls are idempotent and do not consume quota twice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyerAccessGrant'
+        '403':
+          description: Membership inactive or unlock quota exhausted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /opportunities/{opportunity_id}/outcomes:
+    post:
+      operationId: recordDealOutcome
+      parameters:
+        - $ref: '#/components/parameters/OpportunityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stage]
+              properties:
+                stage: {type: string, enum: [NEGOTIATING, WON, LOST]}
+                reason: {type: [string, 'null'], maxLength: 500}
+      responses:
+        '201':
+          description: Seller-reported outcome recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealOutcome'
+  /buyers/{buyer_id}:
+    get:
+      operationId: getBuyer
+      parameters:
+        - name: buyer_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Canonical buyer and entity relations. Requires a valid access grant; channels are returned only by the access-grant API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Buyer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    OpportunityId:
+      name: opportunity_id
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  schemas:
+    DataMode:
+      type: string
+      enum: [LIVE, CACHED, SAMPLE]
+    MatchStatus:
+      type: string
+      enum: [PASS, FAIL, UNKNOWN]
+    Health:
+      type: object
+      required: [status, database, cache_ready, llm]
+      properties:
+        status: {type: string, enum: [ok, degraded]}
+        database: {type: string, enum: [ok, error]}
+        cache_ready: {type: boolean}
+        llm: {type: string, enum: [ok, disabled, error]}
+    MatchingTemplate:
+      type: object
+      required: [template_code, category, product_type, schema_version, attribute_schema]
+      properties:
+        template_code: {type: string}
+        category: {type: string}
+        product_type: {type: string}
+        product_form: {type: [string, 'null']}
+        schema_version: {type: string}
+        attribute_schema: {type: object, additionalProperties: true}
+    SellerCapabilityProfileInput:
+      type: object
+      required: [seller_id, template_code, target_product, target_markets, attributes]
+      properties:
+        seller_id: {type: string, format: uuid}
+        template_code: {type: string}
+        target_product: {type: string, minLength: 1, description: Product the seller wants to find overseas buyer demand for.}
+        target_markets:
+          type: array
+          items: {type: string, minLength: 2, maxLength: 2}
+        attributes: {type: object, additionalProperties: true}
+    SellerCapabilityProfile:
+      allOf:
+        - $ref: '#/components/schemas/SellerCapabilityProfileInput'
+        - type: object
+          required: [id, snapshot_version, created_at]
+          properties:
+            id: {type: string, format: uuid}
+            snapshot_version: {type: integer, minimum: 1}
+            created_at: {type: string, format: date-time}
+    CrawlRun:
+      type: object
+      required: [id, status, stage, raw_count, normalized_count, buyer_count, opportunity_count]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [QUEUED, RUNNING, SUCCEEDED, PARTIAL, FAILED]}
+        stage: {type: string, enum: [DISCOVER, FETCH, NORMALIZE, RESOLVE, SCORE, COMPLETE]}
+        raw_count: {type: integer, minimum: 0}
+        normalized_count: {type: integer, minimum: 0}
+        buyer_count: {type: integer, minimum: 0}
+        opportunity_count: {type: integer, minimum: 0}
+        sources:
+          type: array
+          items:
+            type: object
+            required: [source_code, status, item_count]
+            properties:
+              source_code: {type: string}
+              status: {type: string, enum: [QUEUED, RUNNING, SUCCEEDED, FAILED]}
+              item_count: {type: integer, minimum: 0}
+              error_code: {type: [string, 'null']}
+    ScoreBreakdown:
+      type: object
+      required: [truth_score, truth_level, intent, fit, timing, reachability, penalty, opportunity_score, ruleset_version]
+      properties:
+        truth_score: {type: number, minimum: 0, maximum: 100}
+        truth_level: {type: string, enum: [A, B, C, D]}
+        truth_dimensions:
+          type: object
+          required: [demand_explicitness, entity_authenticity, recency, corroboration]
+          properties:
+            demand_explicitness: {type: number, minimum: 0, maximum: 35}
+            entity_authenticity: {type: number, minimum: 0, maximum: 25}
+            recency: {type: number, minimum: 0, maximum: 25}
+            corroboration: {type: number, minimum: 0, maximum: 15}
+        intent: {type: number, minimum: 0, maximum: 100}
+        fit: {type: number, minimum: 0, maximum: 100}
+        timing: {type: number, minimum: 0, maximum: 100}
+        reachability: {type: number, minimum: 0, maximum: 100}
+        penalty: {type: number, minimum: 0, maximum: 30}
+        opportunity_score: {type: number, minimum: 0, maximum: 100}
+        ruleset_version: {type: string}
+    BuyerRequirementSummary:
+      type: object
+      required: [id, buyer_display_name, access_status, country, product_terms, buying_action, truth_score, truth_level, latest_signal_at, data_mode]
+      properties:
+        id: {type: string, format: uuid}
+        buyer_display_name: {type: string, description: Masked unless the seller has an access grant.}
+        access_status: {type: string, enum: [PREVIEW, UNLOCKED]}
+        country: {type: string, minLength: 2, maxLength: 2}
+        product_terms: {type: array, items: {type: string}}
+        buying_action: {type: [string, 'null']}
+        truth_score: {type: number, minimum: 0, maximum: 100}
+        truth_level: {type: string, enum: [A, B, C, D]}
+        latest_signal_at: {type: [string, 'null'], format: date-time}
+        data_mode: {$ref: '#/components/schemas/DataMode'}
+    OpportunitySummary:
+      type: object
+      required: [id, buyer_display_name, access_status, country, product_terms, why_now, score, latest_signal_at, data_mode, status]
+      properties:
+        id: {type: string, format: uuid}
+        buyer_display_name: {type: string, description: Masked or full according to access grant.}
+        access_status: {type: string, enum: [PREVIEW, UNLOCKED]}
+        country: {type: string, minLength: 2, maxLength: 2}
+        product_terms: {type: array, items: {type: string}}
+        why_now: {type: string}
+        score: {$ref: '#/components/schemas/ScoreBreakdown'}
+        latest_signal_at: {type: [string, 'null'], format: date-time}
+        data_mode: {$ref: '#/components/schemas/DataMode'}
+        status: {type: string, enum: [NEW, REVIEWED, FOLLOW_UP_STARTED, REJECTED_CONFLICT]}
+    Evidence:
+      type: object
+      required: [id, source_type, url, observed_at, excerpt, snapshot_sha256, data_mode]
+      properties:
+        id: {type: string, format: uuid}
+        source_type: {type: string}
+        url: {type: string, format: uri}
+        published_at: {type: [string, 'null'], format: date-time}
+        observed_at: {type: string, format: date-time}
+        excerpt: {type: string, maxLength: 1000}
+        snapshot_sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        data_mode: {$ref: '#/components/schemas/DataMode'}
+    MatchResult:
+      type: object
+      required: [field_code, requirement_value, seller_value, status, hard, reason]
+      properties:
+        field_code: {type: string}
+        requirement_value: {}
+        seller_value: {}
+        status: {$ref: '#/components/schemas/MatchStatus'}
+        hard: {type: boolean}
+        reason: {type: string}
+    OpportunityDetail:
+      allOf:
+        - $ref: '#/components/schemas/OpportunitySummary'
+        - type: object
+          required: [buyer, evidence, match_results, gaps, risks, next_action]
+          properties:
+            buyer: {$ref: '#/components/schemas/Buyer'}
+            evidence: {type: array, items: {$ref: '#/components/schemas/Evidence'}}
+            match_results: {type: array, items: {$ref: '#/components/schemas/MatchResult'}}
+            gaps: {type: array, items: {type: string}}
+            risks: {type: array, items: {type: string}}
+            next_action: {type: string}
+    Buyer:
+      type: object
+      required: [id, canonical_name, country, aliases, relations]
+      properties:
+        id: {type: string, format: uuid}
+        canonical_name: {type: string}
+        domain: {type: [string, 'null']}
+        country: {type: string, minLength: 2, maxLength: 2}
+        aliases: {type: array, items: {type: string}}
+        relations:
+          type: array
+          items:
+            type: object
+            required: [relation_type, target_buyer_id, target_name]
+            properties:
+              relation_type: {type: string, enum: [SUBSIDIARY_OF, BRAND_OF, OPERATED_BY, ALIAS_OF]}
+              target_buyer_id: {type: string, format: uuid}
+              target_name: {type: string}
+    MembershipStatus:
+      type: object
+      required: [subscription_id, plan_code, status, starts_at, ends_at, unlock_quota_total, unlock_quota_used]
+      properties:
+        subscription_id: {type: string, format: uuid}
+        plan_code: {type: string}
+        status: {type: string, enum: [ACTIVE, EXPIRED, PAUSED, NONE]}
+        starts_at: {type: [string, 'null'], format: date-time}
+        ends_at: {type: [string, 'null'], format: date-time}
+        unlock_quota_total: {type: integer, minimum: 0}
+        unlock_quota_used: {type: integer, minimum: 0}
+    BuyerAccessChannel:
+      type: object
+      required: [id, channel_type, value, evidence_id, verified_at]
+      properties:
+        id: {type: string, format: uuid}
+        channel_type: {type: string, enum: [PROCUREMENT_PAGE, BUSINESS_CONTACT_PAGE, PUBLIC_BUSINESS_EMAIL, COMPANY_LINKEDIN]}
+        value: {type: string}
+        evidence_id: {type: string, format: uuid}
+        verified_at: {type: string, format: date-time}
+        risk: {type: [string, 'null']}
+    BuyerAccessGrant:
+      type: object
+      required: [id, subscription_id, opportunity_id, buyer, access_channels, granted_at, quota_consumed]
+      properties:
+        id: {type: string, format: uuid}
+        subscription_id: {type: string, format: uuid}
+        opportunity_id: {type: string, format: uuid}
+        buyer: {$ref: '#/components/schemas/Buyer'}
+        access_channels:
+          type: array
+          items: {$ref: '#/components/schemas/BuyerAccessChannel'}
+        granted_at: {type: string, format: date-time}
+        quota_consumed: {type: boolean}
+    FollowUpRecord:
+      type: object
+      required: [id, opportunity_id, access_channel_id, followed_up_at]
+      properties:
+        id: {type: string, format: uuid}
+        opportunity_id: {type: string, format: uuid}
+        access_channel_id: {type: string, format: uuid}
+        followed_up_at: {type: string, format: date-time}
+        note: {type: [string, 'null']}
+    DealOutcome:
+      type: object
+      required: [id, opportunity_id, stage, reported_at]
+      properties:
+        id: {type: string, format: uuid}
+        opportunity_id: {type: string, format: uuid}
+        stage: {type: string, enum: [NEGOTIATING, WON, LOST]}
+        reason: {type: [string, 'null']}
+        reported_at: {type: string, format: date-time}
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, retryable, request_id]
+          properties:
+            code: {type: string}
+            message: {type: string}
+            retryable: {type: boolean}
+            request_id: {type: string}

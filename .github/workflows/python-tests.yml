@@ -1,0 +1,33 @@
+name: Python Tests (A1 pipeline + decision API)
+
+on:
+  push:
+    branches: [integration, Free]
+    paths:
+      - 'pipeline/**'
+      - 'api/**'
+      - 'db/**'
+      - 'contracts/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+      - '.github/workflows/python-tests.yml'
+  pull_request:
+    paths:
+      - 'pipeline/**'
+      - 'api/**'
+      - 'db/**'
+      - 'contracts/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+      - '.github/workflows/python-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q

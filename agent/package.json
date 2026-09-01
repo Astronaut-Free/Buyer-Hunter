@@ -1,0 +1,14 @@
+{
+  "name": "buyer-hunter-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/bootstrap.js",
+    "dev": "node --watch server/bootstrap.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

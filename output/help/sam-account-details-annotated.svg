@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2549" height="1403" viewBox="0 0 2549 1403">
+  <image x="0" y="0" width="2549" height="1403" xlink:href="sam-account-details.png"/>
+  <ellipse cx="1940" cy="302" rx="116" ry="42" fill="none" stroke="#ff1f1f" stroke-width="12"/>
+  <path d="M 1745 216 C 1795 225, 1830 246, 1855 276" fill="none" stroke="#ff1f1f" stroke-width="12" stroke-linecap="round"/>
+  <path d="M 1828 261 L 1858 280 L 1852 245" fill="#ff1f1f"/>
+  <rect x="1610" y="166" width="180" height="62" rx="16" fill="#ff1f1f"/>
+  <text x="1700" y="209" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="700" fill="white">点这里</text>
+</svg>

@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "data_mode": "SANDBOX",
+    "purpose": "Offline A2 discovery fixture so the proactive-development chain runs with zero external credentials. Shapes mirror providers/trademo.js normalizeCompany() and providers/apollo.js findDecisionMakers().",
+    "not_real": "These are ILLUSTRATIVE companies. They are not real buyers and must never be presented as verified demand. Every record is stamped data_mode=SANDBOX and provider=sandbox."
+  },
+  "companies": [
+    { "id": "sbx-us-01", "name": "Pacific Leaf Ingredients", "country": "US", "city": "Portland", "domain": "pacificleaf.example", "shipments": 41, "keywords": ["matcha", "green tea"], "hs": ["0902"], "types": ["importer", "distributor"], "why": "customs records show 41 matcha powder shipments in 18 months" },
+    { "id": "sbx-us-02", "name": "Cascade Beverage Works", "country": "US", "city": "Seattle", "domain": "cascadebev.example", "shipments": 27, "keywords": ["matcha"], "hs": ["0902", "2101"], "types": ["food brand", "manufacturer"], "why": "launched three matcha-based RTD lines; recurring bulk tea imports" },
+    { "id": "sbx-us-03", "name": "Golden State Organics", "country": "US", "city": "Oakland", "domain": "gsorganics.example", "shipments": 18, "keywords": ["matcha", "blueberry"], "hs": ["0902", "0811"], "types": ["importer", "wholesaler"], "why": "USDA-organic importer sourcing tea and berry powders" },
+    { "id": "sbx-us-04", "name": "Northline Tea Company", "country": "US", "city": "Chicago", "domain": "northlinetea.example", "shipments": 33, "keywords": ["tea", "matcha"], "hs": ["0902"], "types": ["distributor", "tea chain"], "why": "regional tea distributor with steady quarterly green-tea imports" },
+    { "id": "sbx-us-05", "name": "Harbor Foods Trading", "country": "US", "city": "Newark", "domain": "harborfoods.example", "shipments": 12, "keywords": ["chili", "matcha"], "hs": ["0904", "0902"], "types": ["importer"], "why": "specialty food importer, mixed spice and tea volumes" },
+    { "id": "sbx-jp-01", "name": "Yokohama Foods Trading", "country": "JP", "city": "Yokohama", "domain": "yokohamafoods.example", "shipments": 55, "keywords": ["matcha", "tea"], "hs": ["0902"], "types": ["importer", "wholesaler"], "why": "long-running tea importer seeking a second supply source" },
+    { "id": "sbx-jp-02", "name": "Sakura Confectionery", "country": "JP", "city": "Kyoto", "domain": "sakuraconf.example", "shipments": 21, "keywords": ["matcha"], "hs": ["0902", "1806"], "types": ["food brand", "manufacturer"], "why": "confectioner using culinary-grade matcha year-round" },
+    { "id": "sbx-gb-01", "name": "Albion Health Foods", "country": "GB", "city": "Manchester", "domain": "albionhealth.example", "shipments": 24, "keywords": ["blueberry", "matcha"], "hs": ["0811", "0902"], "types": ["importer", "e-commerce"], "why": "freeze-dried fruit and superfood powder importer" },
+    { "id": "sbx-gb-02", "name": "Thames Beverage Group", "country": "GB", "city": "London", "domain": "thamesbev.example", "shipments": 16, "keywords": ["matcha", "tea"], "hs": ["0902"], "types": ["food brand", "tea chain"], "why": "cafe chain sourcing matcha for a new drinks range" },
+    { "id": "sbx-de-01", "name": "Rheinland Naturkost", "country": "DE", "city": "Cologne", "domain": "rheinlandnk.example", "shipments": 30, "keywords": ["matcha", "tea"], "hs": ["0902"], "types": ["importer", "distributor"], "why": "EU-organic certified natural foods importer" },
+    { "id": "sbx-nl-01", "name": "Amsterdam Botanicals BV", "country": "NL", "city": "Amsterdam", "domain": "amsbotanicals.example", "shipments": 38, "keywords": ["matcha", "rosa roxburghii"], "hs": ["0902", "2009"], "types": ["distributor", "wholesaler"], "why": "botanical extract and powder distributor serving the Benelux" },
+    { "id": "sbx-au-01", "name": "Southern Cross Provisions", "country": "AU", "city": "Melbourne", "domain": "scprovisions.example", "shipments": 14, "keywords": ["matcha", "blueberry"], "hs": ["0902", "0811"], "types": ["importer", "retailer"], "why": "specialty grocery importer expanding its tea range" },
+    { "id": "sbx-sg-01", "name": "Marina Bay Ingredients", "country": "SG", "city": "Singapore", "domain": "marinabaying.example", "shipments": 26, "keywords": ["rosa roxburghii", "matcha"], "hs": ["2009", "0902"], "types": ["importer", "distributor"], "why": "functional-beverage ingredient importer for SEA markets" },
+    { "id": "sbx-ca-01", "name": "Maple Ridge Naturals", "country": "CA", "city": "Vancouver", "domain": "mapleridgenat.example", "shipments": 19, "keywords": ["blueberry", "matcha"], "hs": ["0811", "0902"], "types": ["importer", "e-commerce"], "why": "DTC superfood brand importing berry and tea powders" },
+    { "id": "sbx-kr-01", "name": "Hanul Food Partners", "country": "KR", "city": "Seoul", "domain": "hanulfood.example", "shipments": 22, "keywords": ["matcha", "chili"], "hs": ["0902", "0904"], "types": ["importer", "wholesaler"], "why": "food ingredient importer with recurring tea and spice volumes" }
+  ],
+  "contacts": {
+    "_pattern": "one public-style business contact per company; work_email uses the company's own domain",
+    "roles": [
+      { "title": "Procurement Manager", "first": "Dana", "last": "Lee" },
+      { "title": "Head of Sourcing", "first": "Marco", "last": "Silva" },
+      { "title": "Category Buyer", "first": "Aiko", "last": "Tanaka" },
+      { "title": "Supply Chain Director", "first": "Nina", "last": "Bauer" },
+      { "title": "Purchasing Manager, Ingredients", "first": "Tom", "last": "Whitfield" }
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "skill_name": "qianpulse-a6-opportunity-progression",
+  "evals": [
+    {
+      "id": "a6-001",
+      "prompt": "买家回复：We need 20 tons, not 5 tons, and shipment should go to Dubai. Can you confirm whether you can supply?",
+      "expected_output": "识别数量和目的地变化，通过 changed fields 让相关能力失效重跑，再决定下一动作。",
+      "expectations": [
+        "field_observations.updates 包含 quantity 和 destination",
+        "不在 A6 内自行重做供需匹配和风控",
+        "只请求相关能力增量刷新"
+      ]
+    },
+    {
+      "id": "a6-002",
+      "prompt": "买家回复：Please send your formal quotation, payment terms and whether you can give us exclusive distribution rights in UAE.",
+      "expected_output": "识别正式报价、支付与独家条件，强制 HUMAN_TAKEOVER。",
+      "expectations": [
+        "next_action.execution_mode 为 HUMAN",
+        "不得自动承诺价格、支付或独家",
+        "保留原始消息证据"
+      ]
+    },
+    {
+      "id": "a6-003",
+      "prompt": "买家只回复 Thanks, received. 当前没有新的业务字段变化。",
+      "expected_output": "保留当前业务阶段或轻量更新，不全量重跑 A3-A5。",
+      "expectations": [
+        "不制造 field_observations.updates",
+        "不全量重跑所有能力",
+        "可以 WAIT 或按上下文提出单个关键问题"
+      ]
+    },
+    {
+      "id": "a6-004",
+      "prompt": "买家回复 unsubscribe me。",
+      "expected_output": "立即 STOP_CONTACT，并写入 suppression / stop 状态。",
+      "expectations": [
+        "优先处理 UNSUBSCRIBE",
+        "不生成继续营销的回复",
+        "后续自动推进停止"
+      ]
+    },
+    {
+      "id": "a6-005",
+      "prompt": "买家想要样品，但卖家知识库没有样品政策、费用和物流条件。",
+      "expected_output": "识别 SAMPLE_REQUEST，同时请求卖家补证据或进入 APPROVAL，不编造样品政策。",
+      "expectations": [
+        "不编造样品费用和寄送条件",
+        "next action 为 REQUEST_MORE_EVIDENCE / CREATE_SAMPLE_TASK 的受控组合",
+        "human_review_required 为 true"
+      ]
+    }
+  ]
+}
