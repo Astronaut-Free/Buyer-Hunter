@@ -79,6 +79,20 @@ test('login button opened from a local HTML file reaches the running login page'
   assert.deepEqual(result.assigned, ['http://127.0.0.1:3317/workspace/#auth']);
 });
 
+test('production proxy keeps login and workspace on the public site origin', async () => {
+  const result = await runBridge({
+    targetId: 'qpLogin',
+    locationOverrides: {
+      protocol: 'http:',
+      hostname: 'qianpulse.example',
+      port: '4180',
+      origin: 'http://qianpulse.example:4180',
+      pathname: '/opportunities.html'
+    }
+  });
+  assert.deepEqual(result.assigned, ['http://qianpulse.example:4180/workspace/#auth']);
+});
+
 test('workspace CTA prompts signed-out users to log in without navigating', async () => {
   const result = await runBridge();
   assert.deepEqual(result.assigned, []);
