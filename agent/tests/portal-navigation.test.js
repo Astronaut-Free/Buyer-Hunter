@@ -70,6 +70,13 @@ test('agent serves the portal as the only homepage and isolates the workspace', 
     assert.match(bridgeSource, /\/api\/v1\/auth\/me/);
     assert.match(bridgeSource, /qianpulse-auth-token/);
 
+    const opportunities = await fetch(`http://127.0.0.1:${PORT}/opportunities.html`);
+    assert.equal(opportunities.status, 200);
+    const opportunitiesSource = await opportunities.text();
+    assert.match(opportunitiesSource, /id="qpMobileNavToggle"/);
+    assert.match(opportunitiesSource, /@media \(max-width:768px\)/);
+    assert.match(opportunitiesSource, /opportunities-live\.js/);
+
     const workspaceRedirect = await fetch(`http://127.0.0.1:${PORT}/workspace`, { redirect: 'manual' });
     assert.equal(workspaceRedirect.status, 302);
     assert.equal(workspaceRedirect.headers.get('location'), '/workspace/#workspace');
