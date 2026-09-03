@@ -87,6 +87,7 @@ test('agent serves the portal as the only homepage and isolates the workspace', 
     assert.match(workspaceSource, /function portalUrl/);
     assert.match(workspaceSource, /installMessageAvatars/);
     assert.match(workspaceSource, /assets\/chat-bg-desktop\.png/);
+    assert.doesNotMatch(workspaceSource, /function showWorkspace\(\)\{document\.querySelector\('#home'\)\.classList\.remove\('active'\)/);
 
     for (const asset of ['agent-avatar.png', 'user-avatar.png', 'chat-bg-desktop.png', 'chat-bg-mobile.png']) {
       const response = await fetch(`http://127.0.0.1:${PORT}/workspace/assets/${asset}`);
