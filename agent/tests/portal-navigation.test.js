@@ -85,6 +85,7 @@ test('agent serves the portal as the only homepage and isolates the workspace', 
     assert.equal(workspace.status, 200);
     const workspaceSource = await workspace.text();
     assert.match(workspaceSource, /function portalUrl/);
+    assert.match(workspaceSource, /location\.protocol==='file:'\)return new URL\('\.\.\/site\/index\.html',location\.href\)\.href/);
     assert.match(workspaceSource, /installMessageAvatars/);
     assert.match(workspaceSource, /assets\/chat-bg-desktop\.png/);
     assert.doesNotMatch(workspaceSource, /function showWorkspace\(\)\{document\.querySelector\('#home'\)\.classList\.remove\('active'\)/);

@@ -464,6 +464,7 @@ async function refreshResults(){
     const explicit=(typeof window.QIANPULSE_PORTAL_URL==='string'&&window.QIANPULSE_PORTAL_URL)
       ||document.querySelector('meta[name="qianpulse-portal"]')?.content||'';
     if(explicit)return explicit;
+    if(location.protocol==='file:')return new URL('../site/index.html',location.href).href;
     return `${location.origin}/`;
   }
   function goPortal(event){ if(event)event.preventDefault(); window.location.assign(portalUrl()); }
