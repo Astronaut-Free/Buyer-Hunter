@@ -71,12 +71,12 @@ async function runBridge({ token = '', authOk = true, targetId = 'qpHeroStart', 
   return { assigned, fetchCalls, storage, node: nodes.qpHeroStart, notice: nodes.qianpulseLoginNotice };
 }
 
-test('login button opened from a local HTML file reaches the running login page', async () => {
+test('login button opened from a local HTML file reaches the deployed login page', async () => {
   const result = await runBridge({
     targetId: 'qpLogin',
     locationOverrides: { protocol: 'file:', hostname: '', port: '', origin: 'null', pathname: '/local/opportunities.html' }
   });
-  assert.deepEqual(result.assigned, ['http://127.0.0.1:3317/workspace/#auth']);
+  assert.deepEqual(result.assigned, ['http://119.91.204.172:3317/workspace/#auth']);
 });
 
 test('production proxy keeps login and workspace on the public site origin', async () => {

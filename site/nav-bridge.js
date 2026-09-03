@@ -29,7 +29,7 @@
       || document.querySelector('meta[name="qianpulse-app"]')?.content
       || "";
     if (explicit) return explicit.replace(/#.*$/, "").replace(/\/+$/, "");
-    if (location.protocol === "file:") return "http://127.0.0.1:3317";
+    if (location.protocol === "file:") return "http://119.91.204.172:3317";
     const isLoopback = location.hostname === "127.0.0.1"
       || location.hostname === "localhost"
       || location.hostname === "::1";
