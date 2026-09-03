@@ -88,6 +88,10 @@ test('agent serves the portal as the only homepage and isolates the workspace', 
     assert.match(workspaceSource, /location\.protocol==='file:'\)return new URL\('\.\.\/site\/index\.html',location\.href\)\.href/);
     assert.match(workspaceSource, /installMessageAvatars/);
     assert.match(workspaceSource, /assets\/chat-bg-desktop\.png/);
+    assert.match(workspaceSource, /\.workspace\{min-height:0;overflow:hidden\}/);
+    assert.match(workspaceSource, /\.chat,\.results\{min-height:0\}/);
+    assert.match(workspaceSource, /\.messages\{min-height:0;overflow:auto;overscroll-behavior:contain\}/);
+    assert.match(workspaceSource, /\.composer\{flex:0 0 auto\}/);
     assert.doesNotMatch(workspaceSource, /function showWorkspace\(\)\{document\.querySelector\('#home'\)\.classList\.remove\('active'\)/);
 
     for (const asset of ['agent-avatar.png', 'user-avatar.png', 'chat-bg-desktop.png', 'chat-bg-mobile.png']) {
