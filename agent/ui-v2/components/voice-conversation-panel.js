@@ -32,6 +32,9 @@ export function renderVoiceConversationPanel(input = {}, {
   const session = normalizeVoiceSession(input);
   const panel = el('section', { className: 'qp-v2-card qp-v2-voice-panel' });
   const active = Boolean(session.sessionId && !session.endedAt);
+  const canStart = typeof onStart === 'function';
+  const canStop = typeof onStop === 'function';
+  const canTakeover = typeof onHumanTakeover === 'function';
 
   panel.appendChild(el('header', { className: 'qp-v2-panel-head' }, [
     el('div', {}, [
@@ -48,8 +51,10 @@ export function renderVoiceConversationPanel(input = {}, {
   if (!session.sessionId) {
     panel.appendChild(renderViewState({
       status: ViewStatus.EMPTY,
-      title: '尚未开始语音会话',
-      message: '开始后，STT 转写、事实提取与人工接管共用 Conversation Contract。',
+      title: canStart ? '尚未开始语音会话' : '语音通道待接线',
+      message: canStart
+        ? '开始后，STT 转写、事实提取与人工接管共用 Conversation Contract。'
+        : '前端组件已就位；STT / TTS / Voice Session API 未接入前保持不可执行。',
     }));
   } else {
     panel.appendChild(el('div', { className: 'qp-v2-voice-session' }, [
@@ -83,22 +88,22 @@ export function renderVoiceConversationPanel(input = {}, {
   if (!active) {
     actions.appendChild(el('button', {
       className: 'qp-v2-primary-button qp-v2-focus-ring',
-      text: '开始语音会话',
-      attrs: { type: 'button' },
-      on: { click: () => onStart?.() },
+      text: canStart ? '开始语音会话' : '语音能力待接线',
+      attrs: { type: 'button', disabled: canStart ? null : 'disabled' },
+      on: { click: canStart ? () => onStart() : undefined },
     }));
   } else {
     actions.appendChild(el('button', {
       className: 'qp-v2-secondary-button qp-v2-focus-ring',
       text: '人工接管',
-      attrs: { type: 'button' },
-      on: { click: () => onHumanTakeover?.(session) },
+      attrs: { type: 'button', disabled: canTakeover ? null : 'disabled' },
+      on: { click: canTakeover ? () => onHumanTakeover(session) : undefined },
     }));
     actions.appendChild(el('button', {
       className: 'qp-v2-primary-button qp-v2-focus-ring',
       text: '结束会话',
-      attrs: { type: 'button' },
-      on: { click: () => onStop?.(session) },
+      attrs: { type: 'button', disabled: canStop ? null : 'disabled' },
+      on: { click: canStop ? () => onStop(session) : undefined },
     }));
   }
   panel.appendChild(actions);
