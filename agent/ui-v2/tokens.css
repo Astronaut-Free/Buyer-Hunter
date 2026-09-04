@@ -1,0 +1,81 @@
+:root {
+  --qp-color-brand-900: #123226;
+  --qp-color-brand-800: #173d30;
+  --qp-color-brand-700: #1d4b3a;
+  --qp-color-brand-600: #126247;
+  --qp-color-brand-100: #e5f3eb;
+  --qp-color-brand-050: #f3faf6;
+
+  --qp-color-ink: #1d3027;
+  --qp-color-muted: #718078;
+  --qp-color-line: #e3e9e4;
+  --qp-color-bg: #f4f7f4;
+  --qp-color-paper: #fffefa;
+  --qp-color-white: #ffffff;
+
+  --qp-color-success: #126247;
+  --qp-color-success-bg: #e5f3eb;
+  --qp-color-warning: #916a1e;
+  --qp-color-warning-bg: #fff1d6;
+  --qp-color-danger: #b84f43;
+  --qp-color-danger-bg: #fdeae7;
+  --qp-color-unknown: #68746d;
+  --qp-color-unknown-bg: #eef1ef;
+
+  --qp-radius-xs: 4px;
+  --qp-radius-sm: 6px;
+  --qp-radius-md: 8px;
+  --qp-radius-lg: 12px;
+  --qp-radius-pill: 999px;
+
+  --qp-space-1: 4px;
+  --qp-space-2: 8px;
+  --qp-space-3: 12px;
+  --qp-space-4: 16px;
+  --qp-space-5: 20px;
+  --qp-space-6: 24px;
+  --qp-space-8: 32px;
+  --qp-space-10: 40px;
+
+  --qp-font-xs: 10px;
+  --qp-font-sm: 11px;
+  --qp-font-md: 13px;
+  --qp-font-lg: 15px;
+  --qp-font-xl: 20px;
+  --qp-font-2xl: 26px;
+
+  --qp-shadow-card: 0 8px 24px rgba(20, 49, 38, 0.08);
+  --qp-shadow-float: 0 14px 38px rgba(20, 45, 33, 0.11);
+
+  --qp-content-max: 1440px;
+  --qp-sidebar-width: 218px;
+  --qp-transition-fast: 140ms ease;
+  --qp-transition-normal: 220ms ease;
+}
+
+.qp-v2-card {
+  background: var(--qp-color-white);
+  border: 1px solid var(--qp-color-line);
+  border-radius: var(--qp-radius-md);
+  box-shadow: var(--qp-shadow-card);
+}
+
+.qp-v2-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qp-space-1);
+  padding: 3px 7px;
+  border-radius: var(--qp-radius-pill);
+  font-size: var(--qp-font-xs);
+  font-weight: 800;
+}
+
+.qp-v2-tag[data-tone="success"] { color: var(--qp-color-success); background: var(--qp-color-success-bg); }
+.qp-v2-tag[data-tone="warning"] { color: var(--qp-color-warning); background: var(--qp-color-warning-bg); }
+.qp-v2-tag[data-tone="danger"] { color: var(--qp-color-danger); background: var(--qp-color-danger-bg); }
+.qp-v2-tag[data-tone="unknown"] { color: var(--qp-color-unknown); background: var(--qp-color-unknown-bg); }
+
+.qp-v2-focus-ring:focus-visible {
+  outline: 2px solid var(--qp-color-brand-600);
+  outline-offset: 2px;
+}
