@@ -1,3 +1,13 @@
 export { renderOpportunityCard, normalizeOpportunity } from './opportunity-card.js';
 export { renderEvidencePanel, normalizeEvidence } from './evidence-panel.js';
 export { renderSignalTimeline, normalizeSignal } from './signal-timeline.js';
+export { renderBuyerProfile, normalizeBuyer } from './buyer-profile.js';
+export { renderDemandCard, normalizeDemand } from './demand-card.js';
+export { renderSupplierGraph, normalizeSupplierIntelligence } from './supplier-graph.js';
+export { renderMarketAccessPanel, normalizeMarketAccess } from './market-access-panel.js';
+export { renderNextActionPanel, normalizeNextAction } from './next-action-panel.js';
+export { renderConversationTimeline, normalizeConversationMessage } from './conversation-timeline.js';
+export { renderVoiceConversationPanel, normalizeVoiceSession } from './voice-conversation-panel.js';
+export { renderHumanTakeoverPanel, normalizeHumanTakeover } from './human-takeover-panel.js';
+export { renderApprovalPanel, normalizeApproval } from './approval-panel.js';
+export { renderOutcomePlaybookPanel, normalizeOutcomePlaybook } from './outcome-playbook-panel.js';
