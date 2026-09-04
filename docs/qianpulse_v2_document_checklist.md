@@ -14,7 +14,8 @@ L1 业务组件工程文档               ✅ 7 / 7
 L2 前端页面工程文档               ✅ 7 / 7
 L3 核心 / 系统 Contract           ✅ 9 / 9
 L4 真实 site / agent 代码映射      ✅ 5 / 5
-L5 前端组件实现                    ⏳ 0 / 13
+L5 前端基础层                      ✅ 5 / 5
+L5 业务组件实现                    ⏳ 0 / 13
 L6 API / Agent 接线与验收          ⏳ 待执行
 V2 文档全量去重审查               ⏳ 待执行
 ```
@@ -22,17 +23,17 @@ V2 文档全量去重审查               ⏳ 待执行
 当前工程门：
 
 ```text
-Shared Design Tokens + API Client
+Opportunity Card
     ↓
-Shared Business Components
+Evidence Panel / Signal Timeline
+    ↓
+Buyer / Demand / Market Access / Next Action
     ↓
 Dashboard / Radar / Workspace
     ↓
 Conversation / Voice / Playbook
     ↓
-API / Agent 接线
-    ↓
-测试与验收
+API / Agent 接线与验收
 ```
 
 ---
@@ -41,15 +42,7 @@ API / Agent 接线
 
 - [x] `docs/qianpulse_prd_v2_master.md`
 
-唯一产品总纲，覆盖：
-
-- 全球商机经营智能平台定位
-- Opportunity 核心对象
-- 商机全生命周期
-- 7 个核心业务组件
-- 数据解耦
-- 组件边界
-- 开发优先级
+唯一产品总纲：定位、Opportunity、生命周期、7 个业务组件、边界、数据与优先级。
 
 ---
 
@@ -64,8 +57,6 @@ API / Agent 接线
 - [x] `05_channel_hub_engineering.md`
 - [x] `06_conversation_progression_engineering.md`
 - [x] `07_playbook_engineering.md`
-
-能力链：
 
 ```text
 Discovery
@@ -97,7 +88,7 @@ Outcome / Playbook
 - [x] `06_conversation_frontend_engineering.md`
 - [x] `07_playbook_frontend_engineering.md`
 
-其中 Conversation 已把 Voice Conversation 作为独立能力模块定义。
+Conversation 中的 Voice Conversation 已作为独立能力模块定义。
 
 ---
 
@@ -120,7 +111,7 @@ Outcome / Playbook
 - [x] `state_event_contract_v2.md`
 - [x] `data_contract_v2.md`
 
-Contract 状态：**9 / 9 完成。**
+Contract：**9 / 9 完成。**
 
 ---
 
@@ -132,11 +123,11 @@ Contract 状态：**9 / 9 完成。**
 
 已完成：
 
-- [x] 核对 `site/`：4180 公开品牌入口与公开商机入口
-- [x] 核对 `agent/`：3317 登录后 A2-A6 经营工作台
-- [x] 明确 `demo/` 仅保留历史参考，不作为 V2 主实施入口
-- [x] 建立现有页面 → 7 个 V2 页面真实代码映射
-- [x] 建立现有 FastAPI / Agent API → 9 份 V2 Contract 映射
+- [x] `site/`：4180 公开品牌入口与公开商机入口
+- [x] `agent/`：3317 登录后 A2-A6 经营工作台
+- [x] `demo/` 只作历史参考
+- [x] 现有页面 → 7 个 V2 页面映射
+- [x] FastAPI / Agent API → V2 Contract 映射
 
 真实运行拓扑：
 
@@ -162,7 +153,7 @@ agent/ :3317
       A2-A6 Runtime
 ```
 
-启动事实：
+启动链：
 
 ```text
 agent/package.json
@@ -176,19 +167,32 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
 
 ---
 
-# 6. L5｜前端组件实现
+# 6. L5｜前端基础层
 
-目标目录：`agent/ui-v2/`
+目录：`agent/ui-v2/`
 
-## 6.1 基础层
+- [x] Shared Design Tokens
+  - `tokens.css`
+- [x] API Client
+  - `api-client.js`
+  - Agent `:3317` + Decision API `:8000`
+  - 复用 `qianpulse-auth-token`
+- [x] Shared State Store
+  - `state-store.js`
+- [x] Router / View Shell
+  - `router.js`
+  - `view-shell.js`
+  - `shell.css`
+- [x] Loading / Error / Empty / UNKNOWN
+  - `view-state.js`
 
-- [ ] Shared Design Tokens
-- [ ] API Client
-- [ ] Shared State Store
-- [ ] Router / View Shell
-- [ ] Loading / Error / Empty / UNKNOWN 统一状态
+当前基础层已落代码，尚未替换当前 `agent/index.html` 的稳定运行链；后续以组件逐步接入。
 
-## 6.2 业务组件
+---
+
+# 7. L5｜业务组件实现
+
+目录：`agent/ui-v2/components/`
 
 - [ ] Opportunity Card
 - [ ] Signal Timeline
@@ -204,17 +208,17 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
 - [ ] Approval Panel
 - [ ] Outcome / Playbook Panel
 
-前端实现原则：
+实现底线：
 
-- 基于当前 `agent/index.html` 螺旋拆分
-- 第一阶段不强制更换前端框架
-- 不重写已经跑通的登录、Runtime、A2-A6 链路
-- 页面消费 Contract
-- 页面不直接消费 Apollo / Trademo / Crawler Provider 原始字段
+- Contract 驱动
+- FACT / DERIVED / INFERENCE / ACTION 可区分
+- UNKNOWN 不猜测
+- Provider 字段不得直接穿透页面
+- 不破坏当前登录与 A2-A6 Runtime
 
 ---
 
-# 7. 七个 V2 页面代码 Owner
+# 8. 七个 V2 页面代码 Owner
 
 | 页面 | Owner | 当前基础 | 状态 |
 |---|---|---|---|
@@ -228,7 +232,7 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
 
 ---
 
-# 8. API Owner
+# 9. API Owner
 
 ## FastAPI `:8000`
 
@@ -244,7 +248,7 @@ Seller Fit
 Market Access
 ```
 
-已确认接口：
+已确认：
 
 - [x] `GET /api/v1/opportunities/recent`
 - [x] `GET /api/v1/opportunities/today`
@@ -268,7 +272,7 @@ External Action
 Outcome
 ```
 
-已确认能力接口：
+已确认：
 
 - [x] Auth
 - [x] Opportunity List
@@ -285,32 +289,32 @@ Outcome
 
 ---
 
-# 9. L6｜Agent / Runtime 接线
+# 10. L6｜Agent / Runtime 接线
 
 - [x] 保留 A2-A6 Runtime
-- [ ] 建立现有 Skill → V2 组件能力正式映射表
-- [ ] Mission Contract → A2 Runtime 接线
-- [ ] Opportunity Workspace → V2 页面接线
-- [ ] Evidence Contract → UI Evidence Panel 接线
-- [ ] Conversation Contract → A6 / Thread / Message 接线
-- [ ] Voice Event → Evidence / Conversation Event 接线
-- [ ] Human Gate → Approval Panel 接线
-- [ ] Approval → Executor → External Action 接线
-- [ ] Outcome → Playbook 回写接线
+- [ ] 现有 Skill → V2 组件能力正式映射表
+- [ ] Mission Contract → A2 Runtime
+- [ ] Opportunity Workspace → V2 页面
+- [ ] Evidence Contract → Evidence Panel
+- [ ] Conversation Contract → A6 / Thread / Message
+- [ ] Voice Event → Evidence / Conversation Event
+- [ ] Human Gate → Approval Panel
+- [ ] Approval → Executor → External Action
+- [ ] Outcome → Playbook
 
 运行底线：
 
-- idempotency 保留
-- Evidence Grounding 保留
-- Human Gate 保留
-- AgentRun / Step / Checkpoint 保留
-- Outcome 回写保留
+- idempotency
+- Evidence Grounding
+- Human Gate
+- AgentRun / Step / Checkpoint
+- Outcome 回写
+
+全部保留。
 
 ---
 
-# 10. 数据源与 Evidence Layer
-
-统一数据链：
+# 11. 数据源与 Evidence Layer
 
 ```text
 API
@@ -354,7 +358,7 @@ Playbook
 
 ---
 
-# 11. 核心 Signal 验收
+# 12. 核心 Signal 验收
 
 - [ ] 正在进口同类产品
 - [ ] 进口量增长
@@ -377,7 +381,7 @@ Playbook
 
 ---
 
-# 12. V2 商机字段验收
+# 13. V2 商机字段验收
 
 ## Buyer
 
@@ -432,7 +436,7 @@ Playbook
 
 ---
 
-# 13. 文档清理
+# 14. 文档清理
 
 已删除过程重复稿：
 
