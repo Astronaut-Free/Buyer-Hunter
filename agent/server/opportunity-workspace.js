@@ -1,4 +1,4 @@
-const WORKSPACE_VERSION = '1.0.0';
+const WORKSPACE_VERSION = '1.1.0';
 import { A2_CAPABILITY_ID, A6_CAPABILITY_ID } from '../skill-runtime/capability-ids.js';
 
 function array(value) {
@@ -159,7 +159,9 @@ function projectRun(run, role) {
 function projectMessages(messages, role) {
   return messages.slice(0, 20).map(message => ({
     event_id: message.event_id,
+    thread_id: message.thread_id || null,
     direction: message.direction || null,
+    channel: message.channel || null,
     timestamp: message.timestamp || null,
     source: message.source || null,
     ...(role === 'BUYER' ? {} : { content: message.content || '' })
@@ -177,6 +179,36 @@ function projectExternalRefs(refs, role) {
   }));
 }
 
+function projectFields(fields, role) {
+  const source = fields && typeof fields === 'object' ? fields : {};
+  if (role === 'BUYER') {
+    return {
+      product: source.product || null,
+      quantity: source.quantity || null,
+      certification: source.certification || null
+    };
+  }
+  return source;
+}
+
+function normalizeWhyNow(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (value === undefined || value === null || value === '') return [];
+  return [String(value)];
+}
+
+function intelligenceProjection(opportunity, role) {
+  if (role === 'BUYER') return {};
+  return {
+    why_now: normalizeWhyNow(opportunity.why_now),
+    gaps: array(opportunity.gaps),
+    component_scores: opportunity.component_scores || null,
+    supply_match: opportunity.supply_match || null,
+    supplier_intelligence: opportunity.supplier_intelligence || null,
+    market_access: opportunity.market_access || opportunity.a5?.market_access || opportunity.a6?.market_access || null
+  };
+}
+
 export function createOpportunityWorkspace({ state, opportunityId, role = 'SELLER' } = {}) {
   if (!state || typeof state !== 'object') throw new Error('state required');
   const opportunity = state.opportunities?.[opportunityId];
@@ -189,25 +221,35 @@ export function createOpportunityWorkspace({ state, opportunityId, role = 'SELLE
   const actions = externalActionsForApprovals(state, approvals);
   const latestA2 = latestA2Run(runs);
   const latestA6 = latestA6Run(runs);
+  const intelligence = intelligenceProjection(opportunity, role);
 
   const workspace = {
     workspace_version: WORKSPACE_VERSION,
     opportunity: {
       id: opportunity.id,
       source: opportunity.source || null,
+      origin: opportunity.origin || null,
+      decision: opportunity.decision || null,
       status: opportunity.status || null,
       stage: opportunity.stage || null,
       buyer: opportunity.buyer || null,
       seller: role === 'BUYER' ? undefined : opportunity.seller || null,
       product: opportunity.product || opportunity.fields?.product || null,
+      fields: projectFields(opportunity.fields, role),
+      priority: role === 'BUYER' ? undefined : opportunity.priority || null,
       updated_at: opportunity.updated_at || null
     },
     score: {
+      opportunity: role === 'BUYER' ? undefined : opportunity.opportunity_score ?? null,
+      truth: role === 'BUYER' ? undefined : opportunity.truth_score ?? null,
+      timing: role === 'BUYER' ? undefined : opportunity.component_scores?.timing ?? opportunity.timing_score ?? null,
+      market_access: role === 'BUYER' ? undefined : opportunity.component_scores?.market_access ?? opportunity.market_access_score ?? null,
       rank: opportunity.a2?.rank_score ?? null,
       fit: opportunity.fit_score ?? opportunity.a2?.buyer_fit?.score ?? null,
       intent: opportunity.intent_score ?? opportunity.a6?.buyer_reply?.intent?.score ?? null,
       conversation: opportunity.conversation_score ?? null
     },
+    ...intelligence,
     a2: role === 'BUYER' ? undefined : {
       status: latestA2?.status || (opportunity.a2 ? 'COMPLETED' : null),
       outreach_status: opportunity.status === 'READY_FOR_OUTREACH_APPROVAL'
@@ -242,7 +284,8 @@ export function createOpportunityWorkspace({ state, opportunityId, role = 'SELLE
     evidence: {
       count: array(opportunity.evidence_ids).length,
       refs: role === 'BUYER' ? undefined : array(opportunity.evidence_ids)
-    }
+    },
+    outcome: opportunity.a6?.outcome || opportunity.outcome || null
   };
 
   return compact(workspace);
