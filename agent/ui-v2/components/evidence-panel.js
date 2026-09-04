@@ -3,17 +3,37 @@ import { renderViewState, ViewStatus } from '../view-state.js';
 
 const ALLOWED_LEVELS = new Set(['FACT', 'DERIVED', 'INFERENCE', 'ACTION']);
 
+function isHttpUrl(value) {
+  return /^https?:\/\//i.test(String(value || '').trim());
+}
+
 function normalizeEvidence(item = {}) {
+  if (typeof item === 'string') {
+    const value = item.trim();
+    return {
+      id: null,
+      level: 'FACT',
+      claim: isHttpUrl(value) ? '来源证据' : value || '证据引用待核验',
+      source: isHttpUrl(value) ? '公开来源' : 'Evidence Ref',
+      sourceUrl: isHttpUrl(value) ? value : null,
+      observedAt: null,
+      confidence: null,
+      freshness: null,
+      reference: value || null,
+    };
+  }
+
   const level = String(item.level || item.fact_level || item.type || 'FACT').toUpperCase();
   return {
     id: item.id || item.evidence_id || null,
     level: ALLOWED_LEVELS.has(level) ? level : 'FACT',
     claim: item.claim || item.excerpt || item.text || item.title || '',
     source: item.source || item.provider || item.source_name || '公开来源',
-    sourceUrl: item.source_url || item.url || item.evidence_ref || null,
+    sourceUrl: item.source_url || item.url || (isHttpUrl(item.evidence_ref) ? item.evidence_ref : null),
     observedAt: item.observed_at || item.verified_at || item.created_at || null,
     confidence: item.confidence ?? item.score ?? null,
     freshness: item.freshness || null,
+    reference: item.evidence_ref || item.reference || null,
   };
 }
 
@@ -40,6 +60,7 @@ function evidenceRow(raw) {
       el('span', { className: 'qp-v2-muted', text: confidenceLabel(item.confidence) }),
     ]),
     el('p', { className: 'qp-v2-evidence-claim', text: textOrUnknown(item.claim, '证据原文待核验') }),
+    item.reference && !item.sourceUrl ? el('code', { className: 'qp-v2-evidence-ref', text: item.reference }) : null,
     el('footer', { className: 'qp-v2-evidence-row-foot' }, [
       el('span', { text: `${item.source} · ${formatDateTime(item.observedAt)}` }),
       safeExternalLink(item.sourceUrl, '查看来源'),
