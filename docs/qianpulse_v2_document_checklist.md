@@ -15,7 +15,7 @@ L2 前端页面工程文档               ✅ 7 / 7
 L3 核心 / 系统 Contract           ✅ 9 / 9
 L4 真实 site / agent 代码映射      ✅ 5 / 5
 L5 前端基础层                      ✅ 5 / 5
-L5 业务组件实现                    ⏳ 0 / 13
+L5 业务组件实现                    🟡 3 / 13
 L6 API / Agent 接线与验收          ⏳ 待执行
 V2 文档全量去重审查               ⏳ 待执行
 ```
@@ -23,15 +23,13 @@ V2 文档全量去重审查               ⏳ 待执行
 当前工程门：
 
 ```text
-Opportunity Card
+Buyer Profile / Demand Card
     ↓
-Evidence Panel / Signal Timeline
+Supplier Graph / Market Access / Next Action
     ↓
-Buyer / Demand / Market Access / Next Action
+Conversation / Voice / Human Takeover / Approval
     ↓
 Dashboard / Radar / Workspace
-    ↓
-Conversation / Voice / Playbook
     ↓
 API / Agent 接线与验收
 ```
@@ -194,9 +192,12 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
 
 目录：`agent/ui-v2/components/`
 
-- [ ] Opportunity Card
-- [ ] Signal Timeline
-- [ ] Evidence Panel
+- [x] Opportunity Card
+  - `opportunity-card.js`
+- [x] Signal Timeline
+  - `signal-timeline.js`
+- [x] Evidence Panel
+  - `evidence-panel.js`
 - [ ] Buyer Profile
 - [ ] Supplier Graph
 - [ ] Demand Card
@@ -207,6 +208,12 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
 - [ ] Human Takeover Panel
 - [ ] Approval Panel
 - [ ] Outcome / Playbook Panel
+
+辅助文件：
+
+- [x] `shared/dom.js`
+- [x] `components/components.css`
+- [x] `components/index.js`
 
 实现底线：
 
