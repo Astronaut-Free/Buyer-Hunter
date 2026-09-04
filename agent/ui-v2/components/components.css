@@ -6,7 +6,15 @@
 .qp-v2-evidence-row-head,
 .qp-v2-evidence-row-foot,
 .qp-v2-signal-head,
-.qp-v2-signal-foot {
+.qp-v2-signal-foot,
+.qp-v2-buyer-title,
+.qp-v2-contact-row,
+.qp-v2-contact-meta,
+.qp-v2-conversation-head,
+.qp-v2-approval-head,
+.qp-v2-approval-actions,
+.qp-v2-action-actions,
+.qp-v2-voice-status {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -19,6 +27,19 @@
 .qp-v2-muted { color: var(--qp-color-muted); font-size: var(--qp-font-sm); }
 .qp-v2-link { color: var(--qp-color-brand-600); font-weight: 800; text-decoration: none; }
 .qp-v2-link:hover { text-decoration: underline; }
+
+.qp-v2-primary-button,
+.qp-v2-secondary-button {
+  border-radius: var(--qp-radius-sm);
+  padding: 8px 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.qp-v2-primary-button { border: 0; background: var(--qp-color-brand-600); color: #fff; }
+.qp-v2-secondary-button { border: 1px solid var(--qp-color-line); background: #fff; color: var(--qp-color-brand-600); }
+.qp-v2-primary-button:disabled,
+.qp-v2-secondary-button:disabled { cursor: not-allowed; opacity: .55; }
+.qp-v2-chip { display: inline-flex; padding: 3px 7px; border-radius: 999px; background: var(--qp-color-brand-050); color: var(--qp-color-brand-600); font-size: var(--qp-font-xs); font-weight: 800; }
 
 .qp-v2-opportunity-card { overflow: hidden; }
 .qp-v2-opportunity-card-head { padding: var(--qp-space-4) var(--qp-space-5) var(--qp-space-3); }
@@ -54,9 +75,169 @@
 .qp-v2-signal-body p { margin: var(--qp-space-2) 0; }
 .qp-v2-signal-foot { color: var(--qp-color-muted); font-size: var(--qp-font-sm); }
 
+.qp-v2-buyer-summary,
+.qp-v2-demand-main,
+.qp-v2-action-main,
+.qp-v2-voice-session,
+.qp-v2-voice-transcript,
+.qp-v2-voice-summary,
+.qp-v2-subsection,
+.qp-v2-action-blockers,
+.qp-v2-playbook-section { padding: var(--qp-space-4) var(--qp-space-5); }
+.qp-v2-buyer-title strong { font-size: 18px; }
+.qp-v2-buyer-title p,
+.qp-v2-contact-row p,
+.qp-v2-demand-main p,
+.qp-v2-action-main p,
+.qp-v2-voice-status p,
+.qp-v2-voice-transcript p,
+.qp-v2-voice-summary p { margin: 3px 0 0; color: var(--qp-color-muted); }
+.qp-v2-fact-grid,
+.qp-v2-demand-grid,
+.qp-v2-action-grid,
+.qp-v2-access-summary,
+.qp-v2-supplier-summary,
+.qp-v2-takeover-summary,
+.qp-v2-outcome-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: var(--qp-space-2); }
+.qp-v2-fact,
+.qp-v2-demand-field,
+.qp-v2-action-line,
+.qp-v2-access-summary > div,
+.qp-v2-supplier-summary > div,
+.qp-v2-takeover-summary > div,
+.qp-v2-outcome-summary > div { min-width: 0; padding: var(--qp-space-3); border: 1px solid var(--qp-color-line); border-radius: var(--qp-radius-sm); background: #fff; }
+.qp-v2-fact span,
+.qp-v2-demand-field span,
+.qp-v2-action-line span,
+.qp-v2-access-summary span,
+.qp-v2-supplier-summary span,
+.qp-v2-takeover-summary span,
+.qp-v2-outcome-summary span { display: block; color: var(--qp-color-muted); font-size: var(--qp-font-xs); }
+.qp-v2-fact strong,
+.qp-v2-demand-field strong,
+.qp-v2-action-line strong,
+.qp-v2-access-summary strong,
+.qp-v2-supplier-summary strong,
+.qp-v2-takeover-summary strong,
+.qp-v2-outcome-summary strong { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+.qp-v2-buyer-context { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--qp-space-2); padding: 0 var(--qp-space-5) var(--qp-space-4); }
+.qp-v2-subsection { border-top: 1px solid var(--qp-color-line); }
+.qp-v2-subsection h4,
+.qp-v2-access-section h4,
+.qp-v2-action-blockers h4,
+.qp-v2-voice-transcript h4,
+.qp-v2-voice-summary h4,
+.qp-v2-playbook-section h4 { margin: 0 0 var(--qp-space-3); }
+.qp-v2-contact-row { padding: var(--qp-space-3) 0; border-top: 1px solid var(--qp-color-line); }
+.qp-v2-contact-row:first-of-type { border-top: 0; }
+.qp-v2-contact-meta { justify-content: flex-end; }
+.qp-v2-procurement-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+
+.qp-v2-demand-main { background: var(--qp-color-brand-050); }
+.qp-v2-demand-main h3 { margin: 4px 0 0; font-size: 18px; }
+.qp-v2-demand-grid { padding: var(--qp-space-4) var(--qp-space-5) var(--qp-space-5); grid-template-columns: repeat(3,minmax(0,1fr)); }
+.qp-v2-demand-field-wide { grid-column: span 3; }
+
+.qp-v2-supplier-summary,
+.qp-v2-access-summary,
+.qp-v2-takeover-summary,
+.qp-v2-outcome-summary { padding: var(--qp-space-4) var(--qp-space-5); border-bottom: 1px solid var(--qp-color-line); }
+.qp-v2-supplier-list { display: grid; }
+.qp-v2-supplier-row { display: grid; grid-template-columns: 110px minmax(0,1fr) minmax(180px,.8fr); gap: var(--qp-space-3); align-items: center; padding: var(--qp-space-3) var(--qp-space-5); border-top: 1px solid var(--qp-color-line); }
+.qp-v2-supplier-row:first-child { border-top: 0; }
+.qp-v2-supplier-main p { margin: 2px 0 0; color: var(--qp-color-muted); font-size: var(--qp-font-sm); }
+.qp-v2-supplier-time { display: grid; gap: 2px; color: var(--qp-color-muted); font-size: var(--qp-font-xs); text-align: right; }
+
+.qp-v2-access-note,
+.qp-v2-takeover-note { margin: 0; padding: var(--qp-space-4) var(--qp-space-5); background: var(--qp-color-brand-050); }
+.qp-v2-access-grid,
+.qp-v2-playbook-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--qp-space-3); padding: var(--qp-space-4) var(--qp-space-5); }
+.qp-v2-access-section,
+.qp-v2-playbook-section { padding: var(--qp-space-4); border: 1px solid var(--qp-color-line); border-radius: var(--qp-radius-sm); background: #fff; }
+.qp-v2-access-list,
+.qp-v2-action-blockers ul,
+.qp-v2-playbook-section ul { margin: 0; padding-left: 18px; }
+.qp-v2-access-list li,
+.qp-v2-action-blockers li,
+.qp-v2-playbook-section li { margin: 5px 0; }
+.qp-v2-hard-gate { display: flex; gap: var(--qp-space-2); align-items: center; margin: 0 var(--qp-space-5) var(--qp-space-5); padding: var(--qp-space-3); border: 1px solid #e9c39e; border-radius: var(--qp-radius-sm); background: #fff5ea; color: #8b541e; }
+
+.qp-v2-action-actions { padding: var(--qp-space-4) var(--qp-space-5); border-top: 1px solid var(--qp-color-line); justify-content: flex-end; }
+.qp-v2-action-blockers { border-top: 1px solid var(--qp-color-line); }
+
+.qp-v2-conversation-list { position: relative; padding: var(--qp-space-3) var(--qp-space-5) var(--qp-space-5); }
+.qp-v2-conversation-list:before { content: ''; position: absolute; left: 31px; top: 18px; bottom: 24px; width: 1px; background: var(--qp-color-line); }
+.qp-v2-conversation-message { position: relative; display: grid; grid-template-columns: 22px minmax(0,1fr); gap: var(--qp-space-3); padding: var(--qp-space-3) 0; }
+.qp-v2-conversation-dot { display: block; width: 9px; height: 9px; margin: 8px 0 0 3px; border-radius: 50%; background: var(--qp-color-muted); box-shadow: 0 0 0 4px #f2f4f2; z-index: 1; }
+.qp-v2-conversation-dot[data-tone='success'] { background: var(--qp-color-brand-600); box-shadow: 0 0 0 4px var(--qp-color-brand-100); }
+.qp-v2-conversation-dot[data-tone='warning'] { background: #b7832f; box-shadow: 0 0 0 4px #fff0d5; }
+.qp-v2-conversation-head strong { display: block; }
+.qp-v2-conversation-head span:not(.qp-v2-tag) { color: var(--qp-color-muted); font-size: var(--qp-font-xs); }
+.qp-v2-conversation-body > p { margin: var(--qp-space-2) 0; }
+.qp-v2-conversation-meta,
+.qp-v2-conversation-fields { display: flex; gap: var(--qp-space-2); flex-wrap: wrap; color: var(--qp-color-muted); font-size: var(--qp-font-xs); }
+
+.qp-v2-voice-status { justify-content: flex-start; }
+.qp-v2-voice-pulse { width: 12px; height: 12px; border-radius: 50%; background: var(--qp-color-muted); }
+.qp-v2-voice-pulse.is-live { background: var(--qp-color-brand-600); box-shadow: 0 0 0 6px var(--qp-color-brand-100); }
+.qp-v2-voice-facts { margin-left: auto; text-align: right; }
+.qp-v2-voice-facts span { display: block; color: var(--qp-color-muted); font-size: var(--qp-font-xs); }
+.qp-v2-voice-facts strong { font-size: 18px; }
+.qp-v2-voice-transcript,
+.qp-v2-voice-summary { border-top: 1px solid var(--qp-color-line); }
+
+.qp-v2-approval-list { display: grid; }
+.qp-v2-approval-row { padding: var(--qp-space-4) var(--qp-space-5); border-top: 1px solid var(--qp-color-line); }
+.qp-v2-approval-row:first-child { border-top: 0; }
+.qp-v2-approval-head strong { display: block; }
+.qp-v2-approval-head span:not(.qp-v2-tag) { color: var(--qp-color-muted); font-size: var(--qp-font-xs); }
+.qp-v2-approval-risk { margin: var(--qp-space-3) 0; }
+.qp-v2-approval-execution { display: flex; gap: var(--qp-space-2); color: var(--qp-color-muted); font-size: var(--qp-font-sm); }
+.qp-v2-approval-actions { justify-content: flex-end; margin-top: var(--qp-space-3); }
+
+.qp-v2-playbook-grid { border-top: 1px solid var(--qp-color-line); }
+.qp-v2-playbook-panel > .qp-v2-playbook-section { margin: 0 var(--qp-space-5) var(--qp-space-5); }
+
+@media (max-width: 900px) {
+  .qp-v2-fact-grid,
+  .qp-v2-access-summary,
+  .qp-v2-supplier-summary,
+  .qp-v2-takeover-summary,
+  .qp-v2-outcome-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .qp-v2-buyer-context,
+  .qp-v2-demand-grid,
+  .qp-v2-procurement-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .qp-v2-demand-field-wide { grid-column: span 2; }
+  .qp-v2-supplier-row { grid-template-columns: 92px minmax(0,1fr); }
+  .qp-v2-supplier-time { grid-column: 2; text-align: left; }
+}
+
 @media (max-width: 720px) {
   .qp-v2-opportunity-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .qp-v2-opportunity-metric:nth-child(3) { border-left: 0; border-top: 1px solid var(--qp-color-line); }
   .qp-v2-opportunity-metric:nth-child(4) { border-top: 1px solid var(--qp-color-line); }
-  .qp-v2-opportunity-card-foot,.qp-v2-signal-head,.qp-v2-signal-foot,.qp-v2-evidence-row-foot { align-items: flex-start; flex-direction: column; }
+  .qp-v2-opportunity-card-foot,
+  .qp-v2-signal-head,
+  .qp-v2-signal-foot,
+  .qp-v2-evidence-row-foot,
+  .qp-v2-buyer-title,
+  .qp-v2-contact-row,
+  .qp-v2-contact-meta,
+  .qp-v2-conversation-head,
+  .qp-v2-approval-head,
+  .qp-v2-approval-actions,
+  .qp-v2-action-actions { align-items: flex-start; flex-direction: column; }
+  .qp-v2-fact-grid,
+  .qp-v2-buyer-context,
+  .qp-v2-demand-grid,
+  .qp-v2-procurement-grid,
+  .qp-v2-access-summary,
+  .qp-v2-supplier-summary,
+  .qp-v2-takeover-summary,
+  .qp-v2-outcome-summary,
+  .qp-v2-access-grid,
+  .qp-v2-playbook-grid { grid-template-columns: 1fr; }
+  .qp-v2-demand-field-wide { grid-column: span 1; }
+  .qp-v2-supplier-row { grid-template-columns: 1fr; }
+  .qp-v2-supplier-time { grid-column: auto; }
 }
