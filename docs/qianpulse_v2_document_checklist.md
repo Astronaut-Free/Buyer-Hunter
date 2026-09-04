@@ -2,40 +2,44 @@
 
 > 分支：`feature/qianpulse-frontend-v2`
 >
-> 唯一清单入口。产品、组件、页面、Contract、真实代码映射与实施状态统一在此维护。
+> 本文件是 V2 唯一工程清单入口。
 
 ---
 
-# 0. 当前总状态
+# 0. 总状态
 
-```text
-L0 总 PRD                         ✅ 1 / 1
-L1 业务组件工程文档               ✅ 7 / 7
-L2 前端页面工程文档               ✅ 7 / 7
-L3 核心 / 系统 Contract           ✅ 9 / 9
-L4 真实 site / agent 代码映射      ✅ 5 / 5
-L5 前端基础层                      ✅ 5 / 5
-L5 业务组件实现                    ✅ 13 / 13
-L5 七个页面组合代码                ✅ 7 / 7
-L6 Workspace BFF V2 投影           ✅ 1 / 1
-L6 稳定入口接入 / API / Agent 验收  ⏳ 待执行
-V2 文档全量去重审查               ⏳ 待执行
-```
+| 层级 | 交付 | 状态 |
+|---|---|---|
+| L0 | 总 PRD | ✅ 1 / 1 |
+| L1 | 业务组件工程文档 | ✅ 7 / 7 |
+| L2 | 前端页面工程文档 | ✅ 7 / 7 |
+| L3 | 核心 / 系统 Contract | ✅ 9 / 9 |
+| L4 | 真实 `site/` / `agent/` 代码映射 | ✅ 5 / 5 |
+| L5 | V2 前端基础层 | ✅ 6 / 6 |
+| L5 | 业务组件代码 | ✅ 13 / 13 |
+| L5 | 七个页面组合代码 | ✅ 7 / 7 |
+| L6 | Skill / Runtime → UI 能力映射 | ✅ 1 / 1 |
+| L6 | Opportunity Workspace BFF V2 Projection | ✅ 1 / 1 |
+| L6 | Legacy → V2 可回退桥接代码 | ✅ 1 / 1 |
+| L6 | 稳定入口实际加载 V2 | ⏳ 0 / 1 |
+| L7 | Node / UI 静态测试代码 | ✅ 已补 |
+| L7 | Node / Python 全量回归实际执行 | ⏳ 待执行 |
+| L7 | 真实浏览器联调 | ⏳ 待执行 |
+| L7 | Voice Runtime（STT / TTS / Voice Event） | ⏳ 待执行 |
+| 收口 | `docs/` 全量去重审查 | ⏳ 最终执行 |
 
 当前工程门：
 
 ```text
-13 个业务组件完成
+稳定入口加载 V2
     ↓
-7 个页面组合完成
+Node / Python 回归
     ↓
-Opportunity Workspace BFF 1.1.0 完成
+浏览器联调
     ↓
-接入现有 agent/index.html 稳定运行链
+Voice Runtime
     ↓
-API / Agent 联调
-    ↓
-测试与验收
+文档最终去重
 ```
 
 ---
@@ -44,11 +48,25 @@ API / Agent 联调
 
 - [x] `docs/qianpulse_prd_v2_master.md`
 
-唯一产品总纲：定位、Opportunity、生命周期、7 个业务组件、边界、数据与优先级。
+产品主链：
+
+```text
+发现
+→ 研究
+→ 判断
+→ 联系
+→ 对话
+→ 推进
+→ 报价 / 寄样 / 谈判
+→ 成交
+→ 复盘
+```
+
+核心对象：`Opportunity`
 
 ---
 
-# 2. L1｜业务组件工程文档
+# 2. L1｜7 个业务组件工程文档
 
 目录：`docs/components/`
 
@@ -60,25 +78,9 @@ API / Agent 联调
 - [x] `06_conversation_progression_engineering.md`
 - [x] `07_playbook_engineering.md`
 
-```text
-Discovery
-  ↓
-Buyer Intelligence
-  ↓
-Opportunity Intelligence
-  ↓
-BD Mission
-  ↓
-Channel Hub
-  ↓
-Conversation Progression
-  ↓
-Outcome / Playbook
-```
-
 ---
 
-# 3. L2｜前端页面工程文档
+# 3. L2｜7 个前端页面工程文档
 
 目录：`docs/pages/`
 
@@ -90,241 +92,144 @@ Outcome / Playbook
 - [x] `06_conversation_frontend_engineering.md`
 - [x] `07_playbook_frontend_engineering.md`
 
-Conversation 中的 Voice Conversation 已作为独立能力模块定义。
-
 ---
 
-# 4. L3｜Contract
+# 4. L3｜9 份 Contract
 
 目录：`docs/contracts/`
-
-## 核心业务 Contract
 
 - [x] `opportunity_contract_v2.md`
 - [x] `evidence_contract_v2.md`
 - [x] `buyer_contract_v2.md`
 - [x] `conversation_contract_v2.md`
 - [x] `mission_contract_v2.md`
-
-## 系统 Contract
-
 - [x] `api_contract_v2.md`
 - [x] `frontend_component_contract_v2.md`
 - [x] `state_event_contract_v2.md`
 - [x] `data_contract_v2.md`
 
-Contract：**9 / 9 完成。**
+Contract 完成：**9 / 9**。
 
 ---
 
-# 5. L4｜真实代码映射
+# 5. L4｜真实代码基线
 
-正式实施文档：
+正式映射：
 
 - [x] `docs/implementation/01_site_agent_real_code_mapping_v2.md`
 
-已完成：
-
-- [x] `site/`：4180 公开品牌入口与公开商机入口
-- [x] `agent/`：3317 登录后 A2-A6 经营工作台
-- [x] `demo/` 只作历史参考
-- [x] 现有页面 → 7 个 V2 页面映射
-- [x] FastAPI / Agent API → V2 Contract 映射
-
-真实运行拓扑：
+运行拓扑：
 
 ```text
 site/ :4180
-  ├── index.html
-  ├── opportunities.html
-  ├── opportunities-live.js
-  └── nav-bridge.js
-        ↓
-api/app.py :8000
-        ↓
-runtime/buyer_hunter.db
+  ↓
+api/ :8000
 
-site
+site/ :4180
   ↓
 agent/ :3317
-  ├── index.html
-  └── server/bootstrap.js
-        ↓
-      server/index.js
-        ↓
-      A2-A6 Runtime
+  ↓
+agent/server/index.js
+  ↓
+A2-A6 Runtime
 ```
 
-启动链：
+基线结论：
 
-```text
-agent/package.json
-  ↓
-node server/bootstrap.js
-  ↓
-server/index.js
-```
-
-V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作为主 Runtime 入口。
+- [x] `site/` 保留公开品牌入口与公开商机入口
+- [x] `agent/` 保留登录、Agent Runtime、采集、审批、对话
+- [x] `demo/` 仅作历史参考
+- [x] `site/nav-bridge.js` 保留
+- [x] V2 在现有 `agent/` 上增量组件化
 
 ---
 
-# 6. L5｜前端基础层
+# 6. L5｜V2 前端基础层
 
 目录：`agent/ui-v2/`
 
-- [x] Shared Design Tokens
-  - `tokens.css`
-- [x] API Client
-  - `api-client.js`
-  - Agent `:3317` + Decision API `:8000`
-  - 复用 `qianpulse-auth-token`
-- [x] Shared State Store
-  - `state-store.js`
-- [x] Router / View Shell
-  - `router.js`
-  - `view-shell.js`
-  - `shell.css`
-- [x] Loading / Error / Empty / UNKNOWN
-  - `view-state.js`
-- [x] V2 App Mount
-  - `app.js`
-  - `app.css`
-
-当前基础层已落代码。接入当前 `agent/index.html` 前保持现有稳定运行链可回退。
+- [x] `tokens.css` — Design Tokens
+- [x] `api-client.js` — `:3317` + `:8000`
+- [x] `state-store.js` — Shared State
+- [x] `router.js` + `view-shell.js` + `shell.css`
+- [x] `view-state.js` — Loading / Error / Empty / UNKNOWN
+- [x] `app.js` + `app.css` — V2 Mount Entry
 
 ---
 
-# 7. L5｜业务组件实现
+# 7. L5｜13 个业务组件代码
 
 目录：`agent/ui-v2/components/`
 
-- [x] Opportunity Card
-  - `opportunity-card.js`
-- [x] Signal Timeline
-  - `signal-timeline.js`
-- [x] Evidence Panel
-  - `evidence-panel.js`
-  - 已兼容 Workspace `evidence.refs` 字符串引用
-- [x] Buyer Profile
-  - `buyer-profile.js`
-- [x] Supplier Graph
-  - `supplier-graph.js`
-- [x] Demand Card
-  - `demand-card.js`
-- [x] Market Access Panel
-  - `market-access-panel.js`
-- [x] Next Action Panel
-  - `next-action-panel.js`
-- [x] Conversation Timeline
-  - `conversation-timeline.js`
-- [x] Voice Conversation Panel
-  - `voice-conversation-panel.js`
-  - Voice API 未接线前按钮 Hard Disable
-- [x] Human Takeover Panel
-  - `human-takeover-panel.js`
-- [x] Approval Panel
-  - `approval-panel.js`
-- [x] Outcome / Playbook Panel
-  - `outcome-playbook-panel.js`
+- [x] `opportunity-card.js`
+- [x] `signal-timeline.js`
+- [x] `evidence-panel.js`
+- [x] `buyer-profile.js`
+- [x] `supplier-graph.js`
+- [x] `demand-card.js`
+- [x] `market-access-panel.js`
+- [x] `next-action-panel.js`
+- [x] `conversation-timeline.js`
+- [x] `voice-conversation-panel.js`
+- [x] `human-takeover-panel.js`
+- [x] `approval-panel.js`
+- [x] `outcome-playbook-panel.js`
 
-辅助文件：
-
-- [x] `shared/dom.js`
-- [x] `components/components.css`
-- [x] `components/index.js`
-
-实现底线：
+组件底线：
 
 - Contract 驱动
-- FACT / DERIVED / INFERENCE / ACTION 可区分
-- UNKNOWN 不猜测
-- Provider 字段不得直接穿透页面
-- Next Action 由 A6 Runtime 单一 Owner
-- Voice 未接 Runtime 时不可假执行
-- 不破坏当前登录与 A2-A6 Runtime
+- `FACT / DERIVED / INFERENCE / ACTION` 分层
+- `UNKNOWN` 保持 UNKNOWN
+- Provider 字段不穿透页面
+- `Next Action` 由 A6 Runtime 单一 Owner
+- Pending Approval 阻断外部动作
+- Voice API 未接线时按钮 Hard Disable
 
 ---
 
-# 8. 七个 V2 页面代码 Owner
+# 8. L5｜7 个页面组合代码
 
 目录：`agent/ui-v2/pages/`
 
-| 页面 | Owner | 代码 | 状态 |
-|---|---|---|---|
-| Dashboard | `agent/` | `dashboard.js` | ✅ 组合完成 |
-| Opportunity Radar | `site/` + `agent/` | `opportunity-radar.js` | ✅ 登录后视图完成 |
-| Opportunity Workspace | `agent/` | `opportunity-workspace.js` | ✅ 组合完成 |
-| Buyer Intelligence | `agent/` | `buyer-intelligence.js` | ✅ 组合完成 |
-| BD Mission | `agent/` | `bd-mission.js` | ✅ 组合完成 |
-| Conversation | `agent/` | `conversation.js` | ✅ 组合完成 |
-| Playbook | `agent/` | `playbook.js` | ✅ 组合完成 |
+- [x] `dashboard.js`
+- [x] `opportunity-radar.js`
+- [x] `opportunity-workspace.js`
+- [x] `buyer-intelligence.js`
+- [x] `bd-mission.js`
+- [x] `conversation.js`
+- [x] `playbook.js`
 
-页面基础：
+公共：
 
-- [x] `pages/page-utils.js`
-- [x] `pages/pages.css`
-- [x] `pages/index.js`
-- [x] 7 页面注册到 `view-shell.js` Loader Registry
-
-当前状态：页面模块已经具备代码 Owner；尚未替换现有 `agent/index.html` 稳定入口。
+- [x] `page-utils.js`
+- [x] `pages.css`
+- [x] `index.js` — 7 Page Loader Registry
 
 ---
 
-# 9. API Owner
+# 9. L6｜Skill / Runtime → UI 能力映射
 
-## FastAPI `:8000`
+- [x] `agent/ui-v2/capability-map.js`
 
-Owner：`api/app.py`
-
-负责：
+已固定：
 
 ```text
-Signal
-Evidence
-Decision Snapshot
-Seller Fit
-Market Access
+A1 Data Entry → Radar / Signal / Evidence
+A2 → BD Mission / Buyer / Outreach
+A3 → Purchase Timing / Why Now
+A4 → Supply Match / Seller Fit
+A5 → Market Access / Risk / Human Gate
+A6 → Conversation / Next Action / Approval / Outcome
 ```
 
-已确认：
+同时保留 Legacy Capability 映射：
 
-- [x] `GET /api/v1/opportunities/recent`
-- [x] `GET /api/v1/opportunities/today`
-- [x] `GET /api/v1/opportunities/{id}/decision`
-- [x] `GET /api/v1/opportunities/{id}/brief.pdf`
-- [x] `GET /api/v1/opportunities/{id}/access-channels`
-
-## Agent `:3317`
-
-Owner：`agent/server/index.js`
-
-负责：
-
-```text
-Mission
-AgentRun
-Action
-Conversation
-Approval
-External Action
-Outcome
-```
-
-已确认：
-
-- [x] Auth
-- [x] Opportunity List
-- [x] Opportunity Workspace
-- [x] Agent Capabilities
-- [x] NL Target
-- [x] Agent Runs / Resume
-- [x] Messages / Threads
-- [x] Approval
-- [x] Collection Runs
-- [x] Agent Intake / Chat
-- [x] Smartlead Webhook
-- [x] Public Opportunity Projection
+- `demand.normalize`
+- `buyer.intent`
+- `supply.match`
+- `market.access`
+- `conversation.qualify`
+- `reply.draft`
 
 ---
 
@@ -332,92 +237,122 @@ Outcome
 
 Owner：`agent/server/opportunity-workspace.js`
 
-- [x] Workspace Contract 升级为 `1.1.0`
-- [x] 保留现有 A2 / A6 / approvals / blockers / activity / evidence
-- [x] 增量加入 `opportunity.fields`
-- [x] 增量加入 `origin / decision / priority`
-- [x] 增量加入 `opportunity_score / truth / timing / market_access score`
-- [x] 增量加入 `why_now / gaps`
-- [x] 增量加入 `supply_match / supplier_intelligence / market_access`
-- [x] Buyer Role 隐藏 Seller Intelligence 与内部评分
-- [x] Next Action 继续由服务端 A6 Runtime 单一 Owner
-- [x] `agent/tests/opportunity-workspace.test.js` 已同步新增 V2 Projection / Role Privacy 断言
+- [x] `workspace_version = 1.1.0`
+- [x] `opportunity.fields`
+- [x] `origin / decision / priority`
+- [x] Opportunity / Truth / Timing / Market Access Score
+- [x] `why_now / gaps`
+- [x] `supply_match`
+- [x] `supplier_intelligence`
+- [x] `market_access`
+- [x] `A2 / A6`
+- [x] `next_action`
+- [x] `blockers`
+- [x] `approvals`
+- [x] `activity`
+- [x] `evidence`
+- [x] `outcome`
+- [x] Buyer Role 隐藏内部商业情报与 Seller Intelligence
+
+测试同步：
+
+- [x] `agent/tests/opportunity-workspace.test.js`
 
 ---
 
-# 11. L6｜Agent / Runtime 接线
+# 11. L6｜稳定入口桥接
 
-- [x] 保留 A2-A6 Runtime
-- [ ] 现有 Skill → V2 组件能力正式映射表
-- [x] Mission Contract → A2 Runtime 页面调用代码
-- [x] Opportunity Workspace → V2 页面组合代码
-- [x] Evidence Contract → Evidence Panel
-- [x] Conversation Contract → Timeline / AI Advisor
-- [ ] Voice Event → STT / TTS / Evidence / Conversation Event
-- [x] Human Gate → Approval / Human Takeover Panel
-- [x] Approval → 现有 `/api/v1/approvals/{id}` 调用
-- [x] Outcome → Playbook 页面读取代码
-- [ ] V2 App → `agent/index.html` 稳定入口接线
-- [ ] 真实浏览器联调
-- [ ] Node / Python 全量回归测试
+- [x] `agent/ui-v2/legacy-bridge.js`
 
-运行底线：
-
-- idempotency
-- Evidence Grounding
-- Human Gate
-- AgentRun / Step / Checkpoint
-- Outcome 回写
-
-全部保留。
-
----
-
-# 12. 数据源与 Evidence Layer
+桥接规则：
 
 ```text
-API
-+
-Crawler
-+
-Browser Agent
-+
-User Input / Upload
-+
-Trade Data
-+
-News / Jobs / Company Events
-+
-Conversation Data
+#auth / #workspace
+→ 继续走现有稳定界面
 
-↓
-Evidence
-↓
-Opportunity
-↓
-Action
-↓
-Conversation
-↓
-Outcome
-↓
-Playbook
+#/dashboard
+#/opportunities
+#/opportunity/:id
+#/buyer/:id
+#/mission
+#/conversation/:id
+#/playbook
+→ V2 Shell
 ```
 
-待接入 / 强化：
+底线：
 
-- [ ] API 数据源
-- [ ] Crawler
-- [ ] Browser Agent
-- [ ] User Input / Upload
-- [ ] 社媒 / 公共网页
-- [ ] 贸易数据
-- [ ] 新闻 / 招聘 / 企业变化
-- [ ] 沟通数据
+- 原登录入口保留
+- 原工作台保留
+- V2 可回退
+- 不建立平行 Runtime
+
+待完成：
+
+- [ ] 将 `app.css` 与 `legacy-bridge.js` 实际加载进现有 `agent/index.html`
+- [ ] 验证 Portal `#auth / #workspace` 不受影响
+- [ ] 验证 V2 7 条 hash route
 
 ---
 
-# 13. 核心 Signal 验收
+# 12. L7｜测试
+
+已补测试代码：
+
+- [x] `agent/tests/opportunity-workspace.test.js`
+  - Workspace 1.1.0 Projection
+  - Role Privacy
+  - Approval / Evidence / Blocker
+
+- [x] `agent/tests/ui-v2-modules.test.js`
+  - 13 个组件 export
+  - 7 个页面 loader
+  - Provider-neutral
+  - Demand destination 真值规则
+  - A6 Next Action Owner
+  - Voice Hard Disable
+  - Legacy Bridge 可回退
+
+- [x] `agent/tests/ui-v2-capability-map.test.js`
+  - A2-A6 UI Owner
+  - A5 Risk Gate
+  - A6 Next Action / Outcome
+  - Reverse Lookup
+  - Provider-neutral
+
+待实际执行：
+
+- [ ] `npm test`
+- [ ] Skill Dispatch Audit
+- [ ] Python tests
+- [ ] Browser smoke
+- [ ] API E2E
+
+未执行前禁止标记测试通过。
+
+---
+
+# 13. Voice Runtime
+
+前端组件已经完成。
+
+待后端：
+
+- [ ] Voice Session Contract 落 Runtime
+- [ ] STT
+- [ ] 实时 Transcript
+- [ ] Fact Extraction
+- [ ] Voice Event → Conversation Event
+- [ ] TTS
+- [ ] Call Summary
+- [ ] Human Takeover
+- [ ] Evidence Ref
+
+当前 Voice 入口保持不可执行状态。
+
+---
+
+# 14. 核心 Signal 数据验收
 
 - [ ] 正在进口同类产品
 - [ ] 进口量增长
@@ -428,76 +363,56 @@ Playbook
 - [ ] 新产品 / 新市场 / 渠道扩张
 - [ ] 展会 / 活动 / 公开采购动作
 
-每个 Signal 必须具备：
+每条 Signal 必须带：
 
-- source
-- source_url / evidence_ref
-- observed_at
-- related buyer
-- related product
-- confidence
-- freshness
+```text
+source
+source_url / evidence_ref
+observed_at
+related_buyer
+related_product
+confidence
+freshness
+```
 
 ---
 
-# 14. V2 商机字段验收
+# 15. 最终验收字段
 
-## Buyer
+## Buyer / Contact
 
-- [ ] 公司名称 / 国家 / Domain / 地址
+- [ ] 公司 / 国家 / Domain / 地址
 - [ ] 企业类型 / 产业链角色
-- [ ] 主营产品 / 销售渠道 / 目标市场
-
-## Contact
-
-- [ ] 姓名 / 职位 / 部门
+- [ ] 联系人 / 职位 / 部门 / 决策角色
 - [ ] Email / LinkedIn / 公共渠道
-- [ ] 决策角色
 
 ## Demand
 
 - [ ] 产品 / 规格 / 数量
 - [ ] 价格区间（来源披露时）
-- [ ] 认证 / 目的地 / 交付时间
+- [ ] 认证 / 采购目的地 / 交付时间
 - [ ] MOQ / 包装 / 用途
 
-## Procurement Intelligence
+## Procurement / Supplier Intelligence
 
-- [ ] 采购品类 / HS Code
-- [ ] 采购频次 / 最近采购
-- [ ] 数量与金额趋势
-- [ ] 来源国 / 采购周期 / 季节性
+- [ ] 采购品类 / HS Code / 采购频次
+- [ ] 数量 / 金额趋势 / 来源国 / 周期
+- [ ] 当前 / 历史 / 新增 / 流失供应商
+- [ ] Supplier Switch Score / Window
 
-## Supplier Intelligence
+## Opportunity / Conversation / Outcome
 
-- [ ] 当前 / 历史供应商
-- [ ] 新增 / 流失供应商
-- [ ] first_seen / last_seen
-- [ ] supplier switch score / window
-
-## Opportunity Intelligence
-
-- [ ] Score
-- [ ] Why Now
-- [ ] Seller Fit
-- [ ] Market Access
-- [ ] Risk
-- [ ] Stage / Priority
-- [ ] Next Action
-
-## Conversation / Outcome
-
-- [ ] 首次触达 / 渠道 / 买家回复
-- [ ] 意向 / 对话阶段 / 下一步
-- [ ] 人工接管
-- [ ] 报价 / 寄样 / 谈判
+- [ ] Score / Why Now / Seller Fit / Market Access / Risk
+- [ ] Stage / Priority / Next Action
+- [ ] 首次触达 / 渠道 / 买家回复 / 意向
+- [ ] 人工接管 / 报价 / 寄样 / 谈判
 - [ ] WON / LOST / 原因
 
 ---
 
-# 15. 文档清理
+# 16. 文档清理
 
-已删除过程重复稿：
+已删除：
 
 - [x] `frontend_current_mapping_v2.md`
 - [x] `frontend_v2_execution_checklist.md`
@@ -505,15 +420,16 @@ Playbook
 - [x] 重复总纲 `qianpulse_prd_v2_master_architecture.md`
 - [x] 重复实施映射稿 `docs/implementation/01_frontend_live_code_mapping_v2.md`
 
-后续：
+最终待执行：
 
-- [ ] V2 稳定入口接入后执行 `docs/` 全量去重审查
-- [ ] 对旧历史文档逐份判断：事实依据 / 归档 / 删除
+- [ ] 稳定入口完成后全量审查 `docs/`
+- [ ] 历史事实依据保留
+- [ ] 重复 / 过期 / 过程稿删除或归档
 
 禁止新增：
 
 - 临时讨论稿
 - 重复 PRD
 - 重复清单
-- 无 Owner 过程文档
+- 无 Owner 的过程文档
 - 与 Contract / 代码脱节的概念稿
