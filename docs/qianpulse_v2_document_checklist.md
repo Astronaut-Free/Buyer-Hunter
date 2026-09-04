@@ -162,11 +162,11 @@ L4  代码实施与验收
 
 # 4. L3｜Contract 与跨组件工程文档
 
-目录建议：`docs/contracts/`
+目录：`docs/contracts/`
 
 ## 4.1 核心业务 Contract
 
-- [ ] `opportunity_contract_v2.md`
+- [x] `opportunity_contract_v2.md`
   - Opportunity 主对象
   - stage
   - priority
@@ -175,7 +175,7 @@ L4  代码实施与验收
   - next_action
   - outcome
 
-- [ ] `evidence_contract_v2.md`
+- [x] `evidence_contract_v2.md`
   - FACT
   - DERIVED
   - INFERENCE
@@ -185,14 +185,14 @@ L4  代码实施与验收
   - confidence
   - provenance
 
-- [ ] `buyer_contract_v2.md`
+- [x] `buyer_contract_v2.md`
   - Company
   - Contact
   - Business Event
   - Procurement Intelligence
   - Supplier Intelligence
 
-- [ ] `conversation_contract_v2.md`
+- [x] `conversation_contract_v2.md`
   - message
   - channel
   - sender / recipient
@@ -201,8 +201,9 @@ L4  代码实施与验收
   - stage transition
   - next action
   - human takeover
+  - voice conversation
 
-- [ ] `mission_contract_v2.md`
+- [x] `mission_contract_v2.md`
   - mission goal
   - target market
   - target buyer
@@ -213,7 +214,7 @@ L4  代码实施与验收
 
 ## 4.2 系统 Contract
 
-- [ ] `api_contract_v2.md`
+- [x] `api_contract_v2.md`
   - 现有 API 复用
   - 新增 API
   - request / response
@@ -221,26 +222,29 @@ L4  代码实施与验收
   - pagination
   - idempotency
 
-- [ ] `frontend_component_contract_v2.md`
+- [x] `frontend_component_contract_v2.md`
   - 页面与业务组件输入输出
   - shared state
   - loading / error / empty
   - component events
+  - voice component boundary
 
-- [ ] `state_event_contract_v2.md`
+- [x] `state_event_contract_v2.md`
   - Opportunity 状态机
   - Conversation 状态机
   - Mission 状态机
   - Event 定义
   - 状态迁移 Hard Gate
 
-- [ ] `data_contract_v2.md`
+- [x] `data_contract_v2.md`
   - Data Source → Evidence
   - Evidence → Opportunity
   - Opportunity → Action
   - Action → Outcome
   - 字段真值来源
   - UNKNOWN 规则
+
+本轮完成：**9 份 Contract 文档全部写入仓库。**
 
 ---
 
@@ -424,7 +428,7 @@ Playbook
 - [x] 删除 `frontend_v2_execution_checklist.md`
 - [x] 删除旧版无编号 `opportunity_workspace_frontend_engineering.md`
 - [x] 删除重复总纲 `qianpulse_prd_v2_master_architecture.md`
-- [ ] V2 Contract 完成后再做一次 `docs/` 全量去重审查
+- [ ] V2 Contract 完成后做一次 `docs/` 全量去重审查
 - [ ] 对旧版历史文档先判断是否仍承担事实 / 决策依据，再决定保留、归档或删除
 
 禁止继续新增：
@@ -443,16 +447,14 @@ Playbook
 总 PRD                         ✅ 1 / 1
 业务组件工程文档               ✅ 7 / 7
 前端页面工程文档               ✅ 7 / 7
-核心 / 系统 Contract           ⏳ 0 / 9
+核心 / 系统 Contract           ✅ 9 / 9
 真实代码映射与实施             ⏳ 待执行
-V2 文档全量去重审查             ⏳ Contract 完成后执行
+V2 文档全量去重审查             ⏳ 待执行
 ```
 
 当前下一工程门：
 
 ```text
-Contract 补齐
-    ↓
 真实 site / agent 代码映射
     ↓
 前端组件实现
