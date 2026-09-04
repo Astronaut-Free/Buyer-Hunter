@@ -15,23 +15,27 @@ L2 前端页面工程文档               ✅ 7 / 7
 L3 核心 / 系统 Contract           ✅ 9 / 9
 L4 真实 site / agent 代码映射      ✅ 5 / 5
 L5 前端基础层                      ✅ 5 / 5
-L5 业务组件实现                    🟡 3 / 13
-L6 API / Agent 接线与验收          ⏳ 待执行
+L5 业务组件实现                    ✅ 13 / 13
+L5 七个页面组合代码                ✅ 7 / 7
+L6 Workspace BFF V2 投影           ✅ 1 / 1
+L6 稳定入口接入 / API / Agent 验收  ⏳ 待执行
 V2 文档全量去重审查               ⏳ 待执行
 ```
 
 当前工程门：
 
 ```text
-Buyer Profile / Demand Card
+13 个业务组件完成
     ↓
-Supplier Graph / Market Access / Next Action
+7 个页面组合完成
     ↓
-Conversation / Voice / Human Takeover / Approval
+Opportunity Workspace BFF 1.1.0 完成
     ↓
-Dashboard / Radar / Workspace
+接入现有 agent/index.html 稳定运行链
     ↓
-API / Agent 接线与验收
+API / Agent 联调
+    ↓
+测试与验收
 ```
 
 ---
@@ -183,8 +187,11 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
   - `shell.css`
 - [x] Loading / Error / Empty / UNKNOWN
   - `view-state.js`
+- [x] V2 App Mount
+  - `app.js`
+  - `app.css`
 
-当前基础层已落代码，尚未替换当前 `agent/index.html` 的稳定运行链；后续以组件逐步接入。
+当前基础层已落代码。接入当前 `agent/index.html` 前保持现有稳定运行链可回退。
 
 ---
 
@@ -198,16 +205,28 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
   - `signal-timeline.js`
 - [x] Evidence Panel
   - `evidence-panel.js`
-- [ ] Buyer Profile
-- [ ] Supplier Graph
-- [ ] Demand Card
-- [ ] Market Access Panel
-- [ ] Next Action Panel
-- [ ] Conversation Timeline
-- [ ] Voice Conversation Panel
-- [ ] Human Takeover Panel
-- [ ] Approval Panel
-- [ ] Outcome / Playbook Panel
+  - 已兼容 Workspace `evidence.refs` 字符串引用
+- [x] Buyer Profile
+  - `buyer-profile.js`
+- [x] Supplier Graph
+  - `supplier-graph.js`
+- [x] Demand Card
+  - `demand-card.js`
+- [x] Market Access Panel
+  - `market-access-panel.js`
+- [x] Next Action Panel
+  - `next-action-panel.js`
+- [x] Conversation Timeline
+  - `conversation-timeline.js`
+- [x] Voice Conversation Panel
+  - `voice-conversation-panel.js`
+  - Voice API 未接线前按钮 Hard Disable
+- [x] Human Takeover Panel
+  - `human-takeover-panel.js`
+- [x] Approval Panel
+  - `approval-panel.js`
+- [x] Outcome / Playbook Panel
+  - `outcome-playbook-panel.js`
 
 辅助文件：
 
@@ -221,21 +240,34 @@ V2 后端实施以 `agent/server/` 为主；根目录旧 `agent/index.js` 不作
 - FACT / DERIVED / INFERENCE / ACTION 可区分
 - UNKNOWN 不猜测
 - Provider 字段不得直接穿透页面
+- Next Action 由 A6 Runtime 单一 Owner
+- Voice 未接 Runtime 时不可假执行
 - 不破坏当前登录与 A2-A6 Runtime
 
 ---
 
 # 8. 七个 V2 页面代码 Owner
 
-| 页面 | Owner | 当前基础 | 状态 |
+目录：`agent/ui-v2/pages/`
+
+| 页面 | Owner | 代码 | 状态 |
 |---|---|---|---|
-| Dashboard | `agent/` | workspace / runs / approvals | ⏳ |
-| Opportunity Radar | `site/` + `agent/` | `opportunities.html` + live API | ⏳ |
-| Opportunity Workspace | `agent/` | `/api/v1/opportunities/{id}/workspace` | ⏳ |
-| Buyer Intelligence | `agent/` | buyer / A2 / evidence / refs | ⏳ |
-| BD Mission | `agent/` | NL target + AgentRun + collection | ⏳ |
-| Conversation | `agent/` | message / thread / approval / Smartlead | ⏳ |
-| Playbook | `agent/` | runs / messages / outcomes | ⏳ |
+| Dashboard | `agent/` | `dashboard.js` | ✅ 组合完成 |
+| Opportunity Radar | `site/` + `agent/` | `opportunity-radar.js` | ✅ 登录后视图完成 |
+| Opportunity Workspace | `agent/` | `opportunity-workspace.js` | ✅ 组合完成 |
+| Buyer Intelligence | `agent/` | `buyer-intelligence.js` | ✅ 组合完成 |
+| BD Mission | `agent/` | `bd-mission.js` | ✅ 组合完成 |
+| Conversation | `agent/` | `conversation.js` | ✅ 组合完成 |
+| Playbook | `agent/` | `playbook.js` | ✅ 组合完成 |
+
+页面基础：
+
+- [x] `pages/page-utils.js`
+- [x] `pages/pages.css`
+- [x] `pages/index.js`
+- [x] 7 页面注册到 `view-shell.js` Loader Registry
+
+当前状态：页面模块已经具备代码 Owner；尚未替换现有 `agent/index.html` 稳定入口。
 
 ---
 
@@ -296,18 +328,38 @@ Outcome
 
 ---
 
-# 10. L6｜Agent / Runtime 接线
+# 10. L6｜Opportunity Workspace BFF
+
+Owner：`agent/server/opportunity-workspace.js`
+
+- [x] Workspace Contract 升级为 `1.1.0`
+- [x] 保留现有 A2 / A6 / approvals / blockers / activity / evidence
+- [x] 增量加入 `opportunity.fields`
+- [x] 增量加入 `origin / decision / priority`
+- [x] 增量加入 `opportunity_score / truth / timing / market_access score`
+- [x] 增量加入 `why_now / gaps`
+- [x] 增量加入 `supply_match / supplier_intelligence / market_access`
+- [x] Buyer Role 隐藏 Seller Intelligence 与内部评分
+- [x] Next Action 继续由服务端 A6 Runtime 单一 Owner
+- [x] `agent/tests/opportunity-workspace.test.js` 已同步新增 V2 Projection / Role Privacy 断言
+
+---
+
+# 11. L6｜Agent / Runtime 接线
 
 - [x] 保留 A2-A6 Runtime
 - [ ] 现有 Skill → V2 组件能力正式映射表
-- [ ] Mission Contract → A2 Runtime
-- [ ] Opportunity Workspace → V2 页面
-- [ ] Evidence Contract → Evidence Panel
-- [ ] Conversation Contract → A6 / Thread / Message
-- [ ] Voice Event → Evidence / Conversation Event
-- [ ] Human Gate → Approval Panel
-- [ ] Approval → Executor → External Action
-- [ ] Outcome → Playbook
+- [x] Mission Contract → A2 Runtime 页面调用代码
+- [x] Opportunity Workspace → V2 页面组合代码
+- [x] Evidence Contract → Evidence Panel
+- [x] Conversation Contract → Timeline / AI Advisor
+- [ ] Voice Event → STT / TTS / Evidence / Conversation Event
+- [x] Human Gate → Approval / Human Takeover Panel
+- [x] Approval → 现有 `/api/v1/approvals/{id}` 调用
+- [x] Outcome → Playbook 页面读取代码
+- [ ] V2 App → `agent/index.html` 稳定入口接线
+- [ ] 真实浏览器联调
+- [ ] Node / Python 全量回归测试
 
 运行底线：
 
@@ -321,7 +373,7 @@ Outcome
 
 ---
 
-# 11. 数据源与 Evidence Layer
+# 12. 数据源与 Evidence Layer
 
 ```text
 API
@@ -365,7 +417,7 @@ Playbook
 
 ---
 
-# 12. 核心 Signal 验收
+# 13. 核心 Signal 验收
 
 - [ ] 正在进口同类产品
 - [ ] 进口量增长
@@ -388,7 +440,7 @@ Playbook
 
 ---
 
-# 13. V2 商机字段验收
+# 14. V2 商机字段验收
 
 ## Buyer
 
@@ -443,7 +495,7 @@ Playbook
 
 ---
 
-# 14. 文档清理
+# 15. 文档清理
 
 已删除过程重复稿：
 
@@ -451,10 +503,11 @@ Playbook
 - [x] `frontend_v2_execution_checklist.md`
 - [x] 旧版无编号 `opportunity_workspace_frontend_engineering.md`
 - [x] 重复总纲 `qianpulse_prd_v2_master_architecture.md`
+- [x] 重复实施映射稿 `docs/implementation/01_frontend_live_code_mapping_v2.md`
 
 后续：
 
-- [ ] L5 前端第一轮完成后执行 `docs/` 全量去重审查
+- [ ] V2 稳定入口接入后执行 `docs/` 全量去重审查
 - [ ] 对旧历史文档逐份判断：事实依据 / 归档 / 删除
 
 禁止新增：
