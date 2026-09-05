@@ -1,8 +1,12 @@
-"""Collect public buyer/RFQ listing pages from two additional B2B channels.
+"""Collect public buyer/RFQ listing pages from configured B2B SourceSpecs.
 
 The collector intentionally stays on public listing pages. It does not log in,
 submit forms, reveal masked contacts, or bypass access controls. Each successful
 response is snapshotted before parsing so every derived row is auditable.
+
+Phase-0 Source Engine migration keeps the mature evidence-bound parser adapters
+and moves listing/fetch configuration into Source Registry V4. This removes the
+hard-coded LISTINGS table without changing downstream record/evidence contracts.
 """
 
 from __future__ import annotations
@@ -32,18 +36,8 @@ COUNTRY_RE = re.compile(r"Buyer\s+From\s+([A-Za-z][A-Za-z .'-]{1,60})", re.I)
 QUANTITY_RE = re.compile(r"Quantity\s+Required\s*:\s*([^\r\n<]{1,100})", re.I)
 INTENT_RE = re.compile(r"\b(?:buy|buyer|buying|wanted|need|require|requires|seeking|source|sourcing|rfq|quotation|order|import)\b", re.I)
 SELLER_RE = re.compile(r"\b(?:we\s+(?:sell|supply|export|manufacture)|our\s+(?:factory|product)|supplier\s+of)\b", re.I)
-
-LISTINGS = [
-    ("tradekey", "MATCHA", "https://www.tradekey.com/matcha-buyer/"),
-    ("tradekey", "BLUEBERRY", "https://www.tradekey.com/blueberry-buyer/"),
-    ("tradekey", "CHILI", "https://www.tradekey.com/chili-buyer/"),
-    ("tradekey", "TEA", "https://www.tradekey.com/tea-buyer/"),
-    ("go4worldbusiness", "MATCHA", "https://www.go4worldbusiness.com/buyers/matcha.html"),
-    ("go4worldbusiness", "BLUEBERRY", "https://www.go4worldbusiness.com/buyers/blueberries.html"),
-    ("go4worldbusiness", "ROSA_ROXBURGHII", "https://www.go4worldbusiness.com/buyers/rosa-roxburghii.html"),
-    ("go4worldbusiness", "CHILI", "https://www.go4worldbusiness.com/buyers/chili.html"),
-    ("go4worldbusiness", "TEA", "https://www.go4worldbusiness.com/buyers/tea.html"),
-]
+SOURCE_SPEC_CONTRACT = "qianpulse_source_spec_v1"
+DEFAULT_REGISTRY = Path(__file__).with_name("b2b_source_registry_v4.json")
 
 
 def clean_text(value: str) -> str:
@@ -137,6 +131,61 @@ def parse_go4worldbusiness(html: bytes, listing_url: str) -> list[dict]:
 PARSERS = {"tradekey": parse_tradekey, "go4worldbusiness": parse_go4worldbusiness}
 
 
+def load_source_specs(registry_path: Path) -> list[dict]:
+    """Load executable public SourceSpecs from Registry V4.
+
+    The runtime stays provider-neutral. MCP/browser/scraper integrations may be
+    used by outer discovery/fetch layers later, but this collector only accepts
+    explicit PUBLIC_HTTP SourceSpecs that preserve the current evidence policy.
+    """
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    if registry.get("source_spec_contract") != SOURCE_SPEC_CONTRACT:
+        raise ValueError(f"unsupported source spec contract: {registry.get('source_spec_contract')!r}")
+
+    listings: list[dict] = []
+    for source in registry.get("sources", []):
+        spec = source.get("source_spec")
+        if not spec:
+            continue
+        if spec.get("contract") != SOURCE_SPEC_CONTRACT:
+            raise ValueError(f"{source.get('code')}: source spec contract mismatch")
+        if spec.get("runtime") != "PUBLIC_HTTP":
+            continue
+
+        parser_adapter = spec.get("parser_adapter")
+        if parser_adapter not in PARSERS:
+            raise ValueError(f"{source.get('code')}: unknown parser adapter {parser_adapter!r}")
+
+        fetch_spec = spec.get("fetch") or {}
+        if fetch_spec.get("method", "GET") != "GET":
+            raise ValueError(f"{source.get('code')}: public B2B runtime only supports GET")
+
+        policy = spec.get("policy") or {}
+        forbidden = [name for name in ("login_required", "captcha_bypass", "paywall_bypass") if policy.get(name)]
+        if forbidden:
+            raise ValueError(f"{source.get('code')}: forbidden access policy: {', '.join(forbidden)}")
+        if not policy.get("require_source_url", True) or not policy.get("require_evidence", True):
+            raise ValueError(f"{source.get('code')}: evidence/source-url requirements cannot be disabled")
+
+        for listing in spec.get("listings", []):
+            category = listing.get("category_code")
+            url = listing.get("url")
+            if not category or not url:
+                raise ValueError(f"{source.get('code')}: listing requires category_code and url")
+            listings.append({
+                "source_code": source["code"],
+                "category_code": category,
+                "url": url,
+                "parser_adapter": parser_adapter,
+                "spec_version": spec.get("version", 1),
+                "min_interval_seconds": float(fetch_spec.get("min_interval_seconds", 2.0)),
+            })
+
+    if not listings:
+        raise ValueError(f"no executable SourceSpecs in {registry_path}")
+    return listings
+
+
 def parse_date(raw: str | None) -> str | None:
     if not raw:
         return None
@@ -159,10 +208,23 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--delay", type=float, default=2.0)
     parser.add_argument("--retries", type=int, default=2)
-    parser.add_argument("--sources", nargs="*", choices=sorted(PARSERS), default=sorted(PARSERS))
+    parser.add_argument("--registry", default=str(DEFAULT_REGISTRY))
+    parser.add_argument("--sources", nargs="*", help="Optional SourceSpec source codes")
     args = parser.parse_args()
-    delay = max(args.delay, 1.5)
+
     taxonomy = load_taxonomy()
+    listings = load_source_specs(Path(args.registry))
+    available_sources = sorted({item["source_code"] for item in listings})
+    selected_sources = set(args.sources or available_sources)
+    unknown_sources = sorted(selected_sources - set(available_sources))
+    if unknown_sources:
+        parser.error(f"unknown SourceSpec source(s): {', '.join(unknown_sources)}")
+
+    unknown_categories = sorted({item["category_code"] for item in listings} - set(taxonomy))
+    if unknown_categories:
+        raise ValueError(f"SourceSpec category not found in taxonomy: {', '.join(unknown_categories)}")
+
+    delay = max(args.delay, 1.5)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = Path(__file__).with_name("data_b2b_public_v3") / run_id
     raw_dir = run_dir / "raw"
@@ -173,9 +235,13 @@ def main() -> int:
     records: list[dict] = []
     seen: set[str] = set()
 
-    for source, category, url in LISTINGS:
-        if source not in args.sources:
+    for listing in listings:
+        source = listing["source_code"]
+        if source not in selected_sources:
             continue
+        category = listing["category_code"]
+        url = listing["url"]
+        parser_adapter = listing["parser_adapter"]
         observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         response, attempts = fetch(session, url, args.retries)
         status = response.status_code if response is not None else None
@@ -192,7 +258,7 @@ def main() -> int:
         if status == 200 and body:
             snapshot_path = raw_dir / f"{source}_{category}_{digest[:12]}.html"
             snapshot_path.write_bytes(body)
-            parsed = PARSERS[source](body, url)
+            parsed = PARSERS[parser_adapter](body, url)
         accepted = 0
         for row in parsed:
             canonical_url = row["source_url"].strip()
@@ -230,9 +296,13 @@ def main() -> int:
             "attempts": attempts,
             "snapshot_sha256": digest if body else None,
             "observed_at": observed_at,
+            "source_spec_contract": SOURCE_SPEC_CONTRACT,
+            "source_spec_version": listing["spec_version"],
+            "parser_adapter": parser_adapter,
         })
         print(f"{source} {category} http={status} parsed={len(parsed)} candidates={accepted}", flush=True)
-        time.sleep(delay + random.uniform(0.0, 0.35))
+        source_delay = max(delay, listing["min_interval_seconds"])
+        time.sleep(source_delay + random.uniform(0.0, 0.35))
 
     columns = [
         "source_code", "category_code", "record_kind", "exact_product_match",
@@ -248,7 +318,9 @@ def main() -> int:
     (run_dir / "probe_results.json").write_text(json.dumps(probes, ensure_ascii=False, indent=2), encoding="utf-8")
     summary = {
         "run_id": run_id,
-        "listing_count": len(probes),
+        "source_spec_contract": SOURCE_SPEC_CONTRACT,
+        "registry": str(Path(args.registry)),
+        "listing_count": len([item for item in listings if item["source_code"] in selected_sources]),
         "successful_listing_count": sum(p["http_status"] == 200 for p in probes),
         "raw_record_count": len(records),
         "candidate_count": len(candidates),
