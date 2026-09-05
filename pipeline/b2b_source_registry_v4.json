@@ -1,0 +1,121 @@
+{
+  "version": "4.0",
+  "source_spec_contract": "qianpulse_source_spec_v1",
+  "spec_storage": "embedded_phase0",
+  "policy": "Only public pages or authorized APIs. No login, paywall, CAPTCHA, contact masking, or rate-limit bypass.",
+  "connector_priority": [
+    "OFFICIAL_API",
+    "PUBLIC_REST_OR_GRAPHQL",
+    "PUBLIC_HTTP_HTML",
+    "EXTERNAL_CONNECTOR_OUTER_LAYER",
+    "PUBLIC_BROWSER_RENDER"
+  ],
+  "external_connector_policy": {
+    "runtime_binding": false,
+    "allowed_roles": ["source_discovery", "managed_public_fetch", "public_browser_render"],
+    "required_output": "Canonical Source Record + Evidence",
+    "note": "MCP and other external connectors stay outside the internal SourceSpec runtime boundary."
+  },
+  "sources": [
+    {
+      "code": "tradekey",
+      "name": "TradeKey Buy Offers",
+      "layer": "DIRECT_RFQ",
+      "regions": ["GLOBAL"],
+      "access_mode": "PUBLIC_LISTING",
+      "priority": "P0",
+      "adapter_status": "LIVE",
+      "entry_url": "https://www.tradekey.com/matcha-buyer/",
+      "source_spec": {
+        "contract": "qianpulse_source_spec_v1",
+        "version": 1,
+        "runtime": "PUBLIC_HTTP",
+        "parser_adapter": "tradekey",
+        "fetch": {
+          "method": "GET",
+          "min_interval_seconds": 2.0,
+          "max_response_bytes": 2097152,
+          "save_raw_snapshot": true
+        },
+        "policy": {
+          "login_required": false,
+          "captcha_bypass": false,
+          "paywall_bypass": false,
+          "require_source_url": true,
+          "require_evidence": true
+        },
+        "listings": [
+          {"category_code": "MATCHA", "url": "https://www.tradekey.com/matcha-buyer/"},
+          {"category_code": "BLUEBERRY", "url": "https://www.tradekey.com/blueberry-buyer/"},
+          {"category_code": "CHILI", "url": "https://www.tradekey.com/chili-buyer/"},
+          {"category_code": "TEA", "url": "https://www.tradekey.com/tea-buyer/"}
+        ],
+        "migration": {
+          "mode": "REUSE_CUSTOM_ADAPTER",
+          "reason": "Preserve the mature evidence-bound parser while removing hard-coded listing configuration."
+        }
+      }
+    },
+    {
+      "code": "go4worldbusiness",
+      "name": "go4WorldBusiness Buy Leads",
+      "layer": "DIRECT_RFQ",
+      "regions": ["GLOBAL"],
+      "access_mode": "PUBLIC_LISTING_PARTIAL",
+      "priority": "P0",
+      "adapter_status": "LIVE_PARTIAL",
+      "entry_url": "https://www.go4worldbusiness.com/buyers/matcha.html",
+      "source_spec": {
+        "contract": "qianpulse_source_spec_v1",
+        "version": 1,
+        "runtime": "PUBLIC_HTTP",
+        "parser_adapter": "go4worldbusiness",
+        "fetch": {
+          "method": "GET",
+          "min_interval_seconds": 2.0,
+          "max_response_bytes": 2097152,
+          "save_raw_snapshot": true
+        },
+        "policy": {
+          "login_required": false,
+          "captcha_bypass": false,
+          "paywall_bypass": false,
+          "require_source_url": true,
+          "require_evidence": true
+        },
+        "listings": [
+          {"category_code": "MATCHA", "url": "https://www.go4worldbusiness.com/buyers/matcha.html"},
+          {"category_code": "BLUEBERRY", "url": "https://www.go4worldbusiness.com/buyers/blueberries.html"},
+          {"category_code": "ROSA_ROXBURGHII", "url": "https://www.go4worldbusiness.com/buyers/rosa-roxburghii.html"},
+          {"category_code": "CHILI", "url": "https://www.go4worldbusiness.com/buyers/chili.html"},
+          {"category_code": "TEA", "url": "https://www.go4worldbusiness.com/buyers/tea.html"}
+        ],
+        "migration": {
+          "mode": "REUSE_CUSTOM_ADAPTER",
+          "reason": "Preserve the mature evidence-bound parser while removing hard-coded listing configuration."
+        }
+      }
+    },
+    {"code":"ec21","name":"EC21 Buying Leads","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"PUBLIC_LISTING_PARTIAL","priority":"P0","adapter_status":"LIVE_PARTIAL","entry_url":"https://importer.ec21.com/US/tea.html"},
+    {"code":"sam_gov","name":"SAM.gov Contract Opportunities","layer":"OFFICIAL_PROCUREMENT","regions":["US"],"access_mode":"OFFICIAL_API_KEY","priority":"P0","adapter_status":"LIVE","entry_url":"https://sam.gov/content/opportunities"},
+    {"code":"ted_eu","name":"Tenders Electronic Daily","layer":"OFFICIAL_PROCUREMENT","regions":["EUROPE"],"access_mode":"OPEN_API","priority":"P0","adapter_status":"READY","entry_url":"https://api.ted.europa.eu/v3/notices/search"},
+    {"code":"usda_ams","name":"USDA AMS Solicitations","layer":"OFFICIAL_PROCUREMENT","regions":["US"],"access_mode":"PUBLIC_DOCUMENTS_BROWSER_BLOCKED","priority":"P0","adapter_status":"BLOCKED_403_BROWSER","entry_url":"https://www.ams.usda.gov/selling-food/solicitations"},
+    {"code":"tradewheel","name":"TradeWheel Buyers","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"SEARCH_DISCOVERY_LOGIN_DETAIL","priority":"P1","adapter_status":"DISCOVERY_ONLY","entry_url":"https://www.tradewheel.com/buyers/matcha-powder/"},
+    {"code":"exporthub","name":"ExportHub Importers","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"PUBLIC_OR_LOGIN_DETAIL","priority":"P1","adapter_status":"DISCOVERY_ONLY","entry_url":"https://www.exporthub.com/importers/tea/"},
+    {"code":"freshdi","name":"FreshDI Buy Requests","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"SEARCH_DISCOVERY_SOURCE_BLOCKED","priority":"P1","adapter_status":"DISCOVERY_ONLY","entry_url":"https://freshdi.com/"},
+    {"code":"globaltradeplaza","name":"Global Trade Plaza Buy Leads","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"PUBLIC_BROWSER_BLOCKED","priority":"P1","adapter_status":"BLOCKED_403_BROWSER","entry_url":"https://globaltradeplaza.com/user/buy-leads"},
+    {"code":"connectamericas","name":"ConnectAmericas Business Opportunities","layer":"DIRECT_RFQ","regions":["AMERICAS","GLOBAL"],"access_mode":"PUBLIC_BROWSER_BLOCKED","priority":"P1","adapter_status":"BLOCKED_403_BROWSER","entry_url":"https://www.connectamericas.com/business-opportunity/tea"},
+    {"code":"tradeford","name":"TradeFord Buyers","layer":"BUYER_DIRECTORY_AND_RFQ","regions":["GLOBAL"],"access_mode":"PUBLIC_BROWSER_BLOCKED","priority":"P1","adapter_status":"BLOCKED_403_BROWSER","entry_url":"https://importer.tradeford.com/chili-powder"},
+    {"code":"eworldtrade","name":"eWorldTrade Buyers","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"DOMAIN_SEIZED","priority":"P3","adapter_status":"UNAVAILABLE_DOMAIN_SEIZED","entry_url":"https://eworldtrade.com/importers/"},
+    {"code":"hktdc_sourcing","name":"HKTDC Sourcing","layer":"DIRECT_RFQ","regions":["ASIA","GLOBAL"],"access_mode":"PUBLIC_RFQ_LOGIN_QUOTE_GATE","priority":"P1","adapter_status":"LIVE_PUBLIC_SEARCH","entry_url":"https://sourcing.hktdc.com/en/request-for-quotation"},
+    {"code":"ungm","name":"UN Global Marketplace","layer":"OFFICIAL_PROCUREMENT","regions":["GLOBAL"],"access_mode":"PUBLIC_SEARCH_OAUTH_LIMITED_API","priority":"P1","adapter_status":"ROUTE_TO_VERIFY","entry_url":"https://www.ungm.org/Public/Notice"},
+    {"code":"japan_jetro","name":"JETRO Business Matching","layer":"BUSINESS_MATCHING","regions":["JAPAN"],"access_mode":"PUBLIC_PROPOSAL_SEARCH_LOGIN_CONTACT_GATE","priority":"P1","adapter_status":"LIVE_PUBLIC_SEARCH","entry_url":"https://e-venue.jetro.go.jp/bizportal/s/selectBusinessCase?language=en_US"},
+    {"code":"alibaba_rfq","name":"Alibaba.com RFQ","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"AUTHORIZED_API_OR_PUBLIC_BROWSER_PAGE","priority":"P0","adapter_status":"LIVE_PUBLIC_PARTIAL","entry_url":"https://sourcing.alibaba.com/rfq/onepage/rfq_search_list.htm"},
+    {"code":"made_in_china","name":"Made-in-China Sourcing Requests","layer":"DIRECT_RFQ","regions":["GLOBAL"],"access_mode":"AUTHORIZED_SUPPLIER_ACCOUNT","priority":"P0_AFTER_AUTH","adapter_status":"WAITING_CREDENTIALS","entry_url":"https://sourcing.made-in-china.com/"},
+    {"code":"rangeme","name":"RangeMe Retailer Discovery","layer":"RETAIL_BUYER_MATCHING","regions":["US"],"access_mode":"AUTHORIZED_SUPPLIER_ACCOUNT","priority":"P1_AFTER_AUTH","adapter_status":"WAITING_CREDENTIALS","entry_url":"https://www.rangeme.com/suppliers"},
+    {"code":"amazon_business","name":"Amazon Business","layer":"BUSINESS_DEMAND_AND_MARKET_SIGNAL","regions":["US","EUROPE","JAPAN"],"access_mode":"PUBLIC_INFO_AUTHORIZED_ACCOUNT_RFQ","priority":"P2_AFTER_AUTH","adapter_status":"PUBLIC_INFO_ACCOUNT_GATE","entry_url":"https://business.amazon.com/en/solutions/bulk-buying/request-for-quote"},
+    {"code":"importyeti","name":"ImportYeti","layer":"TRADE_HISTORY_BACKGROUND","regions":["US"],"access_mode":"PUBLIC_SEARCH","priority":"P2","adapter_status":"BACKGROUND_ONLY","entry_url":"https://www.importyeti.com/"},
+    {"code":"volza","name":"Volza","layer":"TRADE_HISTORY_BACKGROUND","regions":["GLOBAL"],"access_mode":"SUBSCRIPTION_OR_PUBLIC_PREVIEW","priority":"P2","adapter_status":"BACKGROUND_ONLY","entry_url":"https://www.volza.com/"},
+    {"code":"trademo","name":"Trademo Intel","layer":"TRADE_HISTORY_BACKGROUND","regions":["GLOBAL"],"access_mode":"COMMERCIAL_ACCOUNT","priority":"P2","adapter_status":"BACKGROUND_ONLY","entry_url":"https://www.trademo.com/"}
+  ]
+}
