@@ -7,14 +7,135 @@
     "OFFICIAL_API",
     "PUBLIC_REST_OR_GRAPHQL",
     "PUBLIC_HTTP_HTML",
-    "EXTERNAL_CONNECTOR_OUTER_LAYER",
+    "SEARCH_DISCOVERY_MCP",
+    "MANAGED_PUBLIC_FETCH_MCP",
     "PUBLIC_BROWSER_RENDER"
   ],
   "external_connector_policy": {
     "runtime_binding": false,
-    "allowed_roles": ["source_discovery", "managed_public_fetch", "public_browser_render"],
+    "allowed_roles": ["source_discovery", "managed_public_fetch", "public_browser_render", "source_health"],
     "required_output": "Canonical Source Record + Evidence",
-    "note": "MCP and other external connectors stay outside the internal SourceSpec runtime boundary."
+    "hard_gates": [
+      "PUBLIC_OR_AUTHORIZED_API_ONLY",
+      "NO_LOGIN_BYPASS",
+      "NO_CAPTCHA_BYPASS",
+      "NO_PAYWALL_BYPASS",
+      "NO_CONTACT_MASKING_BYPASS",
+      "NO_RATE_LIMIT_BYPASS",
+      "RAW_OR_PROVIDER_EVIDENCE_REQUIRED"
+    ],
+    "screening": {
+      "source_catalog": "punkpeye/awesome-mcp-servers",
+      "screened_at": "2026-09-05",
+      "criteria": [
+        "GLOBALPAI_ROLE_FIT",
+        "ACCESS_POLICY_FIT",
+        "EVIDENCE_PRESERVATION",
+        "LICENSE_AND_COMMERCIAL_USE",
+        "MAINTENANCE_AND_OFFICIALITY",
+        "CAPABILITY_OVERLAP",
+        "INTEGRATION_COST",
+        "VENDOR_LOCK_IN"
+      ],
+      "candidates": [
+        {
+          "code": "firecrawl",
+          "repo": "firecrawl/firecrawl-mcp-server",
+          "priority": "P0",
+          "decision": "ADOPT_AS_OPTIONAL_OUTER_CONNECTOR",
+          "roles": ["source_discovery", "managed_public_fetch", "source_health"],
+          "license": "MIT_MCP_SERVER",
+          "policy_gate": "PUBLIC_ONLY; disable auth-gated interaction for GlobalPai",
+          "reason": "Search, scrape, crawl, map, structured extraction, JS rendering and page-change monitoring cover most public-web fallback needs."
+        },
+        {
+          "code": "apify",
+          "repo": "apify/apify-mcp-server",
+          "priority": "P0",
+          "decision": "ADOPT_WITH_ACTOR_ALLOWLIST",
+          "roles": ["source_discovery", "managed_public_fetch"],
+          "license": "MIT",
+          "policy_gate": "ALLOWLIST_ACTORS_ONLY; public or authorized sources only",
+          "reason": "Thousands of reusable Actors can avoid writing site-specific collectors while keeping the internal SourceSpec contract stable."
+        },
+        {
+          "code": "exa",
+          "repo": "exa-labs/exa-mcp-server",
+          "priority": "P0",
+          "decision": "ADOPT_FOR_DISCOVERY_ONLY",
+          "roles": ["source_discovery"],
+          "license": "MIT",
+          "policy_gate": "SEARCH_AND_PUBLIC_FETCH_ONLY",
+          "reason": "High-fit discovery layer for finding candidate sources; it should not become the canonical evidence runtime."
+        },
+        {
+          "code": "microsoft_playwright",
+          "repo": "microsoft/playwright-mcp",
+          "priority": "P0_FALLBACK",
+          "decision": "ADOPT_AS_LAST_PUBLIC_RENDER_FALLBACK",
+          "roles": ["public_browser_render"],
+          "license": "APACHE_2_0",
+          "policy_gate": "PUBLIC_JS_RENDER_ONLY; no stored login sessions for source acquisition",
+          "reason": "Official deterministic browser automation is useful only when public HTTP/API paths cannot render the required evidence."
+        },
+        {
+          "code": "reefapi",
+          "repo": "reefapi/reefapi-mcp",
+          "priority": "P1_RESTRICTED",
+          "decision": "HOLD_FOR_WHITELISTED_PUBLIC_ENGINES",
+          "roles": ["market_signal", "company_intel", "ecommerce_signal"],
+          "license": "MIT_MCP_SERVER_HOSTED_DATA_SERVICE",
+          "policy_gate": "PER_ENGINE_REVIEW_REQUIRED; blocked/login/captcha bypass capabilities prohibited",
+          "reason": "Broad coverage is useful, but advertised access to blocked, login and captcha-protected sources conflicts with GlobalPai access policy."
+        },
+        {
+          "code": "buywhere",
+          "repo": "BuyWhere/buywhere-mcp",
+          "priority": "P1",
+          "decision": "EVALUATE_FOR_MARKET_PRICE_SIGNAL",
+          "roles": ["ecommerce_signal", "price_comparison"],
+          "policy_gate": "SIGNAL_ONLY; never upgrade product listings into buyer demand evidence",
+          "reason": "Useful cross-border catalog and price signal across Singapore, SEA and US, but it does not directly prove B2B purchase intent."
+        },
+        {
+          "code": "supplymaven",
+          "repo": "SupplyMaven-SCR/supplymaven-mcp-server",
+          "priority": "P1",
+          "decision": "EVALUATE_FOR_A3_A5_SIGNAL_PROVIDER",
+          "roles": ["supply_chain_risk", "timing_signal"],
+          "policy_gate": "BACKGROUND_SIGNAL_ONLY",
+          "reason": "Port congestion, freight, trade policy, commodities and disruption signals can improve timing and risk decisions later."
+        },
+        {
+          "code": "apollo_io",
+          "repo": "louis030195/apollo-io-mcp",
+          "priority": "P2_AUTHORIZED_ONLY",
+          "decision": "DEFER",
+          "roles": ["buyer_enrichment", "prospecting"],
+          "policy_gate": "AUTHORIZED_ACCOUNT_AND_DATA_RIGHTS_REQUIRED; personal-contact handling review required",
+          "reason": "Potentially strong buyer enrichment, with higher licensing, privacy and contact-data governance requirements."
+        },
+        {
+          "code": "xcomet",
+          "repo": "shuji-bonji/xcomet-mcp-server",
+          "priority": "P2",
+          "decision": "DEFER_TO_MULTILINGUAL_QA",
+          "roles": ["translation_quality"],
+          "policy_gate": "QA_ONLY",
+          "reason": "Useful for multilingual outreach quality scoring after the acquisition and opportunity pipeline is stable."
+        },
+        {
+          "code": "mcp_cn_commerce",
+          "repo": "TonyWang-hub/mcp-cn-commerce",
+          "priority": "HOLD",
+          "decision": "DO_NOT_ADD_TO_SOURCE_ENGINE",
+          "roles": ["seller_side_merchant_data"],
+          "policy_gate": "OUT_OF_SOURCE_ENGINE_SCOPE",
+          "reason": "Merchant-account orders, inventory and ad reports belong to seller-side operations and do not solve public global demand discovery."
+        }
+      ]
+    },
+    "note": "External MCP/connectors remain outside the internal SourceSpec runtime boundary."
   },
   "sources": [
     {
