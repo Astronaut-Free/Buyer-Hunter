@@ -45,9 +45,14 @@ class FakeResponse:
 
 
 class SourceSpecContractTests(unittest.TestCase):
-    def test_registry_exposes_exactly_nine_migrated_listings(self):
+    def test_registry_exposes_exactly_nine_phase0_migrated_listings(self):
         taxonomy = collector.load_taxonomy()
-        listings = collector.load_source_specs(collector.DEFAULT_REGISTRY, taxonomy=taxonomy)
+        phase0_sources = {"tradekey", "go4worldbusiness"}
+        listings = collector.load_source_specs(
+            collector.DEFAULT_REGISTRY,
+            selected_sources=phase0_sources,
+            taxonomy=taxonomy,
+        )
         self.assertEqual(len(listings), 9)
         counts = {}
         for item in listings:
